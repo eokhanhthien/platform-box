@@ -3,6 +3,7 @@ const path = require('path');
 const { initDB } = require('../models/database');
 const { initUserController } = require('../controllers/userController');
 const { initPermissionController } = require('../controllers/permissionController');
+const { initSystemController } = require('../controllers/systemController');
 
 let mainWindow;
 
@@ -14,6 +15,7 @@ async function bootstrap() {
         // 2. Initialize Controllers (IPC Event Listeners)
         initUserController();
         initPermissionController();
+        initSystemController();
 
         // 3. Create the Main Window
         createWindow();
@@ -40,6 +42,7 @@ function createWindow() {
 
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
+        mainWindow.maximize();
     });
 }
 

@@ -16,5 +16,8 @@ contextBridge.exposeInMainWorld('api', {
 
     // Permissions
     getPermissions: () => ipcRenderer.invoke('getPermissions'),
-    updatePermissions: (role, config) => ipcRenderer.invoke('updatePermissions', role, config)
+    updatePermissions: (role, config) => ipcRenderer.invoke('updatePermissions', role, config),
+
+    // System Components
+    loadTemplate: (moduleName) => ipcRenderer.invoke('loadTemplate', moduleName)
 });

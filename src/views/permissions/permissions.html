@@ -1,0 +1,31 @@
+<div class="table-section">
+    <div class="table-header">
+        <h3>Phân Quyền Hệ Thống</h3>
+        <div style="display: flex; gap: 12px; align-items: center; margin-left: auto;">
+            <label>Chọn chức vụ:</label>
+            <select id="permRoleSelect" class="form-group"
+                style="margin-bottom: 0; min-width: 150px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-input);">
+                <!-- Options generated dynamically -->
+            </select>
+            <button class="btn-primary" onclick="savePermissions()">
+                <i class="fas fa-save"></i> Cập Nhật
+            </button>
+        </div>
+    </div>
+
+    <table id="permissionsTable">
+        <thead>
+            <tr>
+                <th width="25%">Module (Tính năng)</th>
+                <th width="15%" style="text-align: center;">View (Xem)</th>
+                <th width="15%" style="text-align: center;">Create (Thêm)</th>
+                <th width="15%" style="text-align: center;">Update (Sửa)</th>
+                <th width="15%" style="text-align: center;">Delete (Xóa)</th>
+                <th width="15%" style="text-align: center;">Export (DL)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Generated dynamically by permissions.js -->
+        </tbody>
+    </table>
+</div>

@@ -60,6 +60,55 @@ Khi bạn hoặc người khác cần thêm một tính năng mới (Ví dụ: T
 3. Khi cần load thư viện ngoại (jQuery, Select2, ChartJS...), tải file `.min.js` và `.min.css` đưa vào thư mục `src/views/assets/` và gọi qua thẻ script đường dẫn tương đối. TUYỆT ĐỐI không dùng `require()` ngoài file HTML ở Renderer để tránh lỗi `nodeIntegration`!
 4. **Quản lý Cấu hình Tập trung:** Nếu có các danh sách dữ liệu tĩnh cấu hình ứng dụng (như các loại `Role`, `Department`, `Categories`...), hãy khai báo vào file cấu hình dùng chung `src/views/config.js` (gắn vào thẻ `<script>` trong HTML trước các file logic) để lấy ra dùng qua biến `window.APP_CONFIG`. Tuyệt đối không hardcode cứng trên mã HTML.
 
+## BƯỚC 6: CHIA MODULE THEO TÍNH NĂNG (CHUẨN FRAMEWORK)
+**Vị trí:** `src/views/tên-module`
+
+Để tránh file JS/HTML bị phình to (ví dụ `dashboard.js` dài hàng ngàn dòng), dự án tuân thủ cấu trúc **Modularize theo Navbar**:
+
+1. File `dashboard.js` chỉ là **Router Component**. Nó làm nhiệm vụ quản lý bộ khung, tạo Sidebar từ Config và chuyển đổi qua lại giữa các `sectionId` trên DOM.
+2. Mỗi tính năng trên Navbar phải có một **Thư mục riêng** nằm trong `src/views/` (vd: `src/views/users/`, `src/views/permissions/`).
+3. Toàn bộ Logic Load dữ liệu, Phân quyền thao tác, Xử lý Modal thêm/sửa/xoá của tính năng đó phải được di chuyển vào file JS nằm trong thư mục tương ứng (vd: `users/users.js`).
+4. Tại file HTML tổng `dashboard.html`, tạo một bao lưới bọc HTML như `<div id="section-tên-module" class="module-section">` và gọi `<script src="../tên-module/tên-module.js">` ở phần cuối body.
+
+## BƯỚC 7: ÁP DỤNG PHÂN QUYỀN RBAC VÀO GIAO DIỆN (Ẩn/Hiện Nút)
+**Vị trí:** `src/views/filename.js`
+
+Hệ thống sử dụng **Ma Trận Phân Quyền Động (Action-Based RBAC)** được nạp từ Database. Khi render View, tuyệt đối không được hardcode quyền (ví dụ: `if (currentUser.role === 'Admin')`), mà phải bám theo cấu trúc `PERMISSIONS`.
+
+1. **Lấy quyền của User hiện tại cho Module đang dev:**
+   ```javascript
+   // Ví dụ lấy quyền cho module 'products'
+   const rolePerms = window.APP_CONFIG.PERMISSIONS[currentUser.role] || {};
+   const modulePerms = rolePerms['products'] || [];
+   ```
+2. **Kiểm tra quyền View (Xem trang):**
+   ```javascript
+   if (!modulePerms.includes('view') && currentUser.role !== 'Admin') {
+       // Ẩn bảng dữ liệu, hiện thông báo không có quyền
+       document.querySelector('#productTable').style.display = 'none';
+       return;
+   }
+   ```
+3. **Ẩn/Hiện nút Thêm, Sửa, Xóa (Create, Update, Delete):**
+   ```javascript
+   // Nút Thêm Mới
+   if (modulePerms.includes('create') || currentUser.role === 'Admin') {
+       document.querySelector('#btnAddProduct').style.display = 'block';
+   } else {
+       document.querySelector('#btnAddProduct').style.display = 'none';
+   }
+
+   // Trong vòng lặp render Table, chỉ render nút Sửa/Xóa nếu có quyền
+   let actionsHTML = '';
+   if (modulePerms.includes('update') || currentUser.role === 'Admin') {
+       actionsHTML += `<button onclick="edit(${id})">Sửa</button>`;
+   }
+   if (modulePerms.includes('delete') || currentUser.role === 'Admin') {
+       actionsHTML += `<button onclick="del(${id})">Xóa</button>`;
+   }
+   ```
+   *Lưu ý: Role `Admin` luôn được ngầm định bypass mọi quyền hành để tránh rủi ro mất quyền kiểm soát hệ thống.*
+
 ---
 
 ## TỔNG KẾT LUỒNG CHẠY (DATA FLOW)

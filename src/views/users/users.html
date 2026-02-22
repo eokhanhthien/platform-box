@@ -1,0 +1,74 @@
+<div class="table-section">
+    <div class="table-header">
+        <h3>Recent Activity / Users</h3>
+        <button class="btn-primary" onclick="openModal()" style="margin-left: auto;">
+            <i class="fas fa-plus"></i> New User
+        </button>
+    </div>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th width="30%">USER</th>
+                <th width="20%">ACTION / ROLE</th>
+                <th width="25%">DATE / DEPT</th>
+                <th width="15%">STATUS</th>
+                <th width="10%" style="text-align: center;">ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data populated by JS -->
+        </tbody>
+    </table>
+</div>
+
+<!-- MODAL (Thêm / Sửa User) -->
+<div id="userModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">New User</h3>
+            <i class="fas fa-times close-btn" onclick="closeModal()"></i>
+        </div>
+
+        <div class="modal-body">
+            <input type="hidden" id="editUserId" value="">
+
+            <div style="display: flex; gap: 16px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Username *</label>
+                    <input type="text" id="userUsername" placeholder="e.g. admin">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Password * <small id="pwdHint" style="color:#9ca3af;font-weight:normal;display:none;">(Leave
+                            blank to
+                            keep)</small></label>
+                    <input type="password" id="userPassword" placeholder="••••••••">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" id="userFullName" placeholder="e.g. John Doe">
+            </div>
+
+            <div style="display: flex; gap: 16px;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Role *</label>
+                    <select id="userRole">
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 2;" id="deptGroup">
+                    <label>Department * <small style="color:#9ca3af;font-weight:normal;">(Type to
+                            add)</small></label>
+                    <select id="userDepartment" multiple="multiple" style="width: 100%;">
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-outline" onclick="closeModal()">Cancel</button>
+            <button class="btn-primary" id="submitBtn" onclick="saveUser()"><i class="fas fa-save"></i> Save
+                User</button>
+        </div>
+    </div>
+</div>
