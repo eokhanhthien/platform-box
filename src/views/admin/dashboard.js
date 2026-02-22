@@ -27,12 +27,67 @@ document.addEventListener("DOMContentLoaded", () => {
         allowClear: true
     });
 
-    // Auto-load users list
-    loadUsers();
+    // Initialize User Context
+    initDashboardContext();
 });
 
+async function initDashboardContext() {
+    const currentUser = await window.api.getCurrentUser();
+    if (!currentUser) {
+        // Chặn nếu chưa đăng nhập
+        window.api.navigateToLogin();
+        return;
+    }
+
+    // Render tên và role ở góc trên phải
+    document.querySelector('.user-profile .name').innerText = currentUser.full_name;
+    document.querySelector('.user-profile .role').innerText = currentUser.role;
+
+    // Build Sidebar Navigation Động dựa trên Role
+    const navMenu = document.querySelector('.nav-menu');
+    navMenu.innerHTML = ''; // Clear default items
+    const rolePermissions = window.APP_CONFIG.PERMISSIONS[currentUser.role] || {};
+
+    window.APP_CONFIG.NAVIGATION.forEach(item => {
+        const modulePerms = rolePermissions[item.id] || [];
+        if (modulePerms.includes('view')) {
+            const li = document.createElement('li');
+            li.className = 'nav-item';
+            // Đánh dấu active tạm thời cho menu Users
+            if (item.id === 'users') li.classList.add('active');
+
+            li.innerHTML = `<i class="${item.icon}"></i> ${item.label}`;
+            navMenu.appendChild(li);
+        }
+    });
+
+    // Quyền ở Table Users
+    const userPerms = rolePermissions['users'] || [];
+    if (!userPerms.includes('view')) {
+        const tableSection = document.querySelector('.table-section');
+        const statsGrid = document.querySelector('.stats-grid'); // Các ô thống kê phụ thuộc
+
+        if (tableSection) tableSection.style.display = 'none';
+        if (statsGrid) statsGrid.style.display = 'none';
+
+        // Cập nhật lại tiêu đề Dashboard cho Role thấp
+        document.querySelector('.page-title h1').innerText = `Xin chào, ${currentUser.full_name}`;
+        document.querySelector('.page-title p').innerText = "Chào mừng bạn quay trở lại nền tảng làm việc.";
+    } else {
+        // Nút thêm mới
+        const btnNewUser = document.querySelector('.table-header .btn-primary');
+        if (btnNewUser) {
+            btnNewUser.style.display = userPerms.includes('create') ? 'block' : 'none';
+        }
+
+        // Chỉ auto-load users list nếu được view
+        loadUsers();
+    }
+}
+
 // Logout back to Main/Auth Window
-function handleLogout() {
+async function handleLogout() {
+    await window.api.logout();
     window.api.navigateToLogin();
 }
 
@@ -72,6 +127,20 @@ function renderTable() {
         if (u.role === 'Admin') statusBadgeClass = 'status-alert';
         if (u.role === 'Lãnh đạo') statusBadgeClass = 'status-pending';
 
+        // Lookup current user permissions from config
+        const currentUserRole = document.querySelector('.user-profile .role').innerText;
+        const userPerms = window.APP_CONFIG.PERMISSIONS[currentUserRole] || {};
+        const canUpdate = (userPerms['users'] || []).includes('update');
+        const canDelete = (userPerms['users'] || []).includes('delete') && u.username !== 'admin';
+
+        let actionsHTML = '';
+        if (canUpdate) {
+            actionsHTML += `<button class="actions-btn" onclick="editUser(${u.id})" title="Edit User"><i class="fas fa-pen"></i></button>`;
+        }
+        if (canDelete) {
+            actionsHTML += `${u.username !== 'admin' ? `<button class="actions-btn" onclick="deleteUser(${u.id})" title="Delete User"><i class="fas fa-trash-alt" style="color:#ef4444;"></i></button>` : ''}`;
+        }
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>
@@ -93,13 +162,7 @@ function renderTable() {
                 <span class="status-badge ${statusBadgeClass}">${u.role === 'Admin' ? 'Admin' : (u.role === 'Lãnh đạo' ? 'Manager' : 'User')}</span>
             </td>
             <td style="text-align: center;">
-                <button class="actions-btn" onclick="editUser(${u.id})" title="Edit User">
-                    <i class="fas fa-pen"></i>
-                </button>
-                ${u.username !== 'admin' ? `
-                <button class="actions-btn" onclick="deleteUser(${u.id})" title="Delete User">
-                    <i class="fas fa-trash-alt" style="color:#ef4444;"></i>
-                </button>` : ''}
+                ${actionsHTML}
             </td>
         `;
         tbody.appendChild(tr);

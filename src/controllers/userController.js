@@ -1,14 +1,28 @@
 const { ipcMain } = require('electron');
 const { loginUser, getAllUsers, addUser, updateUser, deleteUser } = require('../models/userModel');
 
+let currentUser = null;
+
 function initUserController() {
     ipcMain.handle('login', async (event, username, password) => {
         try {
             const result = await loginUser(username, password);
+            if (result.success) {
+                currentUser = result.user; // Cache session
+            }
             return result;
         } catch (error) {
             return { success: false, error: 'Database error: ' + error.message };
         }
+    });
+
+    ipcMain.handle('getCurrentUser', async () => {
+        return currentUser;
+    });
+
+    ipcMain.handle('logout', async () => {
+        currentUser = null;
+        return { success: true };
     });
 
     ipcMain.handle('getUsers', async (event) => {
