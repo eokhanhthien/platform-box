@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ thống Quản lý Hành chính - Full CRUD</title>
+    <style>
+        :root { --primary: #003366; --accent: #2ecc71; --danger: #e74c3c; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 95%; max-width: 1000px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); padding-bottom: 15px; margin-bottom: 25px; }
+        .status { margin: -10px 0 16px; color: #5b6470; font-size: 14px; }
+        
+        /* Form */
+        .form-row { display: grid; grid-template-columns: 2fr 1fr 2fr auto; gap: 10px; margin-bottom: 20px; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 6px; outline: none; transition: 0.3s; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 5px rgba(0,51,102,0.2); }
+        
+        /* Buttons */
+        button { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-connect { background: #f39c12; color: white; }
+        .btn-add { background: var(--primary); color: white; }
+        .btn-edit { background: #3498db; color: white; margin-right: 5px; }
+        .btn-delete { background: var(--danger); color: white; }
+        button:hover { opacity: 0.8; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f8f9fa; color: var(--primary); text-align: left; padding: 15px; border-bottom: 2px solid #eee; }
+        td { padding: 15px; border-bottom: 1px solid #eee; }
+        tr:hover { background-color: #fcfcfc; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2 style="margin:0; color: var(--primary);">HÀNH CHÍNH QUẢN TRỊ</h2>
+        <button id="connectBtn" class="btn-connect" onclick="handleFileConnect()">📁 Kết nối file CSV</button>
+    </div>
+    <p id="statusText" class="status">Chưa kết nối file CSV.</p>
+
+    <div id="mainContent" class="hidden">
+        <div class="form-row">
+            <input type="text" id="itemName" placeholder="Tên đồ dùng/Dịch vụ...">
+            <input type="number" id="qty" placeholder="SL">
+            <input type="text" id="staff" placeholder="Người phụ trách/nhận...">
+            <input type="hidden" id="editIndex" value="-1">
+            <button id="submitBtn" class="btn-add" onclick="saveData()">Thêm mới</button>
+        </div>
+
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th width="5%">ID</th>
+                    <th width="40%">Tên nội dung</th>
+                    <th width="10%">SL</th>
+                    <th width="25%">Người thực hiện</th>
+                    <th width="20%">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let fileHandle = null;
+    let cachedHandle = null;
+    let dataList = [];
+    let isWritableConnection = false;
+    const HEADER_CSV = "ID,Item,Qty,Staff\n";
+    const DB_NAME = "csv-connector-db";
+    const STORE_NAME = "handles";
+    const HANDLE_KEY = "mainCsvHandle";
+
+    async function handleFileConnect() {
+        if (!window.showOpenFilePicker) {
+            alert("Trình duyệt chưa hỗ trợ File System Access API.");
+            return;
+        }
+
+        try {
+            if (cachedHandle) {
+                const readGrantedCached = await ensurePermission(cachedHandle, "read", true);
+                if (readGrantedCached) {
+                    fileHandle = cachedHandle;
+                    isWritableConnection = await ensurePermission(cachedHandle, "readwrite", true);
+                    await loadDataFromFileHandle();
+                    setConnectedUI(
+                        isWritableConnection ? "✅ Đã kết nối CSV (ghi trực tiếp)" : "✅ Đã kết nối CSV (chỉ đọc)"
+                    );
+                    setStatus("Đã kết nối lại file: " + (fileHandle.name || "CSV"));
+                    return;
+                }
+            }
+
+            [fileHandle] = await window.showOpenFilePicker({
+                id: "admin-csv-file",
+                startIn: cachedHandle || "downloads",
+                types: [{ description: "CSV Files", accept: { "text/csv": [".csv"] } }]
+            });
+            const readGranted = await ensurePermission(fileHandle, "read", true);
+            if (!readGranted) {
+                alert("Bạn chưa cấp quyền đọc file.");
+                return;
+            }
+            isWritableConnection = await ensurePermission(fileHandle, "readwrite", true);
+            cachedHandle = fileHandle;
+            await saveHandleToIndexedDB(fileHandle);
+            await loadDataFromFileHandle();
+            setConnectedUI(
+                isWritableConnection ? "✅ Đã kết nối CSV (ghi trực tiếp)" : "✅ Đã kết nối CSV (chỉ đọc)"
+            );
+            setStatus("Đã kết nối file: " + (fileHandle.name || "CSV"));
+        } catch (e) {
+            console.log("User cancelled connect", e);
+        }
+    }
+
+    async function loadDataFromFileHandle() {
+        const file = await fileHandle.getFile();
+        const content = await file.text();
+        loadDataFromCsvContent(content);
+    }
+
+    async function autoConnectCsv() {
+        cachedHandle = await loadHandleFromIndexedDB();
+        if (cachedHandle) {
+            try {
+                // Thử đọc trực tiếp từ handle đã lưu; một số browser trả queryPermission=prompt
+                // nhưng vẫn đọc được file đã cấp quyền trước đó.
+                fileHandle = cachedHandle;
+                await loadDataFromFileHandle();
+                isWritableConnection = await ensurePermission(cachedHandle, "readwrite", false);
+                setConnectedUI(
+                    isWritableConnection ? "✅ Đã tự kết nối CSV" : "✅ Đã tự kết nối CSV (chỉ đọc)"
+                );
+                setStatus("Đã tự kết nối file lần trước: " + (fileHandle.name || "CSV"));
+                return;
+            } catch (e) {
+                console.log("Cached handle unavailable", e);
+                isWritableConnection = false;
+                setConnectedUI("🔐 Cấp lại quyền file cũ", "#e67e22");
+                setStatus("Đã tìm thấy file đã lưu trước đó nhưng cần cấp lại quyền. Bấm nút để kết nối lại, không cần tìm file.");
+                return;
+            }
+        }
+        isWritableConnection = false;
+        setConnectedUI("📁 Chọn file CSV", "#f39c12");
+        setStatus("Chưa có file. Vui lòng bấm 'Kết nối file CSV' để chọn file trong thư mục của bạn.");
+    }
+
+    function loadDataFromCsvContent(content) {
+        dataList = parseCsv(content);
+        renderTable();
+        document.getElementById("mainContent").classList.remove("hidden");
+    }
+
+    function parseCsv(content) {
+        const lines = content.split(/\r?\n/).filter(line => line.trim() !== "");
+        if (lines.length <= 1) return [];
+
+        const rows = [];
+        for (let i = 1; i < lines.length; i++) {
+            const [id = "", item = "", qty = "", staff = ""] = lines[i].split(",");
+            rows.push({
+                id: id.trim(),
+                item: item.trim(),
+                qty: qty.trim(),
+                staff: staff.trim()
+            });
+        }
+        return rows;
+    }
+
+    function escapeCsvValue(value) {
+        const safe = String(value ?? "");
+        return safe.includes(",") ? `"${safe.replaceAll("\"", "\"\"")}"` : safe;
+    }
+
+    function buildCsvContent() {
+        let csvContent = HEADER_CSV;
+        dataList.forEach(d => {
+            csvContent += `${escapeCsvValue(d.id)},${escapeCsvValue(d.item)},${escapeCsvValue(d.qty)},${escapeCsvValue(d.staff)}\n`;
+        });
+        return csvContent;
+    }
+
+    function renderTable() {
+        const tbody = document.querySelector("#dataTable tbody");
+        tbody.innerHTML = "";
+        dataList.forEach((data, index) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${data.id}</td>
+                <td>${data.item}</td>
+                <td>${data.qty}</td>
+                <td>${data.staff}</td>
+                <td>
+                    <button class="btn-edit" onclick="editData(${index})">Sửa</button>
+                    <button class="btn-delete" onclick="deleteData(${index})">Xóa</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function saveData() {
+        if (!fileHandle) {
+            alert("Bạn chưa kết nối file CSV. Bấm 'Kết nối file CSV' trước khi lưu.");
+            return;
+        }
+
+        const item = document.getElementById("itemName").value.trim();
+        const qty = document.getElementById("qty").value.trim();
+        const staff = document.getElementById("staff").value.trim();
+        const editIndex = parseInt(document.getElementById("editIndex").value, 10);
+
+        if (!item || !qty || !staff) {
+            alert("Vui lòng nhập đủ!");
+            return;
+        }
+
+        if (editIndex === -1) {
+            const newId = Date.now().toString().slice(-4);
+            dataList.push({ id: newId, item, qty, staff });
+        } else {
+            dataList[editIndex].item = item;
+            dataList[editIndex].qty = qty;
+            dataList[editIndex].staff = staff;
+            document.getElementById("submitBtn").innerText = "Thêm mới";
+            document.getElementById("editIndex").value = "-1";
+        }
+
+        await syncToFile();
+        resetForm();
+    }
+
+    function editData(index) {
+        const data = dataList[index];
+        document.getElementById("itemName").value = data.item;
+        document.getElementById("qty").value = data.qty;
+        document.getElementById("staff").value = data.staff;
+        document.getElementById("editIndex").value = index;
+        document.getElementById("submitBtn").innerText = "Cập nhật thay đổi";
+        document.getElementById("itemName").focus();
+    }
+
+    async function deleteData(index) {
+        if (!fileHandle) {
+            alert("Bạn chưa kết nối file CSV. Bấm 'Kết nối file CSV' trước khi xóa.");
+            return;
+        }
+
+        if (confirm("Bạn có chắc muốn xóa dòng này không?")) {
+            dataList.splice(index, 1);
+            await syncToFile();
+        }
+    }
+
+    async function syncToFile() {
+        if (!fileHandle) {
+            alert("Bạn chưa kết nối file CSV. Bấm 'Kết nối file CSV' trước khi lưu.");
+            return;
+        }
+
+        if (!isWritableConnection) {
+            isWritableConnection = await ensurePermission(fileHandle, "readwrite", true);
+            if (!isWritableConnection) {
+                alert("Bạn chưa cấp quyền ghi file CSV.");
+                return;
+            }
+            setConnectedUI("✅ Đã kết nối CSV (ghi trực tiếp)");
+        }
+
+        const csvContent = buildCsvContent();
+        const writable = await fileHandle.createWritable();
+        await writable.write(csvContent);
+        await writable.close();
+        renderTable();
+        setStatus("Đã lưu vào file: " + (fileHandle.name || "CSV"));
+    }
+
+    function setConnectedUI(text, color = "#2ecc71") {
+        const btn = document.getElementById("connectBtn");
+        btn.innerHTML = text;
+        btn.style.background = color;
+    }
+
+    function setStatus(text) {
+        document.getElementById("statusText").innerText = text;
+    }
+
+    function openIndexedDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = () => {
+                request.result.createObjectStore(STORE_NAME);
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function saveHandleToIndexedDB(handle) {
+        const db = await openIndexedDB();
+        await new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            tx.objectStore(STORE_NAME).put(handle, HANDLE_KEY);
+            tx.oncomplete = resolve;
+            tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+    }
+
+    async function loadHandleFromIndexedDB() {
+        if (!("indexedDB" in window)) return null;
+        try {
+            const db = await openIndexedDB();
+            const handle = await new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, "readonly");
+                const req = tx.objectStore(STORE_NAME).get(HANDLE_KEY);
+                req.onsuccess = () => resolve(req.result || null);
+                req.onerror = () => reject(req.error);
+            });
+            db.close();
+            return handle;
+        } catch {
+            return null;
+        }
+    }
+
+    async function ensurePermission(handle, mode, requestIfNeeded) {
+        if (!handle) return false;
+        const options = { mode };
+        if ((await handle.queryPermission(options)) === "granted") return true;
+        if (!requestIfNeeded) return false;
+        if ((await handle.requestPermission(options)) === "granted") return true;
+        return false;
+    }
+
+    function resetForm() {
+        document.getElementById("itemName").value = "";
+        document.getElementById("qty").value = "";
+        document.getElementById("staff").value = "";
+    }
+
+    document.addEventListener("DOMContentLoaded", autoConnectCsv);
+</script>
+
+</body>
+</html>
