@@ -8,9 +8,16 @@ function initDB() {
     return new Promise((resolve, reject) => {
         // Để an toàn, chúng ta lấy app data path từ electron (chạy ở main process)
         const { app } = require('electron');
-        // Lưu DB ở appData để người dùng cuối dùng được trên cả win/mac
-        const userDataPath = app.getPath('userData');
-        const dbPath = path.join(userDataPath, 'app.db');
+
+        // Phát triển (Dev): Lưu tại thư mục gốc dự án để dễ xem.
+        // Chạy thực tế (Prod): Lưu ở appData để không bị lỗi quyền ghi đè ổ C hoặc thư mục cài đặt.
+        let dbPath;
+        if (app.isPackaged) {
+            const userDataPath = app.getPath('userData');
+            dbPath = path.join(userDataPath, 'app.db');
+        } else {
+            dbPath = path.join(__dirname, '../../app.db'); // Lưu vào thư mục gốc của project
+        }
 
         db = new sqlite3.Database(dbPath, (err) => {
             if (err) {

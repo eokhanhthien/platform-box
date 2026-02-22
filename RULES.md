@@ -6,6 +6,13 @@ Khi bạn hoặc người khác cần thêm một tính năng mới (Ví dụ: T
 
 ---
 
+## 📌 THÔNG TIN QUAN TRỌNG: VỊ TRÍ DATABASE (SQLite)
+Ứng dụng sử dụng cơ sở dữ liệu SQLite (`app.db`). Vị trí lưu trữ file này phụ thuộc vào môi trường chạy:
+- **Ngay lúc Phát triển (Dev Mode):** File `app.db` sẽ được sinh ra trực tiếp ở thư mục gốc của project này (`fee/app.db`). Bạn có thể dễ dàng mở file này bằng các phần mềm như DB Browser for SQLite để xem/edit dữ liệu.
+- **Khi Build/Đóng gói (Production Mode):** File `app.db` sẽ được tự động chuyển vào thư mục `userData` an toàn của hệ điều hành (Ví dụ: `~/Library/Application Support/fee/app.db` trên Mac, hoặc `%APPDATA%/fee/app.db` trên Win). Điều này giúp tránh lỗi thiếu quyền truy cập thư mục cài đặt (`Permission Denied`).
+
+---
+
 ## BƯỚC 1: TẠO MODEL (Thao tác với Cơ sở dữ liệu)
 **Vị trí:** `src/models/`
 
