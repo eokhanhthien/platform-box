@@ -33,6 +33,8 @@ window.APP_CONFIG = {
     NAVIGATION: [
         { id: 'dashboard', label: 'Dashboard', icon: 'fas fa-border-all', url: '#' },
         { id: 'users', label: 'Quản lý Users', icon: 'fas fa-users', url: '#' },
-        { id: 'reports', label: 'Báo cáo', icon: 'fas fa-chart-line', url: '#' }
+        { id: 'reports', label: 'Báo cáo', icon: 'fas fa-chart-line', url: '#' },
+        { id: 'game', label: 'Mini Game', icon: 'fas fa-gamepad', url: '#' },
+        { id: 'permissions', label: 'Phân quyền', icon: 'fas fa-user-shield', url: '#' }
     ]
 };
