@@ -750,20 +750,12 @@
                     <div class="form-group" style="flex: 1;">
                         <label>Role *</label>
                         <select id="userRole">
-                            <option value="Nhân viên">Nhân viên</option>
-                            <option value="Lãnh đạo">Lãnh đạo</option>
-                            <option value="Admin">Admin</option>
                         </select>
                     </div>
-                    <div class="form-group" style="flex: 2;">
+                    <div class="form-group" style="flex: 2;" id="deptGroup">
                         <label>Department * <small style="color:#9ca3af;font-weight:normal;">(Type to
                                 add)</small></label>
                         <select id="userDepartment" multiple="multiple" style="width: 100%;">
-                            <option value="Ban GĐ">Ban GĐ</option>
-                            <option value="Phòng DN Lớn">Phòng DN Lớn</option>
-                            <option value="Phòng DN VVN">Phòng DN VVN</option>
-                            <option value="Phòng Bán lẻ">Phòng Bán lẻ</option>
-                            <option value="Phòng DVKH">Phòng DVKH</option>
                         </select>
                     </div>
                 </div>
@@ -778,6 +770,7 @@
     </div>
 
     <!-- Script Thư Viện Fix: Use script tags safely -->
+    <script src="../config.js"></script>
     <script src="../assets/jquery.min.js"></script>
     <script src="../assets/select2.min.js"></script>
 

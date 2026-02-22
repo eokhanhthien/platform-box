@@ -2,6 +2,23 @@ let users = [];
 
 // Initialize Dashboard properly
 document.addEventListener("DOMContentLoaded", () => {
+    // Load options from config
+    const roleSelect = document.getElementById('userRole');
+    window.APP_CONFIG.ROLES.forEach(r => roleSelect.add(new Option(r, r)));
+
+    const deptSelect = document.getElementById('userDepartment');
+    window.APP_CONFIG.DEPARTMENTS.forEach(d => deptSelect.add(new Option(d, d)));
+
+    // Handle role change to hide/show department
+    roleSelect.addEventListener('change', function () {
+        const deptGroup = document.getElementById('deptGroup');
+        if (this.value === 'Admin') {
+            deptGroup.style.display = 'none';
+        } else {
+            deptGroup.style.display = 'block';
+        }
+    });
+
     // Khởi tạo Select2 cho phép THÊM MỚI (tags: true) và Mutilple select (nhiều tag)
     $('#userDepartment').select2({
         tags: true,
@@ -105,8 +122,10 @@ function resetForm() {
     document.getElementById('userUsername').value = '';
     document.getElementById('userPassword').value = '';
     document.getElementById('userFullName').value = '';
-    document.getElementById('userRole').value = 'Nhân viên';
+    document.getElementById('userRole').value = window.APP_CONFIG.ROLES[0] || 'Nhân viên';
     document.getElementById('editUserId').value = '';
+
+    document.getElementById('userRole').dispatchEvent(new Event('change'));
 
     // Đặt về trạng thái rỗng
     $('#userDepartment').val(null).trigger('change');
@@ -138,6 +157,8 @@ function editUser(id) {
 
         selectEl.val(userDepts).trigger('change');
 
+        document.getElementById('userRole').dispatchEvent(new Event('change'));
+
         document.getElementById('userModal').classList.add('active');
     }
 }
@@ -149,10 +170,13 @@ async function saveUser() {
     const role = document.getElementById('userRole').value;
     const id = document.getElementById('editUserId').value;
 
-    const deptsArray = $('#userDepartment').val() || [];
-    const department = deptsArray.join(' + ');
+    let department = '';
+    if (role !== 'Admin') {
+        const deptsArray = $('#userDepartment').val() || [];
+        department = deptsArray.join(' + ');
+    }
 
-    if (!username || !full_name || !department) {
+    if (!username || !full_name || (role !== 'Admin' && (!department || department === ''))) {
         alert("Vui lòng nhập đầy đủ các thông tin bắt buộc (*)");
         return;
     }
