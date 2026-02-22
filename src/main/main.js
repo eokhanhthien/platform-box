@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { initDB } = require('../models/database');
 const { initUserController } = require('../controllers/userController');
+const { initPermissionController } = require('../controllers/permissionController');
 
 let mainWindow;
 
@@ -12,6 +13,7 @@ async function bootstrap() {
 
         // 2. Initialize Controllers (IPC Event Listeners)
         initUserController();
+        initPermissionController();
 
         // 3. Create the Main Window
         createWindow();

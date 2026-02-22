@@ -16,7 +16,8 @@ window.APP_CONFIG = {
         'Admin': {
             dashboard: ['view'],
             users: ['view', 'create', 'update', 'delete'],
-            reports: ['view', 'export']
+            reports: ['view', 'export'],
+            game: ['view']
         },
         'Lãnh đạo': {
             dashboard: ['view'],

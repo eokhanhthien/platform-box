@@ -668,48 +668,89 @@
         <div class="page-content">
             <div class="page-header">
                 <div class="page-title">
-                    <h1>Business Dashboard</h1>
-                    <p>Overview of your business performance this month.</p>
+                    <h1 id="page-title-text">Business Dashboard</h1>
+                    <p id="page-desc-text">Overview of your business performance this month.</p>
                 </div>
-
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon icon-blue"><i class="fas fa-user-friends"></i></div>
-                        <span class="stat-badge badge-green">+5.2%</span>
+            <!-- USERS SECTION -->
+            <div id="section-users" class="module-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon icon-blue"><i class="fas fa-user-friends"></i></div>
+                            <span class="stat-badge badge-green">+5.2%</span>
+                        </div>
+                        <div class="stat-title">Total Users</div>
+                        <div class="stat-value" id="stat-total-users">0</div>
+                        <div class="stat-desc">Compared to last month</div>
                     </div>
-                    <div class="stat-title">Total Users</div>
-                    <div class="stat-value" id="stat-total-users">0</div>
-                    <div class="stat-desc">Compared to last month</div>
+
                 </div>
 
-            </div>
-
-            <div class="table-section">
-                <div class="table-header">
-                    <h3>Recent Activity / Users</h3>
-                    <button class="btn-primary" onclick="openModal()" style="margin-left: auto;">
-                        <i class="fas fa-plus"></i> New User
-                    </button>
+                <div class="table-section">
+                    <div class="table-header">
+                        <h3>Recent Activity / Users</h3>
+                        <button class="btn-primary" onclick="openModal()" style="margin-left: auto;">
+                            <i class="fas fa-plus"></i> New User
+                        </button>
+                    </div>
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th width="30%">USER</th>
+                                <th width="20%">ACTION / ROLE</th>
+                                <th width="25%">DATE / DEPT</th>
+                                <th width="15%">STATUS</th>
+                                <th width="10%" style="text-align: center;">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data populated by JS -->
+                        </tbody>
+                    </table>
                 </div>
-                <table id="dataTable">
-                    <thead>
-                        <tr>
-                            <th width="30%">USER</th>
-                            <th width="20%">ACTION / ROLE</th>
-                            <th width="25%">DATE / DEPT</th>
-                            <th width="15%">STATUS</th>
-                            <th width="10%" style="text-align: center;">ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Data populated by JS -->
-                    </tbody>
-                </table>
             </div>
         </div>
+
+    </div> <!-- End USERS SECTION -->
+
+    <!-- PERMISSIONS SECTION -->
+    <div id="section-permissions" class="module-section" style="display:none;">
+        <div class="table-header">
+            <h3>Phân Quyền Hệ Thống</h3>
+            <div style="display: flex; gap: 12px; align-items: center; margin-left: auto;">
+                <label>Chọn chức vụ:</label>
+                <select id="permRoleSelect" class="form-group"
+                    style="margin-bottom: 0; min-width: 150px; padding: 8px;">
+                    <!-- Options generated dynamically -->
+                </select>
+                <button class="btn-primary" onclick="savePermissions()">
+                    <i class="fas fa-save"></i> Cập Nhật
+                </button>
+            </div>
+        </div>
+
+        <table class="data-table" id="permissionsTable" style="margin-top: 16px;">
+            <thead>
+                <tr>
+                    <th style="width: 200px;">Module (Tính năng)</th>
+                    <th style="text-align: center;">View (Xem)</th>
+                    <th style="text-align: center;">Create (Thêm)</th>
+                    <th style="text-align: center;">Update (Sửa)</th>
+                    <th style="text-align: center;">Delete (Xóa)</th>
+                    <th style="text-align: center;">Export (Xuất DL)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Generated dynamically -->
+            </tbody>
+        </table>
+    </div> <!-- End PERMISSIONS SECTION -->
+
+    <!-- PLACEHOLDER SECTION -->
+    <div id="section-placeholder" class="module-section" style="display:none; text-align: center; padding: 64px 0;">
+        <h2 style="color: var(--text-muted);">Tính năng đang được phát triển...</h2>
     </div>
 
     <!-- MODAL (Thêm / Sửa User) -->

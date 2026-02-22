@@ -43,6 +43,14 @@ async function initDashboardContext() {
     document.querySelector('.user-profile .name').innerText = currentUser.full_name;
     document.querySelector('.user-profile .role').innerText = currentUser.role;
 
+    // Fetch dynamic role permissions from DB
+    const permRes = await window.api.getPermissions();
+    if (permRes && permRes.success && permRes.data) {
+        window.APP_CONFIG.PERMISSIONS = permRes.data;
+    } else {
+        window.APP_CONFIG.PERMISSIONS = {};
+    }
+
     // Build Sidebar Navigation Động dựa trên Role
     const navMenu = document.querySelector('.nav-menu');
     navMenu.innerHTML = ''; // Clear default items
@@ -50,38 +58,67 @@ async function initDashboardContext() {
 
     window.APP_CONFIG.NAVIGATION.forEach(item => {
         const modulePerms = rolePermissions[item.id] || [];
-        if (modulePerms.includes('view')) {
+        if (modulePerms.includes('view') || currentUser.role === 'Admin') {
             const li = document.createElement('li');
             li.className = 'nav-item';
-            // Đánh dấu active tạm thời cho menu Users
+            // Default select Users if available, or just first item
             if (item.id === 'users') li.classList.add('active');
 
+            li.dataset.moduleId = item.id;
             li.innerHTML = `<i class="${item.icon}"></i> ${item.label}`;
+
+            li.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                li.classList.add('active');
+                switchSection(item.id);
+            });
+
             navMenu.appendChild(li);
         }
     });
 
+    // Default to 'users' section on load, or fallback to first visible module
+    switchSection('users');
+
     // Quyền ở Table Users
     const userPerms = rolePermissions['users'] || [];
-    if (!userPerms.includes('view')) {
-        const tableSection = document.querySelector('.table-section');
-        const statsGrid = document.querySelector('.stats-grid'); // Các ô thống kê phụ thuộc
-
-        if (tableSection) tableSection.style.display = 'none';
+    if (!userPerms.includes('view') && currentUser.role !== 'Admin') {
+        const statsGrid = document.querySelector('.stats-grid');
         if (statsGrid) statsGrid.style.display = 'none';
 
-        // Cập nhật lại tiêu đề Dashboard cho Role thấp
         document.querySelector('.page-title h1').innerText = `Xin chào, ${currentUser.full_name}`;
         document.querySelector('.page-title p').innerText = "Chào mừng bạn quay trở lại nền tảng làm việc.";
     } else {
         // Nút thêm mới
         const btnNewUser = document.querySelector('.table-header .btn-primary');
         if (btnNewUser) {
-            btnNewUser.style.display = userPerms.includes('create') ? 'block' : 'none';
+            btnNewUser.style.display = (userPerms.includes('create') || currentUser.role === 'Admin') ? 'block' : 'none';
         }
 
         // Chỉ auto-load users list nếu được view
         loadUsers();
+    }
+}
+
+// Module View Switcher Function
+function switchSection(moduleId) {
+    // Hide all sections
+    document.querySelectorAll('.module-section').forEach(sec => sec.style.display = 'none');
+
+    // Attempt to show target section
+    const target = document.getElementById(`section-${moduleId}`);
+    if (target) {
+        target.style.display = 'block';
+        if (moduleId === 'permissions') {
+            renderPermissionsUI();
+        }
+    } else {
+        // Nếu module chưa có màn hình (placeholder)
+        const placeholder = document.getElementById('section-placeholder');
+        if (placeholder) {
+            placeholder.style.display = 'block';
+            placeholder.querySelector('h2').innerText = `Module ${moduleId} đang phát triển...`;
+        }
     }
 }
 
@@ -281,5 +318,77 @@ async function deleteUser(id) {
         } else {
             alert("Lỗi khi xóa: " + res.error);
         }
+    }
+}
+
+// ---------------- PERMISSIONS UI LOGIC ---------------- //
+async function renderPermissionsUI() {
+    const roleSelect = document.getElementById('permRoleSelect');
+    roleSelect.innerHTML = '';
+
+    // Populate Roles (exclude Admin from being editable if you want, but for UI sake we list all)
+    window.APP_CONFIG.ROLES.forEach(r => {
+        if (r !== 'Admin') { // Admin luôn có full quyền ngầm định
+            roleSelect.appendChild(new Option(r, r));
+        }
+    });
+
+    roleSelect.onchange = buildPermissionsTable;
+    buildPermissionsTable();
+}
+
+function buildPermissionsTable() {
+    const tbody = document.querySelector('#permissionsTable tbody');
+    tbody.innerHTML = '';
+
+    const selectedRole = document.getElementById('permRoleSelect').value;
+    const currentPerms = window.APP_CONFIG.PERMISSIONS[selectedRole] || {};
+
+    const availableActions = ['view', 'create', 'update', 'delete', 'export'];
+
+    window.APP_CONFIG.NAVIGATION.forEach(module => {
+        // Skip permissions module itself maybe?
+        if (module.id === 'permissions') return;
+
+        const roleModuleActions = currentPerms[module.id] || [];
+
+        const tr = document.createElement('tr');
+        let html = `<td><strong>${module.label}</strong> <br><small style="color:#9ca3af;">${module.id}</small></td>`;
+
+        availableActions.forEach(action => {
+            const isChecked = roleModuleActions.includes(action) ? 'checked' : '';
+            html += `
+                <td style="text-align: center;">
+                    <input type="checkbox" class="perm-cb" data-module="${module.id}" data-action="${action}" ${isChecked} style="width:16px; height:16px; cursor:pointer;">
+                </td>
+            `;
+        });
+
+        tr.innerHTML = html;
+        tbody.appendChild(tr);
+    });
+}
+
+async function savePermissions() {
+    const selectedRole = document.getElementById('permRoleSelect').value;
+    const checkboxes = document.querySelectorAll('.perm-cb');
+
+    const newPerms = {};
+    checkboxes.forEach(cb => {
+        if (cb.checked) {
+            const mod = cb.dataset.module;
+            const act = cb.dataset.action;
+            if (!newPerms[mod]) newPerms[mod] = [];
+            newPerms[mod].push(act);
+        }
+    });
+
+    const res = await window.api.updatePermissions(selectedRole, newPerms);
+    if (res.success) {
+        // Cập nhật state nội bộ
+        window.APP_CONFIG.PERMISSIONS[selectedRole] = newPerms;
+        alert(`Đã lưu phân quyền thành công cho chức vụ: ${selectedRole}!`);
+    } else {
+        alert('Lỗi lưu quyền: ' + res.error);
     }
 }

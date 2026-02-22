@@ -12,5 +12,9 @@ contextBridge.exposeInMainWorld('api', {
     getUsers: () => ipcRenderer.invoke('getUsers'),
     addUser: (user) => ipcRenderer.invoke('addUser', user),
     updateUser: (id, user) => ipcRenderer.invoke('updateUser', id, user),
-    deleteUser: (id) => ipcRenderer.invoke('deleteUser', id)
+    deleteUser: (id) => ipcRenderer.invoke('deleteUser', id),
+
+    // Permissions
+    getPermissions: () => ipcRenderer.invoke('getPermissions'),
+    updatePermissions: (role, config) => ipcRenderer.invoke('updatePermissions', role, config)
 });

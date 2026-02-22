@@ -32,17 +32,39 @@ function initDB() {
                         console.error('Error creating table', err.message);
                         reject(err);
                     } else {
-                        // Check admin existence
-                        db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
-                            if (!err && row.count === 0) {
-                                db.run('INSERT INTO users (username, password, full_name, role, department) VALUES (?, ?, ?, ?, ?)',
-                                    ['admin', 'admin', 'Administrator', 'Admin', 'Tất cả'],
-                                    (err) => {
-                                        if (err) console.error('Error creating admin user:', err.message);
-                                        else console.log('Admin user created defaults: admin/admin');
-                                    });
+                        // Create role_permissions table
+                        db.run(`CREATE TABLE IF NOT EXISTS role_permissions (
+                            role TEXT PRIMARY KEY,
+                            permissions TEXT
+                        )`, (err) => {
+                            if (err) {
+                                console.error('Error creating role_permissions table', err.message);
+                                reject(err);
+                                return;
                             }
-                            resolve(db);
+
+                            // Check admin existence
+                            db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
+                                if (!err && row.count === 0) {
+                                    db.run('INSERT INTO users (username, password, full_name, role, department) VALUES (?, ?, ?, ?, ?)',
+                                        ['admin', 'admin', 'Administrator', 'Admin', 'Tất cả'],
+                                        (err) => {
+                                            if (err) console.error('Error creating admin user:', err.message);
+                                            else console.log('Admin user created defaults: admin/admin');
+
+                                            // Default admin permissions
+                                            const defaultPerms = JSON.stringify({
+                                                dashboard: ['view'],
+                                                users: ['view', 'create', 'update', 'delete'],
+                                                reports: ['view', 'export'],
+                                                game: ['view'],
+                                                permissions: ['view', 'update'] // Quyền config phân quyền
+                                            });
+                                            db.run('INSERT OR IGNORE INTO role_permissions (role, permissions) VALUES (?, ?)', ['Admin', defaultPerms]);
+                                        });
+                                }
+                                resolve(db);
+                            });
                         });
                     }
                 });
