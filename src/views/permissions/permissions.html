@@ -1,31 +1,213 @@
-<div class="table-section">
-    <div class="table-header">
-        <h3>Phân Quyền Hệ Thống</h3>
-        <div style="display: flex; gap: 12px; align-items: center; margin-left: auto;">
-            <label>Chọn chức vụ:</label>
-            <select id="permRoleSelect" class="form-group"
-                style="margin-bottom: 0; min-width: 150px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-input);">
-                <!-- Options generated dynamically -->
-            </select>
-            <button class="btn-primary" onclick="savePermissions()">
-                <i class="fas fa-save"></i> Cập Nhật
-            </button>
+<div class="perm-root">
+    <style>
+        .perm-root {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        /* Page header */
+        .perm-page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .perm-page-header .title-block h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 4px 0;
+            color: var(--text-main);
+        }
+
+        .perm-page-header .title-block p {
+            font-size: 14px;
+            margin: 0;
+            color: var(--text-muted);
+        }
+
+        /* Role selector tabs */
+        .perm-role-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .perm-role-tab {
+            padding: 8px 20px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: white;
+            color: var(--text-muted);
+            transition: all 0.18s;
+        }
+
+        .perm-role-tab:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .perm-role-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Module cards grid */
+        .perm-module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .perm-module-card {
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .perm-module-card:hover {
+            border-color: #c7d2fe;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .perm-module-card.is-on {
+            border-color: var(--primary);
+            background: #eef4ff;
+        }
+
+        .perm-module-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .perm-module-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            background: #f1f5f9;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            transition: all 0.18s;
+        }
+
+        .perm-module-card.is-on .perm-module-icon {
+            background: var(--primary);
+            color: white;
+        }
+
+        .perm-module-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .perm-module-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Toggle switch */
+        .perm-toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .perm-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+
+        .perm-toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: #e5e7eb;
+            border-radius: 24px;
+            cursor: pointer;
+            transition: background 0.18s;
+        }
+
+        .perm-toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            top: 3px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            transition: transform 0.18s;
+        }
+
+        .perm-toggle input:checked+.perm-toggle-slider {
+            background: var(--primary);
+        }
+
+        .perm-toggle input:checked+.perm-toggle-slider::before {
+            transform: translateX(20px);
+        }
+
+        /* Save button */
+        .perm-save-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .perm-save-btn:hover {
+            background: var(--primary-hover);
+        }
+    </style>
+
+    <div class="perm-page-header">
+        <div class="title-block">
+            <h2><i class="fas fa-user-shield" style="color: var(--primary); margin-right: 10px;"></i>Phân quyền hệ thống
+            </h2>
+            <p>Cấp hoặc thu hồi quyền truy cập từng module cho từng vai trò</p>
         </div>
+        <button class="perm-save-btn" onclick="savePermissions()">
+            <i class="fas fa-save"></i> Lưu thay đổi
+        </button>
     </div>
 
-    <table id="permissionsTable">
-        <thead>
-            <tr>
-                <th width="25%">Module (Tính năng)</th>
-                <th width="15%" style="text-align: center;">View (Xem)</th>
-                <th width="15%" style="text-align: center;">Create (Thêm)</th>
-                <th width="15%" style="text-align: center;">Update (Sửa)</th>
-                <th width="15%" style="text-align: center;">Delete (Xóa)</th>
-                <th width="15%" style="text-align: center;">Export (DL)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Generated dynamically by permissions.js -->
-        </tbody>
-    </table>
+    <!-- Role tabs -->
+    <div class="perm-role-bar" id="permRoleBar">
+        <!-- Rendered by JS -->
+    </div>
+
+    <!-- Module cards -->
+    <div class="perm-module-grid" id="permModuleGrid">
+        <!-- Rendered by JS -->
+    </div>
+
 </div>

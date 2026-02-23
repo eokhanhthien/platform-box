@@ -1,71 +1,114 @@
-// ---------------- PERMISSIONS UI LOGIC ---------------- //
-async function renderPermissionsUI() {
-    const roleSelect = document.getElementById('permRoleSelect');
-    roleSelect.innerHTML = '';
+// src/views/permissions/permissions.js
+// Simplified permissions UI: one toggle per module per role (ON = full access, OFF = no access)
 
-    // Populate Roles (exclude Admin from being editable if you want, but for UI sake we list all)
-    window.APP_CONFIG.ROLES.forEach(r => {
-        if (r !== 'Admin') { // Admin luôn có full quyền ngầm định
-            roleSelect.appendChild(new Option(r, r));
-        }
+// Full set of actions granted when a module is toggled ON
+const FULL_PERMISSIONS = ['view', 'create', 'update', 'delete', 'export', 'config'];
+
+let _permSelectedRole = null;
+
+async function renderPermissionsUI() {
+    const roles = window.APP_CONFIG.ROLES.filter(r => r !== 'Admin'); // Admin always has full access
+
+    const bar = document.getElementById('permRoleBar');
+    bar.innerHTML = '';
+
+    roles.forEach((role, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'perm-role-tab' + (i === 0 ? ' active' : '');
+        btn.textContent = role;
+        btn.onclick = () => {
+            document.querySelectorAll('.perm-role-tab').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            _permSelectedRole = role;
+            buildPermissionCards(role);
+        };
+        bar.appendChild(btn);
     });
 
-    roleSelect.onchange = buildPermissionsTable;
-    buildPermissionsTable();
+    _permSelectedRole = roles[0];
+    buildPermissionCards(_permSelectedRole);
 }
 
-function buildPermissionsTable() {
-    const tbody = document.querySelector('#permissionsTable tbody');
-    tbody.innerHTML = '';
+function buildPermissionCards(role) {
+    const grid = document.getElementById('permModuleGrid');
+    grid.innerHTML = '';
 
-    const selectedRole = document.getElementById('permRoleSelect').value;
-    const currentPerms = window.APP_CONFIG.PERMISSIONS[selectedRole] || {};
-
-    const availableActions = ['view', 'create', 'update', 'delete', 'export'];
+    const currentPerms = window.APP_CONFIG.PERMISSIONS[role] || {};
 
     window.APP_CONFIG.NAVIGATION.forEach(module => {
-        // Skip permissions module itself maybe?
+        // Don't allow self-editing the permissions module
         if (module.id === 'permissions') return;
 
-        const roleModuleActions = currentPerms[module.id] || [];
+        const roleModulePerms = currentPerms[module.id] || [];
+        const isOn = roleModulePerms.length > 0;
 
-        const tr = document.createElement('tr');
-        let html = `<td><strong>${module.label}</strong> <br><small style="color:#9ca3af;">${module.id}</small></td>`;
+        const card = document.createElement('div');
+        card.className = 'perm-module-card' + (isOn ? ' is-on' : '');
+        card.id = `perm-card-${module.id}`;
 
-        availableActions.forEach(action => {
-            const isChecked = roleModuleActions.includes(action) ? 'checked' : '';
-            html += `
-                <td style="text-align: center;">
-                    <input type="checkbox" class="perm-cb" data-module="${module.id}" data-action="${action}" ${isChecked} style="width:16px; height:16px; cursor:pointer;">
-                </td>
-            `;
-        });
+        card.innerHTML = `
+            <div class="perm-module-info">
+                <div class="perm-module-icon">
+                    <i class="${module.icon}"></i>
+                </div>
+                <div>
+                    <div class="perm-module-label">${module.label}</div>
+                    <div class="perm-module-sub">${isOn ? 'Có quyền truy cập' : 'Chưa có quyền'}</div>
+                </div>
+            </div>
+            <label class="perm-toggle" title="Bật/Tắt quyền truy cập">
+                <input
+                    type="checkbox"
+                    class="perm-module-toggle"
+                    data-module="${module.id}"
+                    ${isOn ? 'checked' : ''}
+                    onchange="onPermToggleChange('${module.id}', this)"
+                >
+                <span class="perm-toggle-slider"></span>
+            </label>
+        `;
 
-        tr.innerHTML = html;
-        tbody.appendChild(tr);
+        grid.appendChild(card);
     });
+}
+
+function onPermToggleChange(moduleId, checkbox) {
+    const card = document.getElementById(`perm-card-${moduleId}`);
+    const subtitle = card.querySelector('.perm-module-sub');
+
+    if (checkbox.checked) {
+        card.classList.add('is-on');
+        subtitle.textContent = 'Có quyền truy cập';
+    } else {
+        card.classList.remove('is-on');
+        subtitle.textContent = 'Chưa có quyền';
+    }
 }
 
 async function savePermissions() {
-    const selectedRole = document.getElementById('permRoleSelect').value;
-    const checkboxes = document.querySelectorAll('.perm-cb');
+    const role = _permSelectedRole;
+    if (!role) return;
 
+    const toggles = document.querySelectorAll('.perm-module-toggle');
     const newPerms = {};
-    checkboxes.forEach(cb => {
-        if (cb.checked) {
-            const mod = cb.dataset.module;
-            const act = cb.dataset.action;
-            if (!newPerms[mod]) newPerms[mod] = [];
-            newPerms[mod].push(act);
-        }
+
+    toggles.forEach(toggle => {
+        const moduleId = toggle.dataset.module;
+        newPerms[moduleId] = toggle.checked ? [...FULL_PERMISSIONS] : [];
     });
 
-    const res = await window.api.updatePermissions(selectedRole, newPerms);
+    const res = await window.api.updatePermissions(role, newPerms);
+
     if (res.success) {
-        // Cập nhật state nội bộ
-        window.APP_CONFIG.PERMISSIONS[selectedRole] = newPerms;
-        alert(`Đã lưu phân quyền thành công cho chức vụ: ${selectedRole}!`);
+        window.APP_CONFIG.PERMISSIONS[role] = newPerms;
+        Swal.fire({
+            icon: 'success',
+            title: 'Đã lưu!',
+            text: `Phân quyền cho vai trò "${role}" đã được cập nhật.`,
+            timer: 2000,
+            showConfirmButton: false
+        });
     } else {
-        alert('Lỗi lưu quyền: ' + res.error);
+        Swal.fire('Lỗi', 'Không thể lưu phân quyền: ' + res.error, 'error');
     }
 }
