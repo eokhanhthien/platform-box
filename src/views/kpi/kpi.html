@@ -639,41 +639,108 @@
     <div id="kpi-employee-view" style="display:none;">
         <div class="kpi-page-header">
             <div class="title-block">
-                <h2><i class="fas fa-edit" style="color: var(--primary); margin-right: 10px;"></i>Nhập kết quả KPI</h2>
-                <p>Điền số liệu thực tế theo từng ngày làm việc</p>
+                <h2><i class="fas fa-chart-line" style="color: var(--primary); margin-right: 10px;"></i>Kết quả KPI của
+                    tôi</h2>
+                <p>Theo dõi và cập nhật số liệu KPI cá nhân theo ngày</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span id="empKpiStatusBadge" class="status-badge pending">
+                    <i class="fas fa-clock"></i> Hôm nay: Chưa nộp
+                </span>
+                <button class="kpi-btn-primary" onclick="empOpenInputModal()">
+                    <i class="fas fa-plus"></i> Nhập KPI hôm nay
+                </button>
             </div>
         </div>
 
-        <div class="kpi-employee-layout" id="kpiEmployeeLayout" style="display:block;">
-            <div class="kpi-submit-card">
-                <div class="card-head">
-                    <div class="meta-info">
-                        <div class="meta-item">
-                            <i class="fas fa-building" style="color:var(--primary);"></i>
-                            <span>Phòng ban: <strong id="empKpiDept">...</strong></span>
-                        </div>
-                        <div class="meta-item" id="empKpiStatusWrap">
-                            <i class="fas fa-circle-check"></i>
-                            <span id="empKpiStatusBadge" class="status-badge pending">
-                                <i class="fas fa-clock"></i> Chưa nộp
-                            </span>
-                        </div>
-                    </div>
-                    <div class="date-picker-wrap">
-                        <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
-                        <span>Ngày:</span>
-                        <input type="date" id="empKpiPeriod" class="kpi-form-date" onchange="empLoadKpiForm()">
-                    </div>
-                </div>
+        <!-- History Table Card -->
+        <div
+            style="background:white; border-radius:12px; border:1px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,0.04); overflow:hidden;">
 
-                <div class="card-body">
-                    <div id="empKpiFormArea">
-                        <div class="kpi-empty-state" id="empKpiSpinner">
-                            <i class="fas fa-spinner fa-spin" style="font-size:28px; opacity:0.5;"></i>
-                            <p>Đang tải biểu mẫu...</p>
-                        </div>
+            <!-- Filter Bar -->
+            <div
+                style="padding:16px 24px; border-bottom:1px solid var(--border); background:#f9fafb; display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
+                <div>
+                    <span class="form-col-label">Thời gian</span>
+                    <select id="empHistoryPreset" class="kpi-form-select" onchange="applyEmpHistoryPreset()">
+                        <option value="this_week">Tuần này</option>
+                        <option value="this_month" selected>Tháng này</option>
+                        <option value="custom">Tùy chọn...</option>
+                    </select>
+                </div>
+                <div>
+                    <span class="form-col-label">Từ ngày</span>
+                    <input type="date" id="empHistoryStartDate" class="kpi-form-date" disabled>
+                </div>
+                <div>
+                    <span class="form-col-label">Đến ngày</span>
+                    <input type="date" id="empHistoryEndDate" class="kpi-form-date" disabled>
+                </div>
+                <div>
+                    <span class="form-col-label">Lọc theo tiêu chí</span>
+                    <select id="empHistoryCriteriaFilter" class="kpi-form-select">
+                        <option value="all">Tất cả tiêu chí</option>
+                    </select>
+                </div>
+                <div style="padding-top:16px;">
+                    <button class="kpi-btn-primary" onclick="empLoadHistory()">
+                        <i class="fas fa-search"></i> Tra cứu
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div id="empHistoryTableWrap" class="kpi-report-table-wrapper" style="max-height:480px;">
+                <div class="kpi-empty-state">
+                    <i class="fas fa-history"></i>
+                    <p>Dữ liệu KPI của bạn sẽ hiển thị ở đây</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================== EMPLOYEE INPUT MODAL ======================== -->
+    <div id="kpiInputModalOverlay"
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9000; align-items:center; justify-content:center; padding:24px;">
+        <div
+            style="background:white; border-radius:16px; width:100%; max-width:600px; box-shadow:0 20px 60px rgba(0,0,0,0.2); display:flex; flex-direction:column; max-height:90vh;">
+
+            <!-- Modal Header -->
+            <div
+                style="padding:20px 28px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                    <div style="font-size:16px; font-weight:700; color:var(--text-main);">
+                        <i class="fas fa-edit" style="color:var(--primary); margin-right:8px;"></i>Nhập kết quả KPI
+                    </div>
+                    <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">
+                        Phòng ban: <strong id="empModalDept">...</strong>
                     </div>
                 </div>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-muted);">
+                        <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
+                        <input type="date" id="empKpiPeriod" class="kpi-form-date" onchange="empModalLoadForm()">
+                    </div>
+                    <button onclick="empCloseInputModal()"
+                        style="background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:22px; line-height:1; padding:4px;">&times;</button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div id="empKpiFormArea" style="padding:24px 28px; overflow-y:auto; flex:1;">
+                <div class="kpi-empty-state">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Đang tải biểu mẫu…</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+                style="padding:16px 28px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px;">
+                <button class="kpi-btn-secondary" onclick="empCloseInputModal()">Hủy</button>
+                <button class="kpi-btn-primary" onclick="empSubmitKpi()">
+                    <i class="fas fa-paper-plane"></i> Lưu kết quả
+                </button>
             </div>
         </div>
     </div>

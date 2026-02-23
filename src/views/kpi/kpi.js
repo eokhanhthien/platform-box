@@ -335,30 +335,92 @@ function _renderReportTable(rows, tplConfig, container) {
 // ============================================================================
 // EMPLOYEE VIEW
 // ============================================================================
+
+const _empFmt = d => {
+    const tzoff = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tzoff).toISOString().split('T')[0];
+};
+
 function _initEmployeeView() {
     const view = document.getElementById('kpi-employee-view');
     view.style.display = 'block';
 
-    document.getElementById('empKpiDept').textContent = _kpiCurrentUser.department || '(Chưa có phòng ban)';
+    // Check today's status first
+    _empCheckTodayStatus();
 
-    // Set today's date
-    const now = new Date();
-    const fmt = d => {
-        const tzoff = d.getTimezoneOffset() * 60000;
-        return new Date(d.getTime() - tzoff).toISOString().split('T')[0];
-    };
-    document.getElementById('empKpiPeriod').value = fmt(now);
+    // Init history filters
+    applyEmpHistoryPreset();
 
-    empLoadKpiForm();
+    // Load employee template to populate criteria filter
+    _empLoadTemplateForFilters();
+
+    // Trigger initial history load
+    empLoadHistory();
 }
 
-async function empLoadKpiForm() {
+async function _empCheckTodayStatus() {
+    const today = _empFmt(new Date());
+    try {
+        const res = await window.api.getUserKpiReport(_kpiCurrentUser.id, today);
+        const badge = document.getElementById('empKpiStatusBadge');
+        if (res.success && res.data) {
+            badge.className = 'status-badge submitted';
+            badge.innerHTML = '<i class="fas fa-circle-check"></i> H\u00f4m nay: \u0110\u00e3 n\u1ed9p';
+        } else {
+            badge.className = 'status-badge pending';
+            badge.innerHTML = '<i class="fas fa-clock"></i> H\u00f4m nay: Ch\u01b0a n\u1ed9p';
+        }
+    } catch (e) { /* ignore */ }
+}
+
+async function _empLoadTemplateForFilters() {
     const user = _kpiCurrentUser;
-    if (!user || !user.department || user.department === 'Tất cả') {
+    if (!user || !user.department || user.department === 'T\u1ea5t c\u1ea3') return;
+
+    try {
+        const tplRes = await window.api.getKpiTemplate(user.department);
+        if (!tplRes.success || !tplRes.data || !tplRes.data.config) return;
+
+        _kpiEmpTemplate = tplRes.data.config;
+        const sel = document.getElementById('empHistoryCriteriaFilter');
+        sel.innerHTML = '<option value="all">T\u1ea5t c\u1ea3 ti\u00eau ch\u00ed</option>';
+
+        const keys = Object.keys(_kpiEmpTemplate).sort((a, b) =>
+            parseInt(a.split('_')[1]) - parseInt(b.split('_')[1])
+        );
+        keys.forEach(k => {
+            const cfg = _kpiEmpTemplate[k];
+            sel.innerHTML += `<option value="${k}">${cfg.name}${cfg.unit ? ' (' + cfg.unit + ')' : ''}</option>`;
+        });
+    } catch (e) { /* ignore */ }
+}
+
+// --- Modal ---
+
+function empOpenInputModal() {
+    const overlay = document.getElementById('kpiInputModalOverlay');
+    overlay.style.display = 'flex';
+
+    const dept = _kpiCurrentUser.department || '(Ch\u01b0a c\u00f3 ph\u00f2ng ban)';
+    document.getElementById('empModalDept').textContent = dept;
+
+    // Default to today
+    document.getElementById('empKpiPeriod').value = _empFmt(new Date());
+
+    empModalLoadForm();
+}
+
+function empCloseInputModal() {
+    document.getElementById('kpiInputModalOverlay').style.display = 'none';
+}
+
+async function empModalLoadForm() {
+    const user = _kpiCurrentUser;
+    if (!user || !user.department || user.department === 'T\u1ea5t c\u1ea3') {
         document.getElementById('empKpiFormArea').innerHTML = `
             <div class="kpi-empty-state">
                 <i class="fas fa-info-circle"></i>
-                <p>Tài khoản của bạn chưa được gán vào một phòng ban cụ thể.<br>Vui lòng liên hệ Admin để được phân công.</p>
+                <p>T\u00e0i kho\u1ea3n ch\u01b0a \u0111\u01b0\u1ee3c g\u00e1n ph\u00f2ng ban. Li\u00ean h\u1ec7 Admin.</p>
             </div>`;
         return;
     }
@@ -367,79 +429,55 @@ async function empLoadKpiForm() {
     if (!period) return;
 
     const area = document.getElementById('empKpiFormArea');
-    area.innerHTML = `<div class="kpi-empty-state" style="padding:40px 0;"><i class="fas fa-spinner fa-spin"></i></div>`;
+    area.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-spinner fa-spin"></i></div>`;
 
     try {
-        // Load template for dept
-        const tplRes = await window.api.getKpiTemplate(user.department);
-
-        if (!tplRes.success || !tplRes.data || !tplRes.data.config || Object.keys(tplRes.data.config).length === 0) {
-            area.innerHTML = `
-                <div class="kpi-empty-state">
-                    <i class="fas fa-tools"></i>
-                    <p>Phòng ban của bạn chưa được cấu hình tiêu chí KPI.<br>Vui lòng liên hệ Admin.</p>
-                </div>`;
-            return;
+        // Load template (use cached if available)
+        if (!_kpiEmpTemplate || Object.keys(_kpiEmpTemplate).length === 0) {
+            const tplRes = await window.api.getKpiTemplate(user.department);
+            if (!tplRes.success || !tplRes.data || !tplRes.data.config) {
+                area.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-tools"></i><p>Ph\u00f2ng ban ch\u01b0a \u0111\u01b0\u1ee3c c\u1ea5u h\u00ecnh ti\u00eau ch\u00ed KPI.<br>Li\u00ean h\u1ec7 Admin.</p></div>`;
+                return;
+            }
+            _kpiEmpTemplate = tplRes.data.config;
         }
 
-        _kpiEmpTemplate = tplRes.data.config;
-
-        // Load existing data if any
+        // Load existing data for this period
         const reportRes = await window.api.getUserKpiReport(user.id, period);
         const existing = (reportRes.success && reportRes.data) ? reportRes.data : null;
 
-        // Update status badge
-        const badgeEl = document.getElementById('empKpiStatusBadge');
-        if (existing) {
-            badgeEl.className = 'status-badge submitted';
-            badgeEl.innerHTML = '<i class="fas fa-circle-check"></i> Đã nộp';
-        } else {
-            badgeEl.className = 'status-badge pending';
-            badgeEl.innerHTML = '<i class="fas fa-clock"></i> Chưa nộp';
-        }
-
-        // Render fields
         const keys = Object.keys(_kpiEmpTemplate).sort((a, b) =>
             parseInt(a.split('_')[1]) - parseInt(b.split('_')[1])
         );
 
-        let fieldsHtml = `<div class="kpi-field-grid" id="kpiEmpFields">`;
+        let html = `<div class="kpi-field-grid" id="kpiEmpFields">`;
         keys.forEach(k => {
             const cfg = _kpiEmpTemplate[k];
             const val = (existing && existing[k] != null) ? existing[k] : '';
-            fieldsHtml += `
+            html += `
             <div class="kpi-field-item">
-                <label>${cfg.name}<span class="unit-hint">${cfg.unit ? `(${cfg.unit})` : ''}</span></label>
-                <input type="number" data-kpi-id="${k}" value="${val}" step="any" placeholder="Nhập số liệu...">
+                <label>${cfg.name}<span class="unit-hint">${cfg.unit ? '(' + cfg.unit + ')' : ''}</span></label>
+                <input type="number" data-kpi-id="${k}" value="${val}" step="any" placeholder="Nh\u1eadp s\u1ed1 li\u1ec7u...">
             </div>`;
         });
-        fieldsHtml += `</div>`;
+        html += `</div>`;
 
-        fieldsHtml += `
-        <div style="display:flex; justify-content:flex-end; margin-top:28px; padding-top:20px; border-top:1px solid var(--border);">
-            <button class="kpi-btn-primary" style="padding:12px 32px; font-size:15px;" onclick="empSubmitKpi()">
-                <i class="fas fa-paper-plane"></i> Gửi kết quả KPI
-            </button>
-        </div>`;
-
-        area.innerHTML = fieldsHtml;
+        area.innerHTML = html;
 
     } catch (err) {
-        console.error('empLoadKpiForm error:', err);
-        area.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>Đã xảy ra lỗi khi tải biểu mẫu.</p></div>`;
+        area.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>L\u1ed7i khi t\u1ea3i bi\u1ec3u m\u1eabu.</p></div>`;
     }
 }
 
 async function empSubmitKpi() {
     const period = document.getElementById('empKpiPeriod').value;
     if (!period) {
-        Swal.fire('Chú ý', 'Vui lòng chọn ngày báo cáo.', 'warning');
+        Swal.fire('Ch\u00fa \u00fd', 'Vui l\u00f2ng ch\u1ecdn ng\u00e0y b\u00e1o c\u00e1o.', 'warning');
         return;
     }
 
     const inputs = document.querySelectorAll('#kpiEmpFields input[data-kpi-id]');
     const kpiData = {};
-
     inputs.forEach(input => {
         const key = input.getAttribute('data-kpi-id');
         const val = input.value.trim();
@@ -447,19 +485,19 @@ async function empSubmitKpi() {
     });
 
     if (Object.keys(kpiData).length === 0) {
-        const confirm = await Swal.fire({
-            title: 'Biểu mẫu trống',
-            text: 'Bạn chưa nhập bất kỳ chỉ tiêu nào. Vẫn muốn lưu không?',
+        const conf = await Swal.fire({
+            title: 'Bi\u1ec3u m\u1eabu tr\u1ed1ng',
+            text: 'B\u1ea1n ch\u01b0a nh\u1eadp b\u1ea5t k\u1ef3 ch\u1ec9 ti\u00eau n\u00e0o. V\u1eabn mu\u1ed1n l\u01b0u?',
             icon: 'question',
             showCancelButton: true,
-            confirmButtonText: 'Vẫn lưu',
-            cancelButtonText: 'Quay lại'
+            confirmButtonText: 'V\u1eabn l\u01b0u',
+            cancelButtonText: 'Quay l\u1ea1i'
         });
-        if (!confirm.isConfirmed) return;
+        if (!conf.isConfirmed) return;
     }
 
     try {
-        Swal.fire({ title: 'Đang lưu…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+        Swal.fire({ title: '\u0110ang l\u01b0u\u2026', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
         const res = await window.api.saveUserKpiReport(
             _kpiCurrentUser.id,
@@ -471,26 +509,131 @@ async function empSubmitKpi() {
         Swal.close();
 
         if (res.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Đã lưu!',
-                text: `Kết quả KPI ngày ${period} đã được ghi nhận.`,
-                timer: 2000,
-                showConfirmButton: false
-            });
+            Swal.fire({ icon: 'success', title: '\u0110\u00e3 l\u01b0u!', text: `K\u1ebft qu\u1ea3 KPI ng\u00e0y ${period} \u0111\u00e3 \u0111\u01b0\u1ee3c ghi nh\u1eadn.`, timer: 2000, showConfirmButton: false });
 
-            // Update status badge
-            const badgeEl = document.getElementById('empKpiStatusBadge');
-            badgeEl.className = 'status-badge submitted';
-            badgeEl.innerHTML = '<i class="fas fa-circle-check"></i> Đã nộp';
+            empCloseInputModal();
 
+            // Refresh today status + history table
+            _empCheckTodayStatus();
+            empLoadHistory();
         } else {
-            Swal.fire('Lỗi', res.error, 'error');
+            Swal.fire('L\u1ed7i', res.error, 'error');
         }
-
     } catch (err) {
         Swal.close();
-        console.error(err);
-        Swal.fire('Lỗi', 'Không thể kết nối tới server.', 'error');
+        Swal.fire('L\u1ed7i', 'Kh\u00f4ng th\u1ec3 k\u1ebft n\u1ed1i t\u1edbi server.', 'error');
     }
+}
+
+// --- History Table ---
+
+function applyEmpHistoryPreset() {
+    const preset = document.getElementById('empHistoryPreset').value;
+    const startEl = document.getElementById('empHistoryStartDate');
+    const endEl = document.getElementById('empHistoryEndDate');
+
+    if (preset === 'custom') {
+        startEl.disabled = false;
+        endEl.disabled = false;
+        return;
+    }
+    startEl.disabled = true;
+    endEl.disabled = true;
+
+    const now = new Date();
+    if (preset === 'this_week') {
+        const dow = now.getDay() === 0 ? 7 : now.getDay();
+        const mon = new Date(now); mon.setDate(now.getDate() - dow + 1);
+        const sun = new Date(now); sun.setDate(now.getDate() - dow + 7);
+        startEl.value = _empFmt(mon);
+        endEl.value = _empFmt(sun);
+    } else if (preset === 'this_month') {
+        startEl.value = _empFmt(new Date(now.getFullYear(), now.getMonth(), 1));
+        endEl.value = _empFmt(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+    }
+}
+
+async function empLoadHistory() {
+    const startDate = document.getElementById('empHistoryStartDate').value;
+    const endDate = document.getElementById('empHistoryEndDate').value;
+    const criteriaKey = document.getElementById('empHistoryCriteriaFilter').value;
+
+    if (!startDate || !endDate) {
+        // If dates not set yet, auto-apply preset
+        applyEmpHistoryPreset();
+        // Re-read after apply
+        const s2 = document.getElementById('empHistoryStartDate').value;
+        const e2 = document.getElementById('empHistoryEndDate').value;
+        if (!s2 || !e2) return;
+    }
+
+    const wrap = document.getElementById('empHistoryTableWrap');
+    wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-spinner fa-spin"></i><p>\u0110ang t\u1ea3i...</p></div>`;
+
+    try {
+        const sd = document.getElementById('empHistoryStartDate').value;
+        const ed = document.getElementById('empHistoryEndDate').value;
+
+        const res = await window.api.getKpiReports({
+            userId: _kpiCurrentUser.id,
+            startDate: sd,
+            endDate: ed
+        });
+
+        if (!res.success) {
+            wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>L\u1ed7i: ${res.error}</p></div>`;
+            return;
+        }
+
+        _renderEmpHistoryTable(res.data, _kpiEmpTemplate, criteriaKey, wrap);
+
+    } catch (err) {
+        wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>L\u1ed7i khi t\u1ea3i l\u1ecbch s\u1eed.</p></div>`;
+    }
+}
+
+function _renderEmpHistoryTable(rows, tplConfig, criteriaKey, container) {
+    if (!rows || rows.length === 0) {
+        container.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-inbox"></i><p>Kh\u00f4ng c\u00f3 d\u1eef li\u1ec7u trong kho\u1ea3ng th\u1eddi gian \u0111\u00e3 ch\u1ecdn.</p></div>`;
+        return;
+    }
+
+    // Determine columns
+    let cols = [];
+    if (tplConfig && Object.keys(tplConfig).length > 0) {
+        cols = Object.keys(tplConfig).sort((a, b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
+    } else {
+        const set = new Set();
+        rows.forEach(r => { for (let i = 1; i <= 30; i++) { if (r[`kpi_${i}`] != null) set.add(`kpi_${i}`); } });
+        cols = Array.from(set).sort((a, b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
+    }
+
+    // Apply criteria filter: only show the selected column (+ date)
+    if (criteriaKey !== 'all') {
+        cols = cols.filter(c => c === criteriaKey);
+    }
+
+    let html = `<table class="kpi-report-table"><thead><tr>
+        <th>Ng\u00e0y</th>`;
+
+    cols.forEach(c => {
+        const label = (tplConfig && tplConfig[c]) ? tplConfig[c].name : c;
+        const unit = (tplConfig && tplConfig[c] && tplConfig[c].unit) ? `<br><small style="opacity:.6;font-size:10px;">(${tplConfig[c].unit})</small>` : '';
+        html += `<th class="num">${label}${unit}</th>`;
+    });
+
+    html += `</tr></thead><tbody>`;
+
+    rows.forEach(r => {
+        html += `<tr><td style="color:var(--text-muted); font-variant-numeric:tabular-nums;">${r.period}</td>`;
+        cols.forEach(c => {
+            const v = r[c];
+            const disp = (v != null) ? Number(v).toLocaleString('vi-VN') : '<span style="color:#ccc;">\u2014</span>';
+            html += `<td class="num">${disp}</td>`;
+        });
+        html += `</tr>`;
+    });
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
 }
