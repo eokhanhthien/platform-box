@@ -35,11 +35,11 @@ async function initKpiModule() {
             return;
         }
 
-        if (user.role === 'Admin' || kpiPerms.includes('config')) {
-            // Admin / Leader: show Admin view
+        // Route view based on ROLE, not permissions
+        // (permissions only gate access; role determines which UI to show)
+        if (user.role === 'Admin' || user.role === 'Lãnh đạo') {
             _initAdminView();
         } else {
-            // Normal employee: show Employee view
             _initEmployeeView();
         }
 
