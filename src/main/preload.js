@@ -19,5 +19,12 @@ contextBridge.exposeInMainWorld('api', {
     updatePermissions: (role, config) => ipcRenderer.invoke('updatePermissions', role, config),
 
     // System Components
-    loadTemplate: (moduleName) => ipcRenderer.invoke('loadTemplate', moduleName)
+    loadTemplate: (moduleName) => ipcRenderer.invoke('loadTemplate', moduleName),
+
+    // KPI Feature
+    getKpiTemplate: (department) => ipcRenderer.invoke('getKpiTemplate', department),
+    saveKpiTemplate: (department, config) => ipcRenderer.invoke('saveKpiTemplate', department, config),
+    getKpiReports: (filters) => ipcRenderer.invoke('getKpiReports', filters),
+    getUserKpiReport: (userId, period) => ipcRenderer.invoke('getUserKpiReport', userId, period),
+    saveUserKpiReport: (userId, department, period, kpiData) => ipcRenderer.invoke('saveUserKpiReport', userId, department, period, kpiData)
 });

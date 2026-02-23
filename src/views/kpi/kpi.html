@@ -1,0 +1,681 @@
+<!-- KPI MODULE CONTAINER -->
+<div class="kpi-root">
+
+    <style>
+        /* ===== KPI ROOT RESET ===== */
+        .kpi-root {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+            min-height: 100%;
+        }
+
+        /* ===== COMMON PAGE HEADER ===== */
+        .kpi-page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .kpi-page-header .title-block h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 4px 0;
+            color: var(--text-main);
+        }
+
+        .kpi-page-header .title-block p {
+            font-size: 14px;
+            margin: 0;
+            color: var(--text-muted);
+        }
+
+        /* ===== ADMIN VIEW: Two-column layout ===== */
+        .kpi-admin-layout {
+            display: none;
+            /* shown via JS */
+            gap: 24px;
+        }
+
+        /* Sidebar for config panel */
+        .kpi-config-panel {
+            width: 340px;
+            flex-shrink: 0;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .kpi-config-panel .panel-head {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            background: #f9fafb;
+        }
+
+        .kpi-config-panel .panel-head h5 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .kpi-config-panel .panel-body {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Report main area */
+        .kpi-report-panel {
+            flex: 1;
+            min-width: 0;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .kpi-report-panel .panel-head {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            background: #f9fafb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .kpi-report-panel .panel-head h5 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .kpi-report-panel .panel-body {
+            padding: 0;
+            flex: 1;
+            overflow: auto;
+        }
+
+        .kpi-report-panel .filter-bar {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            flex-wrap: wrap;
+            background: white;
+        }
+
+        /* ===== EMPLOYEE VIEW ===== */
+        .kpi-employee-layout {
+            display: none;
+            /* shown via JS */
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        .kpi-submit-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        .kpi-submit-card .card-head {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border);
+            background: #f9fafb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .kpi-submit-card .card-head .meta-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .kpi-submit-card .card-head .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .kpi-submit-card .card-head .meta-item strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .kpi-submit-card .card-head .date-picker-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .kpi-submit-card .card-body {
+            padding: 28px;
+        }
+
+        /* ===== DEPARTMENT PILLS ===== */
+        .dept-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .dept-pill {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1.5px solid var(--border);
+            background: white;
+            color: var(--text-muted);
+            transition: all 0.18s;
+        }
+
+        .dept-pill:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .dept-pill.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* ===== KPI CONFIG TABLE ===== */
+        .kpi-config-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .kpi-config-table th {
+            text-align: left;
+            padding: 10px 12px;
+            background: #f3f4f6;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .kpi-config-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+
+        .kpi-config-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .kpi-config-table input {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 13px;
+            outline: none;
+            background: white;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .kpi-config-table input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 118, 254, 0.1);
+        }
+
+        /* ===== KPI INPUT FIELDS ===== */
+        .kpi-field-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .kpi-field-item label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+
+        .kpi-field-item .unit-hint {
+            font-weight: 400;
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-left: 4px;
+        }
+
+        .kpi-field-item input[type=number] {
+            width: 100%;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            box-sizing: border-box;
+        }
+
+        .kpi-field-item input[type=number]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 118, 254, 0.1);
+        }
+
+        /* ===== STATUS BADGE ===== */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.submitted {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .status-badge.pending {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* ===== COMMON CONTROLS ===== */
+        .kpi-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .kpi-btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .kpi-btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .kpi-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            color: var(--text-main);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .kpi-btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .kpi-btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .kpi-btn-icon.danger {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .kpi-btn-icon.danger:hover {
+            background: #dc2626;
+            color: white;
+        }
+
+        .kpi-form-select {
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+            color: var(--text-main);
+            transition: border-color 0.15s;
+        }
+
+        .kpi-form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 118, 254, 0.1);
+        }
+
+        .kpi-form-date {
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            outline: none;
+            background: white;
+            color: var(--text-main);
+            transition: border-color 0.15s;
+        }
+
+        .kpi-form-date:focus {
+            border-color: var(--primary);
+        }
+
+        .kpi-form-date:disabled {
+            background: #f3f4f6;
+            color: var(--text-muted);
+        }
+
+        .kpi-empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 24px;
+            color: var(--text-muted);
+            gap: 12px;
+        }
+
+        .kpi-empty-state i {
+            font-size: 36px;
+            opacity: 0.35;
+        }
+
+        .kpi-empty-state p {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* ===== REPORT TABLE ===== */
+        .kpi-report-table-wrapper {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 500px;
+        }
+
+        .kpi-report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .kpi-report-table thead tr th {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            padding: 12px 16px;
+            background: #1e293b;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            white-space: nowrap;
+            text-align: left;
+        }
+
+        .kpi-report-table thead tr th.num {
+            text-align: right;
+        }
+
+        .kpi-report-table tbody tr td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .kpi-report-table tbody tr:hover td {
+            background: #f9fafb;
+        }
+
+        .kpi-report-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .kpi-report-table td.num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Cols label for small forms */
+        .form-col-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        /* ===== LOADING SPINNER ===== */
+        .kpi-spinner-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.7);
+            z-index: 10;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .kpi-spinner-overlay.active {
+            display: flex;
+        }
+    </style>
+
+    <!-- ======================== ADMIN VIEW ======================== -->
+    <div id="kpi-admin-view" style="display:none;">
+        <div class="kpi-page-header">
+            <div class="title-block">
+                <h2><i class="fas fa-chart-line" style="color: var(--primary); margin-right: 10px;"></i>Quản lý chỉ tiêu
+                    KPI</h2>
+                <p>Cấu hình tiêu chí và theo dõi kết quả báo cáo của từng phòng ban</p>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:24px; align-items:flex-start;">
+
+            <!-- Left: Config Panel -->
+            <div class="kpi-config-panel">
+                <div class="panel-head">
+                    <h5><i class="fas fa-sliders-h" style="margin-right:8px;"></i>Cấu hình tiêu chí</h5>
+                </div>
+                <div class="panel-body">
+                    <div style="margin-bottom:16px;">
+                        <span class="form-col-label">Chọn phòng ban</span>
+                        <select id="kpiAdminDeptSelect" class="kpi-form-select" style="width:100%;"
+                            onchange="onAdminDeptChange()">
+                            <option value="">-- Chọn phòng ban --</option>
+                        </select>
+                    </div>
+
+                    <div id="kpiAdminConfigBody" style="display:none;">
+                        <div
+                            style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                            <span style="font-size:13px; color:var(--text-muted); font-weight:600;">
+                                Tiêu chí: <span id="kpiAdminCountLabel" style="color:var(--text-main);">0</span>/30
+                            </span>
+                            <button class="kpi-btn-secondary" style="padding:6px 12px; font-size:13px;"
+                                onclick="adminAddKpiRow()">
+                                <i class="fas fa-plus"></i> Thêm
+                            </button>
+                        </div>
+
+                        <table class="kpi-config-table">
+                            <thead>
+                                <tr>
+                                    <th>Tên tiêu chí</th>
+                                    <th>Đơn vị</th>
+                                    <th style="width:32px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="kpiAdminConfigBody_table">
+                                <!-- dynamic rows -->
+                            </tbody>
+                        </table>
+
+                        <div style="margin-top:16px;">
+                            <button class="kpi-btn-primary" style="width:100%;" onclick="adminSaveKpiConfig()">
+                                <i class="fas fa-save"></i> Lưu cấu hình
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="kpiAdminConfigEmpty" style="text-align:center; padding:32px 0; color:var(--text-muted);">
+                        <i class="fas fa-arrow-up" style="display:block; margin-bottom:8px; font-size:18px;"></i>
+                        <span style="font-size:13px;">Chọn phòng ban để xem và chỉnh sửa cấu hình KPI</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Report Panel -->
+            <div class="kpi-report-panel">
+                <div class="panel-head">
+                    <h5><i class="fas fa-table" style="margin-right:8px;"></i>Báo cáo KPI</h5>
+                </div>
+
+                <div class="filter-bar">
+                    <div>
+                        <span class="form-col-label">Phòng ban</span>
+                        <select id="kpiReportDeptFilter" class="kpi-form-select" onchange="onReportDeptFilterChange()">
+                            <option value="Tất cả">Tất cả phòng ban</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span class="form-col-label">Thời gian</span>
+                        <select id="kpiReportPeriodPreset" class="kpi-form-select" onchange="applyReportPeriodPreset()">
+                            <option value="today">Hôm nay</option>
+                            <option value="this_week">Tuần này</option>
+                            <option value="this_month" selected>Tháng này</option>
+                            <option value="custom">Tùy chọn...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <span class="form-col-label">Từ ngày</span>
+                        <input type="date" id="kpiReportStartDate" class="kpi-form-date" disabled>
+                    </div>
+                    <div>
+                        <span class="form-col-label">Đến ngày</span>
+                        <input type="date" id="kpiReportEndDate" class="kpi-form-date" disabled>
+                    </div>
+                    <div style="padding-top:16px;">
+                        <button class="kpi-btn-primary" onclick="adminLoadReports()">
+                            <i class="fas fa-search"></i> Tra cứu
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-body" style="padding:0;">
+                    <div id="kpiReportTableWrap" class="kpi-report-table-wrapper">
+                        <div class="kpi-empty-state">
+                            <i class="fas fa-chart-bar"></i>
+                            <p>Chọn thời gian và bấm <strong>Tra cứu</strong> để xem báo cáo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ======================== EMPLOYEE VIEW ======================== -->
+    <div id="kpi-employee-view" style="display:none;">
+        <div class="kpi-page-header">
+            <div class="title-block">
+                <h2><i class="fas fa-edit" style="color: var(--primary); margin-right: 10px;"></i>Nhập kết quả KPI</h2>
+                <p>Điền số liệu thực tế theo từng ngày làm việc</p>
+            </div>
+        </div>
+
+        <div class="kpi-employee-layout" id="kpiEmployeeLayout" style="display:block;">
+            <div class="kpi-submit-card">
+                <div class="card-head">
+                    <div class="meta-info">
+                        <div class="meta-item">
+                            <i class="fas fa-building" style="color:var(--primary);"></i>
+                            <span>Phòng ban: <strong id="empKpiDept">...</strong></span>
+                        </div>
+                        <div class="meta-item" id="empKpiStatusWrap">
+                            <i class="fas fa-circle-check"></i>
+                            <span id="empKpiStatusBadge" class="status-badge pending">
+                                <i class="fas fa-clock"></i> Chưa nộp
+                            </span>
+                        </div>
+                    </div>
+                    <div class="date-picker-wrap">
+                        <i class="fas fa-calendar-alt" style="color:var(--primary);"></i>
+                        <span>Ngày:</span>
+                        <input type="date" id="empKpiPeriod" class="kpi-form-date" onchange="empLoadKpiForm()">
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div id="empKpiFormArea">
+                        <div class="kpi-empty-state" id="empKpiSpinner">
+                            <i class="fas fa-spinner fa-spin" style="font-size:28px; opacity:0.5;"></i>
+                            <p>Đang tải biểu mẫu...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

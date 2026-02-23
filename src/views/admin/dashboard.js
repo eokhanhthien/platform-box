@@ -104,6 +104,8 @@ async function switchSection(moduleId) {
             loadUsers();
         } else if (moduleId === 'permissions' && typeof renderPermissionsUI === 'function') {
             renderPermissionsUI();
+        } else if (moduleId === 'kpi' && typeof initKpiModule === 'function') {
+            initKpiModule();
         }
     } else {
         // Nếu module chưa có màn hình (placeholder)
