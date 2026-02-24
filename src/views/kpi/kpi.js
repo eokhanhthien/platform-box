@@ -65,13 +65,19 @@ function _initAdminView() {
     });
 
     const reportDeptSelect = document.getElementById('kpiReportDeptFilter');
-    reportDeptSelect.innerHTML = '<option value="Tất cả">Tất cả phòng ban</option>';
+    reportDeptSelect.innerHTML = '<option value="">-- Chọn phòng ban --</option>';
     depts.forEach(d => {
         reportDeptSelect.innerHTML += `<option value="${d}">${d}</option>`;
     });
 
     // Apply default date range (this month)
     applyReportPeriodPreset();
+
+    // Lãnh đạo: chỉ xem báo cáo, không cấu hình tiêu chí
+    if (_kpiCurrentUser && _kpiCurrentUser.role !== 'Admin') {
+        const configPanel = document.getElementById('kpiConfigPanel');
+        if (configPanel) configPanel.style.display = 'none';
+    }
 }
 
 // --- Config panel ---
@@ -252,6 +258,10 @@ async function adminLoadReports() {
     const startDate = document.getElementById('kpiReportStartDate').value;
     const endDate = document.getElementById('kpiReportEndDate').value;
 
+    if (!dept) {
+        Swal.fire('Thiếu thông tin', 'Vui lòng chọn phòng ban cần tra cứu.', 'warning');
+        return;
+    }
     if (!startDate || !endDate) {
         Swal.fire('Thiếu thông tin', 'Vui lòng chọn khoảng thời gian cần tra cứu.', 'warning');
         return;
@@ -261,13 +271,8 @@ async function adminLoadReports() {
     wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tải dữ liệu…</p></div>`;
 
     try {
-        // Load department template for column headers
-        if (dept !== 'Tất cả') {
-            const tplRes = await window.api.getKpiTemplate(dept);
-            _kpiReportConfig = (tplRes.success && tplRes.data) ? (tplRes.data.config || {}) : {};
-        } else {
-            _kpiReportConfig = {};
-        }
+        const tplRes = await window.api.getKpiTemplate(dept);
+        _kpiReportConfig = (tplRes.success && tplRes.data) ? (tplRes.data.config || {}) : {};
 
         const res = await window.api.getKpiReports({ department: dept, startDate, endDate });
 
@@ -290,7 +295,7 @@ function _renderReportTable(rows, tplConfig, container) {
         return;
     }
 
-    // Determine KPI columns
+    // Determine KPI columns from template
     let cols = [];
     if (tplConfig && Object.keys(tplConfig).length > 0) {
         cols = Object.keys(tplConfig).sort((a, b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
@@ -300,10 +305,31 @@ function _renderReportTable(rows, tplConfig, container) {
         cols = Array.from(set).sort((a, b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
     }
 
+    // --- Aggregate: sum KPI values per user ---
+    const userMap = {}; // key: user_id
+    rows.forEach(r => {
+        const uid = r.user_id || r.username;
+        if (!userMap[uid]) {
+            userMap[uid] = {
+                full_name: r.full_name || r.username,
+                department: r.department,
+                days: 0
+            };
+            cols.forEach(c => { userMap[uid][c] = 0; });
+        }
+        userMap[uid].days += 1;
+        cols.forEach(c => {
+            const v = parseFloat(r[c]);
+            if (!isNaN(v)) userMap[uid][c] += v;
+        });
+    });
+
+    const aggregated = Object.values(userMap);
+
     let html = `<table class="kpi-report-table"><thead><tr>
         <th>Nhân viên</th>
         <th>Phòng ban</th>
-        <th>Ngày</th>`;
+        <th class="num" title="Số ngày báo cáo">Số ngày</th>`;
 
     cols.forEach(c => {
         const label = (tplConfig && tplConfig[c]) ? tplConfig[c].name : c;
@@ -313,15 +339,15 @@ function _renderReportTable(rows, tplConfig, container) {
 
     html += `</tr></thead><tbody>`;
 
-    rows.forEach(r => {
+    aggregated.forEach(r => {
         html += `<tr>
-            <td><i class="fas fa-user" style="color:var(--text-muted); margin-right:6px;"></i>${r.full_name || r.username}</td>
+            <td><i class="fas fa-user" style="color:var(--text-muted); margin-right:6px;"></i>${r.full_name}</td>
             <td>${r.department}</td>
-            <td style="color:var(--text-muted);">${r.period}</td>`;
+            <td class="num" style="color:var(--text-muted);">${r.days}</td>`;
 
         cols.forEach(c => {
             const v = r[c];
-            const disp = (v != null) ? Number(v).toLocaleString('vi-VN') : '<span style="color:#ccc;">—</span>';
+            const disp = (v != null && v !== 0) ? Number(v).toLocaleString('vi-VN') : '<span style="color:#ccc">—</span>';
             html += `<td class="num">${disp}</td>`;
         });
 
@@ -453,16 +479,18 @@ async function empModalLoadForm() {
         let html = `<div class="kpi-field-grid" id="kpiEmpFields">`;
         keys.forEach(k => {
             const cfg = _kpiEmpTemplate[k];
-            const val = (existing && existing[k] != null) ? existing[k] : '';
+            const rawVal = (existing && existing[k] != null) ? existing[k] : '';
+            const displayVal = rawVal !== '' ? _formatNumDisplay(rawVal) : '';
             html += `
             <div class="kpi-field-item">
                 <label>${cfg.name}<span class="unit-hint">${cfg.unit ? '(' + cfg.unit + ')' : ''}</span></label>
-                <input type="number" data-kpi-id="${k}" value="${val}" step="any" placeholder="Nh\u1eadp s\u1ed1 li\u1ec7u...">
+                <input type="text" inputmode="numeric" class="kpi-num-input" data-kpi-id="${k}" data-raw="${rawVal}" value="${displayVal}" placeholder="Nh\u1eadp s\u1ed1 li\u1ec7u...">
             </div>`;
         });
         html += `</div>`;
 
         area.innerHTML = html;
+        _attachNumFormatListeners();
 
     } catch (err) {
         area.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>L\u1ed7i khi t\u1ea3i bi\u1ec3u m\u1eabu.</p></div>`;
@@ -480,8 +508,8 @@ async function empSubmitKpi() {
     const kpiData = {};
     inputs.forEach(input => {
         const key = input.getAttribute('data-kpi-id');
-        const val = input.value.trim();
-        if (val !== '') kpiData[key] = parseFloat(val);
+        const raw = input.getAttribute('data-raw');
+        if (raw !== null && raw !== '') kpiData[key] = parseFloat(raw);
     });
 
     if (Object.keys(kpiData).length === 0) {
@@ -636,4 +664,68 @@ function _renderEmpHistoryTable(rows, tplConfig, criteriaKey, container) {
 
     html += `</tbody></table>`;
     container.innerHTML = html;
+}
+
+// ============================================================================
+// NUMBER FORMAT HELPERS
+// ============================================================================
+
+/**
+ * Format a raw number for display using vi-VN locale: 1500000 -> "1.500.000"
+ */
+function _formatNumDisplay(val) {
+    if (val === '' || val === null || val === undefined) return '';
+    const num = parseFloat(String(val).replace(/\./g, '').replace(/,/g, '.'));
+    if (isNaN(num)) return String(val);
+    return num.toLocaleString('vi-VN');
+}
+
+/**
+ * Attach input/focus/blur events to all .kpi-num-input elements
+ * to provide real-time number formatting.
+ */
+function _attachNumFormatListeners() {
+    document.querySelectorAll('.kpi-num-input').forEach(input => {
+        // On input: strip formatting, reformat, store raw value
+        input.addEventListener('input', function () {
+            // Allow digits, one dot or comma for decimal
+            let raw = this.value.replace(/[^\d,.]/g, '');
+            // Remove all dots (thousand separators), treat comma as decimal
+            let numStr = raw.replace(/\./g, '').replace(',', '.');
+            const num = parseFloat(numStr);
+            if (!isNaN(num)) {
+                this.setAttribute('data-raw', num);
+                // Format and show with thousands separator
+                const caretPos = this.selectionStart;
+                const prevLen = this.value.length;
+                this.value = num.toLocaleString('vi-VN');
+                // Adjust caret: keep offset from end
+                const diff = this.value.length - prevLen;
+                this.setSelectionRange(caretPos + diff, caretPos + diff);
+            } else if (raw === '' || raw === '0') {
+                this.setAttribute('data-raw', raw === '' ? '' : '0');
+                this.value = raw;
+            } else {
+                this.setAttribute('data-raw', '');
+            }
+        });
+
+        // On focus: show raw number for easy editing
+        input.addEventListener('focus', function () {
+            const raw = this.getAttribute('data-raw');
+            if (raw !== null && raw !== '') {
+                this.value = raw;
+                // Select all for quick re-entry
+                this.select();
+            }
+        });
+
+        // On blur: re-apply display formatting
+        input.addEventListener('blur', function () {
+            const raw = this.getAttribute('data-raw');
+            if (raw !== null && raw !== '') {
+                this.value = _formatNumDisplay(raw);
+            }
+        });
+    });
 }
