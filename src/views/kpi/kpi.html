@@ -611,21 +611,18 @@
                         </select>
                     </div>
                     <div>
-                        <span class="form-col-label">Thời gian</span>
-                        <select id="kpiReportPeriodPreset" class="kpi-form-select" onchange="applyReportPeriodPreset()">
-                            <option value="today">Hôm nay</option>
-                            <option value="this_week">Tuần này</option>
-                            <option value="this_month" selected>Tháng này</option>
-                            <option value="custom">Tùy chọn...</option>
+                        <span class="form-col-label">Loại thời gian</span>
+                        <select id="kpiReportPeriodType" class="kpi-form-select" onchange="onReportPeriodTypeChange()">
+                            <option value="day">Theo ngày</option>
+                            <option value="week" selected>Theo tuần</option>
+                            <option value="month">Theo tháng</option>
+                            <option value="quarter">Theo quý</option>
+                            <option value="year">Theo năm</option>
+                            <option value="custom">Tùy chỉnh</option>
                         </select>
                     </div>
-                    <div>
-                        <span class="form-col-label">Từ ngày</span>
-                        <input type="date" id="kpiReportStartDate" class="kpi-form-date" disabled>
-                    </div>
-                    <div>
-                        <span class="form-col-label">Đến ngày</span>
-                        <input type="date" id="kpiReportEndDate" class="kpi-form-date" disabled>
+                    <div id="kpiReportDateInputArea" style="display:flex; gap:8px; align-items:flex-end;">
+                        <!-- rendered by JS -->
                     </div>
                     <div style="padding-top:16px;">
                         <button class="kpi-btn-primary" onclick="adminLoadReports()">
@@ -673,20 +670,18 @@
             <div
                 style="padding:16px 24px; border-bottom:1px solid var(--border); background:#f9fafb; display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap;">
                 <div>
-                    <span class="form-col-label">Thời gian</span>
-                    <select id="empHistoryPreset" class="kpi-form-select" onchange="applyEmpHistoryPreset()">
-                        <option value="this_week">Tuần này</option>
-                        <option value="this_month" selected>Tháng này</option>
-                        <option value="custom">Tùy chọn...</option>
+                    <span class="form-col-label">Loại thời gian</span>
+                    <select id="empHistoryPeriodType" class="kpi-form-select" onchange="onEmpHistoryPeriodTypeChange()">
+                        <option value="day">Theo ngày</option>
+                        <option value="week" selected>Theo tuần</option>
+                        <option value="month">Theo tháng</option>
+                        <option value="quarter">Theo quý</option>
+                        <option value="year">Theo năm</option>
+                        <option value="custom">Tùy chỉnh</option>
                     </select>
                 </div>
-                <div>
-                    <span class="form-col-label">Từ ngày</span>
-                    <input type="date" id="empHistoryStartDate" class="kpi-form-date" disabled>
-                </div>
-                <div>
-                    <span class="form-col-label">Đến ngày</span>
-                    <input type="date" id="empHistoryEndDate" class="kpi-form-date" disabled>
+                <div id="empHistoryDateInputArea" style="display:flex; gap:8px; align-items:flex-end;">
+                    <!-- rendered by JS -->
                 </div>
                 <div>
                     <span class="form-col-label">Lọc theo tiêu chí</span>

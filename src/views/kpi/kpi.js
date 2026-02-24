@@ -66,12 +66,25 @@ function _initAdminView() {
 
     const reportDeptSelect = document.getElementById('kpiReportDeptFilter');
     reportDeptSelect.innerHTML = '<option value="">-- Chọn phòng ban --</option>';
-    depts.forEach(d => {
+
+    // Admin thấy tất cả phòng ban; Lãnh đạo chỉ thấy phòng của mình
+    let visibleDepts = depts;
+    if (_kpiCurrentUser && _kpiCurrentUser.role !== 'Admin') {
+        const userDept = _kpiCurrentUser.department || '';
+        // users.js lưu bằng ' + ' hoặc ',' — split cả hai
+        const myDepts = userDept.split(/[,+]/).map(d => d.trim()).filter(Boolean);
+        // Giữ đúng thứ tự của myDepts (thứ tự phòng của lãnh đạo)
+        visibleDepts = myDepts.filter(d => depts.includes(d));
+        // Fallback: phòng không có trong APP_CONFIG.DEPARTMENTS thì vẫn hiển thị
+        if (visibleDepts.length === 0 && myDepts.length > 0) visibleDepts = myDepts;
+    }
+
+    visibleDepts.forEach(d => {
         reportDeptSelect.innerHTML += `<option value="${d}">${d}</option>`;
     });
 
     // Apply default date range (this month)
-    applyReportPeriodPreset();
+    applyReportPeriodPreset(); // triggers _renderPeriodInput for admin report
 
     // Lãnh đạo: chỉ xem báo cáo, không cấu hình tiêu chí
     if (_kpiCurrentUser && _kpiCurrentUser.role !== 'Admin') {
@@ -218,70 +231,228 @@ function onReportDeptFilterChange() {
         </div>`;
 }
 
-function applyReportPeriodPreset() {
-    const preset = document.getElementById('kpiReportPeriodPreset').value;
-    const startEl = document.getElementById('kpiReportStartDate');
-    const endEl = document.getElementById('kpiReportEndDate');
+// ============================================================================
+// PERIOD TYPE HELPERS — shared by both Admin and Employee filter
+// ============================================================================
 
-    if (preset === 'custom') {
-        startEl.disabled = false;
-        endEl.disabled = false;
-        return;
-    }
+const _fmtDate = d => {
+    const tz = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tz).toISOString().split('T')[0];
+};
 
-    startEl.disabled = true;
-    endEl.disabled = true;
-
+/**
+ * Render the appropriate date input(s) into a container div.
+ * type: 'day' | 'week' | 'month' | 'quarter' | 'year' | 'custom'
+ * prefix: 'adminReport' | 'empHistory'  (used as id prefix for inputs)
+ */
+function _renderPeriodInput(containerId, prefix, type) {
     const now = new Date();
-    const fmt = d => {
-        const tzoff = d.getTimezoneOffset() * 60000;
-        return new Date(d.getTime() - tzoff).toISOString().split('T')[0];
-    };
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
-    if (preset === 'today') {
-        startEl.value = fmt(now);
-        endEl.value = fmt(now);
-    } else if (preset === 'this_week') {
-        const dow = now.getDay() === 0 ? 7 : now.getDay();
-        const mon = new Date(now); mon.setDate(now.getDate() - dow + 1);
-        const sun = new Date(now); sun.setDate(now.getDate() - dow + 7);
-        startEl.value = fmt(mon);
-        endEl.value = fmt(sun);
-    } else if (preset === 'this_month') {
-        startEl.value = fmt(new Date(now.getFullYear(), now.getMonth(), 1));
-        endEl.value = fmt(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+    switch (type) {
+        case 'day':
+            container.innerHTML = `
+                <div>
+                    <span class="form-col-label">Chọn ngày</span>
+                    <input type="date" id="${prefix}Date" class="kpi-form-date" value="${_fmtDate(now)}">
+                </div>`;
+            break;
+
+        case 'week': {
+            // Get current ISO week string yyyy-Www
+            const dow = now.getDay() === 0 ? 7 : now.getDay();
+            const mon = new Date(now); mon.setDate(now.getDate() - dow + 1);
+            const weekStr = _fmtDate(mon).substring(0, 4) + '-W' +
+                String(Math.ceil((((mon - new Date(mon.getFullYear(), 0, 1)) / 86400000) + 1) / 7)).padStart(2, '0');
+            container.innerHTML = `
+                <div>
+                    <span class="form-col-label">Chọn tuần</span>
+                    <input type="week" id="${prefix}Week" class="kpi-form-date" value="${weekStr}">
+                </div>`;
+            break;
+        }
+
+        case 'month': {
+            const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            container.innerHTML = `
+                <div>
+                    <span class="form-col-label">Chọn tháng</span>
+                    <input type="month" id="${prefix}Month" class="kpi-form-date" value="${monthStr}">
+                </div>`;
+            break;
+        }
+
+        case 'quarter': {
+            const q = Math.floor(now.getMonth() / 3) + 1;
+            container.innerHTML = `
+                <div>
+                    <span class="form-col-label">Quý</span>
+                    <select id="${prefix}Quarter" class="kpi-form-select">
+                        <option value="1" ${q === 1 ? 'selected' : ''}>Q1 (T1–T3)</option>
+                        <option value="2" ${q === 2 ? 'selected' : ''}>Q2 (T4–T6)</option>
+                        <option value="3" ${q === 3 ? 'selected' : ''}>Q3 (T7–T9)</option>
+                        <option value="4" ${q === 4 ? 'selected' : ''}>Q4 (T10–T12)</option>
+                    </select>
+                </div>
+                <div>
+                    <span class="form-col-label">Năm</span>
+                    <input type="number" id="${prefix}QuarterYear" class="kpi-form-date"
+                        style="width:80px;" min="2000" max="2099" value="${now.getFullYear()}">
+                </div>`;
+            break;
+        }
+
+        case 'year':
+            container.innerHTML = `
+                <div>
+                    <span class="form-col-label">Năm</span>
+                    <input type="number" id="${prefix}Year" class="kpi-form-date"
+                        style="width:90px;" min="2000" max="2099" value="${now.getFullYear()}">
+                </div>`;
+            break;
+
+        case 'custom':
+        default:
+            container.innerHTML = `
+                <div>
+                    <span class="form-col-label">Từ ngày</span>
+                    <input type="date" id="${prefix}StartDate" class="kpi-form-date" value="${_fmtDate(new Date(now.getFullYear(), now.getMonth(), 1))}">
+                </div>
+                <div>
+                    <span class="form-col-label">Đến ngày</span>
+                    <input type="date" id="${prefix}EndDate" class="kpi-form-date" value="${_fmtDate(new Date(now.getFullYear(), now.getMonth() + 1, 0))}">
+                </div>`;
+            break;
     }
 }
 
+/**
+ * Read the current period input values and return {startDate, endDate} (yyyy-mm-dd strings).
+ * Returns null if input is missing/invalid.
+ */
+function _getPeriodDates(prefix, type) {
+    const now = new Date();
+    try {
+        switch (type) {
+            case 'day': {
+                const v = document.getElementById(prefix + 'Date').value;
+                if (!v) return null;
+                return { startDate: v, endDate: v };
+            }
+            case 'week': {
+                const v = document.getElementById(prefix + 'Week').value; // yyyy-Www
+                if (!v) return null;
+                const [yr, ww] = v.split('-W').map(Number);
+                // ISO week: Monday of that week
+                const jan4 = new Date(yr, 0, 4);
+                const startOfW1 = new Date(jan4);
+                startOfW1.setDate(jan4.getDate() - (jan4.getDay() || 7) + 1);
+                const mon = new Date(startOfW1);
+                mon.setDate(startOfW1.getDate() + (ww - 1) * 7);
+                const sun = new Date(mon);
+                sun.setDate(mon.getDate() + 6);
+                return { startDate: _fmtDate(mon), endDate: _fmtDate(sun) };
+            }
+            case 'month': {
+                const v = document.getElementById(prefix + 'Month').value; // yyyy-mm
+                if (!v) return null;
+                const [yr, mo] = v.split('-').map(Number);
+                return {
+                    startDate: _fmtDate(new Date(yr, mo - 1, 1)),
+                    endDate: _fmtDate(new Date(yr, mo, 0))
+                };
+            }
+            case 'quarter': {
+                const q = parseInt(document.getElementById(prefix + 'Quarter').value);
+                const yr = parseInt(document.getElementById(prefix + 'QuarterYear').value);
+                const startM = (q - 1) * 3;
+                return {
+                    startDate: _fmtDate(new Date(yr, startM, 1)),
+                    endDate: _fmtDate(new Date(yr, startM + 3, 0))
+                };
+            }
+            case 'year': {
+                const yr = parseInt(document.getElementById(prefix + 'Year').value);
+                if (!yr) return null;
+                return {
+                    startDate: `${yr}-01-01`,
+                    endDate: `${yr}-12-31`
+                };
+            }
+            case 'custom':
+            default: {
+                const s = document.getElementById(prefix + 'StartDate').value;
+                const e = document.getElementById(prefix + 'EndDate').value;
+                if (!s || !e) return null;
+                return { startDate: s, endDate: e };
+            }
+        }
+    } catch (e) {
+        return null;
+    }
+}
+
+// --- Admin report period handlers ---
+function onReportPeriodTypeChange() {
+    const type = document.getElementById('kpiReportPeriodType').value;
+    _renderPeriodInput('kpiReportDateInputArea', 'adminReport', type);
+}
+
+// --- Employee history period handlers ---
+function onEmpHistoryPeriodTypeChange() {
+    const type = document.getElementById('empHistoryPeriodType').value;
+    _renderPeriodInput('empHistoryDateInputArea', 'empHistory', type);
+}
+
+// Legacy stubs (kept so old references don't error)
+function applyReportPeriodPreset() { onReportPeriodTypeChange(); }
+function applyEmpHistoryPreset() { onEmpHistoryPeriodTypeChange(); }
+
 async function adminLoadReports() {
     const dept = document.getElementById('kpiReportDeptFilter').value;
-    const startDate = document.getElementById('kpiReportStartDate').value;
-    const endDate = document.getElementById('kpiReportEndDate').value;
-
     if (!dept) {
         Swal.fire('Thiếu thông tin', 'Vui lòng chọn phòng ban cần tra cứu.', 'warning');
         return;
     }
-    if (!startDate || !endDate) {
-        Swal.fire('Thiếu thông tin', 'Vui lòng chọn khoảng thời gian cần tra cứu.', 'warning');
+
+    const type = document.getElementById('kpiReportPeriodType').value;
+    const dates = _getPeriodDates('adminReport', type);
+    if (!dates) {
+        Swal.fire('Thiếu thông tin', 'Vui lòng nhập đầy đủ thông tin thời gian.', 'warning');
         return;
     }
+    const { startDate, endDate } = dates;
 
     const wrap = document.getElementById('kpiReportTableWrap');
     wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tải dữ liệu…</p></div>`;
 
     try {
-        const tplRes = await window.api.getKpiTemplate(dept);
-        _kpiReportConfig = (tplRes.success && tplRes.data) ? (tplRes.data.config || {}) : {};
+        // Load template + KPI data + all users of dept (parallel)
+        const [tplRes, res, usersRes] = await Promise.all([
+            window.api.getKpiTemplate(dept),
+            window.api.getKpiReports({ department: dept, startDate, endDate }),
+            window.api.getUsers()
+        ]);
 
-        const res = await window.api.getKpiReports({ department: dept, startDate, endDate });
+        _kpiReportConfig = (tplRes.success && tplRes.data) ? (tplRes.data.config || {}) : {};
 
         if (!res.success) {
             wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>Lỗi tải dữ liệu: ${res.error}</p></div>`;
             return;
         }
 
-        _renderReportTable(res.data, _kpiReportConfig, wrap);
+        // Filter users belonging to this dept — chỉ nhân viên thường, bỏ Lãnh đạo và Admin
+        const deptUsers = (usersRes.success && usersRes.data)
+            ? usersRes.data.filter(u => {
+                if (!u.department) return false;
+                if (u.role === 'Admin' || u.role === 'Lãnh đạo') return false;
+                const parts = u.department.split(/[,+]/).map(d => d.trim());
+                return parts.includes(dept);
+            })
+            : [];
+
+        _renderReportTable(res.data, _kpiReportConfig, wrap, deptUsers);
 
     } catch (err) {
         console.error(err);
@@ -289,47 +460,59 @@ async function adminLoadReports() {
     }
 }
 
-function _renderReportTable(rows, tplConfig, container) {
-    if (!rows || rows.length === 0) {
-        container.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-inbox"></i><p>Không có dữ liệu trong khoảng thời gian đã chọn.</p></div>`;
-        return;
-    }
-
+function _renderReportTable(rows, tplConfig, container, deptUsers = []) {
     // Determine KPI columns from template
     let cols = [];
     if (tplConfig && Object.keys(tplConfig).length > 0) {
         cols = Object.keys(tplConfig).sort((a, b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
-    } else {
+    } else if (rows && rows.length > 0) {
         const set = new Set();
         rows.forEach(r => { for (let i = 1; i <= 30; i++) { if (r[`kpi_${i}`] != null) set.add(`kpi_${i}`); } });
         cols = Array.from(set).sort((a, b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
     }
 
-    // --- Aggregate: sum KPI values per user ---
-    const userMap = {}; // key: user_id
-    rows.forEach(r => {
+    // --- Aggregate: sum KPI values per user (from submitted rows) ---
+    const userMap = {};
+    (rows || []).forEach(r => {
         const uid = r.user_id || r.username;
         if (!userMap[uid]) {
             userMap[uid] = {
                 full_name: r.full_name || r.username,
                 department: r.department,
-                days: 0
+                hasData: true
             };
             cols.forEach(c => { userMap[uid][c] = 0; });
         }
-        userMap[uid].days += 1;
         cols.forEach(c => {
             const v = parseFloat(r[c]);
             if (!isNaN(v)) userMap[uid][c] += v;
         });
     });
 
+    // --- Merge: add dept users who haven't submitted anything ---
+    deptUsers.forEach(u => {
+        const uid = u.id || u.username;
+        if (!userMap[uid]) {
+            userMap[uid] = {
+                full_name: u.full_name || u.username,
+                department: u.department,
+                hasData: false
+            };
+            cols.forEach(c => { userMap[uid][c] = 0; });
+        }
+    });
+
     const aggregated = Object.values(userMap);
+
+    if (aggregated.length === 0) {
+        container.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-inbox"></i><p>Không có dữ liệu trong khoảng thời gian đã chọn.</p></div>`;
+        return;
+    }
 
     let html = `<table class="kpi-report-table"><thead><tr>
         <th>Nhân viên</th>
         <th>Phòng ban</th>
-        <th class="num" title="Số ngày báo cáo">Số ngày</th>`;
+        <th>Trạng thái</th>`;
 
     cols.forEach(c => {
         const label = (tplConfig && tplConfig[c]) ? tplConfig[c].name : c;
@@ -339,15 +522,27 @@ function _renderReportTable(rows, tplConfig, container) {
 
     html += `</tr></thead><tbody>`;
 
+    // Sort: users with data first, then no-data (alphabetical within each group)
+    aggregated.sort((a, b) => {
+        if (a.hasData !== b.hasData) return a.hasData ? -1 : 1;
+        return (a.full_name || '').localeCompare(b.full_name || '', 'vi');
+    });
+
     aggregated.forEach(r => {
+        const statusBadge = r.hasData
+            ? `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#ecfdf5;color:#059669;"><i class="fas fa-check-circle"></i> Đã nộp</span>`
+            : `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#fef2f2;color:#dc2626;"><i class="fas fa-clock"></i> Chưa nộp</span>`;
+
         html += `<tr>
             <td><i class="fas fa-user" style="color:var(--text-muted); margin-right:6px;"></i>${r.full_name}</td>
             <td>${r.department}</td>
-            <td class="num" style="color:var(--text-muted);">${r.days}</td>`;
+            <td>${statusBadge}</td>`;
 
         cols.forEach(c => {
             const v = r[c];
-            const disp = (v != null && v !== 0) ? Number(v).toLocaleString('vi-VN') : '<span style="color:#ccc">—</span>';
+            const disp = (r.hasData && v != null && v !== 0)
+                ? Number(v).toLocaleString('vi-VN')
+                : (r.hasData ? '0' : '<span style="color:#d1d5db">—</span>');
             html += `<td class="num">${disp}</td>`;
         });
 
@@ -374,8 +569,8 @@ function _initEmployeeView() {
     // Check today's status first
     _empCheckTodayStatus();
 
-    // Init history filters
-    applyEmpHistoryPreset();
+    // Init history filters — render default period input
+    onEmpHistoryPeriodTypeChange();
 
     // Load employee template to populate criteria filter
     _empLoadTemplateForFilters();
@@ -555,68 +750,37 @@ async function empSubmitKpi() {
 
 // --- History Table ---
 
-function applyEmpHistoryPreset() {
-    const preset = document.getElementById('empHistoryPreset').value;
-    const startEl = document.getElementById('empHistoryStartDate');
-    const endEl = document.getElementById('empHistoryEndDate');
-
-    if (preset === 'custom') {
-        startEl.disabled = false;
-        endEl.disabled = false;
-        return;
-    }
-    startEl.disabled = true;
-    endEl.disabled = true;
-
-    const now = new Date();
-    if (preset === 'this_week') {
-        const dow = now.getDay() === 0 ? 7 : now.getDay();
-        const mon = new Date(now); mon.setDate(now.getDate() - dow + 1);
-        const sun = new Date(now); sun.setDate(now.getDate() - dow + 7);
-        startEl.value = _empFmt(mon);
-        endEl.value = _empFmt(sun);
-    } else if (preset === 'this_month') {
-        startEl.value = _empFmt(new Date(now.getFullYear(), now.getMonth(), 1));
-        endEl.value = _empFmt(new Date(now.getFullYear(), now.getMonth() + 1, 0));
-    }
-}
+// (applyEmpHistoryPreset is defined as legacy stub above, pointing to onEmpHistoryPeriodTypeChange)
 
 async function empLoadHistory() {
-    const startDate = document.getElementById('empHistoryStartDate').value;
-    const endDate = document.getElementById('empHistoryEndDate').value;
+    const type = document.getElementById('empHistoryPeriodType') ?
+        document.getElementById('empHistoryPeriodType').value : 'month';
     const criteriaKey = document.getElementById('empHistoryCriteriaFilter').value;
 
-    if (!startDate || !endDate) {
-        // If dates not set yet, auto-apply preset
-        applyEmpHistoryPreset();
-        // Re-read after apply
-        const s2 = document.getElementById('empHistoryStartDate').value;
-        const e2 = document.getElementById('empHistoryEndDate').value;
-        if (!s2 || !e2) return;
-    }
+    const dates = _getPeriodDates('empHistory', type);
+    if (!dates) return; // input not yet rendered or invalid
+
+    const { startDate, endDate } = dates;
 
     const wrap = document.getElementById('empHistoryTableWrap');
-    wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-spinner fa-spin"></i><p>\u0110ang t\u1ea3i...</p></div>`;
+    wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tải...</p></div>`;
 
     try {
-        const sd = document.getElementById('empHistoryStartDate').value;
-        const ed = document.getElementById('empHistoryEndDate').value;
-
         const res = await window.api.getKpiReports({
             userId: _kpiCurrentUser.id,
-            startDate: sd,
-            endDate: ed
+            startDate,
+            endDate
         });
 
         if (!res.success) {
-            wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>L\u1ed7i: ${res.error}</p></div>`;
+            wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>Lỗi: ${res.error}</p></div>`;
             return;
         }
 
         _renderEmpHistoryTable(res.data, _kpiEmpTemplate, criteriaKey, wrap);
 
     } catch (err) {
-        wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>L\u1ed7i khi t\u1ea3i l\u1ecbch s\u1eed.</p></div>`;
+        wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>Lỗi khi tải lịch sử.</p></div>`;
     }
 }
 

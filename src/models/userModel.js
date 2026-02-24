@@ -45,22 +45,27 @@ async function addUser(user) {
 async function updateUser(id, user) {
     return new Promise((resolve, reject) => {
         const db = getDB();
-        // Nếu không chỉnh sửa password, giữ nguyên password cũ (yêu cầu logic từ Controller)
-        // Ở đây ta cứ giả định Controller đã truyền đúng params
-        db.run(
-            'UPDATE users SET username = ?, password = ?, full_name = ?, role = ?, department = ? WHERE id = ?',
-            [user.username, user.password, user.full_name, user.role, user.department, id],
-            function (err) {
-                if (err) {
-                    if (err.message.includes('UNIQUE')) {
-                        resolve({ success: false, error: 'Tài khoản này đã tồn tại!' });
-                    } else {
-                        reject(err);
-                    }
+
+        const hasPassword = user.password && user.password.trim() !== '';
+
+        const sql = hasPassword
+            ? 'UPDATE users SET username = ?, password = ?, full_name = ?, role = ?, department = ? WHERE id = ?'
+            : 'UPDATE users SET username = ?, full_name = ?, role = ?, department = ? WHERE id = ?';
+
+        const params = hasPassword
+            ? [user.username, user.password, user.full_name, user.role, user.department, id]
+            : [user.username, user.full_name, user.role, user.department, id];
+
+        db.run(sql, params, function (err) {
+            if (err) {
+                if (err.message.includes('UNIQUE')) {
+                    resolve({ success: false, error: 'Tài khoản này đã tồn tại!' });
+                } else {
+                    reject(err);
                 }
-                else resolve({ success: true, changes: this.changes });
             }
-        );
+            else resolve({ success: true, changes: this.changes });
+        });
     });
 }
 

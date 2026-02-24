@@ -196,13 +196,10 @@ async function saveUser() {
         return;
     }
 
-    if (id && !password) {
-        alert("Vui lòng nhập mật khẩu mới hoặc nhập lại mật khẩu cũ để lưu thay đổi.");
-        return;
-    }
-
     if (id) {
-        const res = await window.api.updateUser(id, { username, password, full_name, role, department });
+        const payload = { username, full_name, role, department };
+        if (password) payload.password = password; // chỉ update password nếu có nhập mới
+        const res = await window.api.updateUser(id, payload);
         if (res.success) {
             closeModal();
             loadUsers();
