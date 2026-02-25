@@ -23,7 +23,8 @@ async function initTodoModule() {
         const isAdmin = _todoUser && _todoUser.role === 'Admin';
         const canView = isAdmin || _todoPerms.includes('view');
         const canCreate = isAdmin || _todoPerms.includes('create');
-        const canViewAll = isAdmin || _todoPerms.includes('view_all');
+        // Admin KHÔNG auto view_all — chỉ xem task của bản thân trong Kanban
+        const canViewAll = !isAdmin && _todoPerms.includes('view_all');
 
         // Không có quyền
         if (!canView) {
@@ -40,8 +41,13 @@ async function initTodoModule() {
         const btnAdd = document.getElementById('btnAddTodo');
         if (btnAdd && !canCreate) btnAdd.style.display = 'none';
 
-        // Hiện filter người dùng nếu có view_all
-        if (canViewAll) {
+        // Admin: load users để giao việc trong modal
+        if (isAdmin) {
+            const ag = document.getElementById('assigneeGroup');
+            if (ag) ag.style.display = '';
+            await _loadTodoUsers();
+        } else if (canViewAll) {
+            // Lãnh đạo/view_all: load users + filter người dùng
             const af = document.getElementById('todoAssigneeFilter');
             if (af) af.style.display = '';
             const ag = document.getElementById('assigneeGroup');
@@ -55,6 +61,9 @@ async function initTodoModule() {
         _calM = now.getMonth();
         _calSel = null;
 
+        // Admin: load thống kê chung toàn hệ thống
+        if (isAdmin) await _loadAdminStats();
+
         await todoLoadTasks();
     } catch (e) {
         console.error('[Todo] initTodoModule error:', e);
@@ -65,7 +74,8 @@ async function initTodoModule() {
 async function todoLoadTasks() {
     try {
         const isAdmin = _todoUser && _todoUser.role === 'Admin';
-        const canViewAll = isAdmin || _todoPerms.includes('view_all');
+        // Tất cả đều chỉ load task của bản thân cho Kanban (kể cả Admin)
+        const canViewAll = !isAdmin && _todoPerms.includes('view_all');
         const filters = canViewAll ? {} : { owner_id: _todoUser ? _todoUser.id : -1 };
 
         const res = await window.api.getTodos(filters);
@@ -164,7 +174,80 @@ function _cardHTML(t, status) {
     </div>`;
 }
 
-// ===== STATS =====
+// ===== ADMIN STATS =====
+async function _loadAdminStats() {
+    try {
+        // Lấy ALL tasks (không filter) chỉ để tính thống kê, không hiển thị trong Kanban
+        const res = await window.api.getTodos({});
+        if (!res || !res.success) return;
+        const all = res.data || [];
+        const today = new Date().toISOString().split('T')[0];
+
+        const totalAll = all.length;
+        const doingAll = all.filter(t => t.status === 'doing').length;
+        const doneAll = all.filter(t => t.status === 'done').length;
+        const overdueAll = all.filter(t => t.status !== 'done' && t.due_date && t.due_date < today).length;
+
+        // Nhóm theo user
+        const byUser = {};
+        all.forEach(t => {
+            const name = t.owner_name || 'Không rõ';
+            if (!byUser[name]) byUser[name] = { todo: 0, doing: 0, done: 0 };
+            byUser[name][t.status] = (byUser[name][t.status] || 0) + 1;
+        });
+
+        const panel = document.getElementById('adminStatsPanel');
+        if (!panel) return;
+        panel.style.display = '';
+
+        const rows = Object.entries(byUser).map(([name, cnt]) =>
+            `<tr>
+                <td style="padding:6px 10px;font-size:12px;">${_esc(name)}</td>
+                <td style="padding:6px 10px;text-align:center;font-size:12px;">${cnt.todo || 0}</td>
+                <td style="padding:6px 10px;text-align:center;font-size:12px;color:#f97316;">${cnt.doing || 0}</td>
+                <td style="padding:6px 10px;text-align:center;font-size:12px;color:#16a34a;">${cnt.done || 0}</td>
+            </tr>`
+        ).join('');
+
+        panel.innerHTML = `
+            <div class="panel-head"><i class="fas fa-globe-asia"></i> Thống kê toàn hệ thống</div>
+            <div class="panel-body" style="padding:12px 16px;">
+                <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px;">
+                    <div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);">
+                        <div style="font-size:22px;font-weight:700;">${totalAll}</div>
+                        <div style="font-size:11px;color:var(--text-muted);">Tổng task</div>
+                    </div>
+                    <div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);">
+                        <div style="font-size:22px;font-weight:700;color:#16a34a;">${doneAll}</div>
+                        <div style="font-size:11px;color:var(--text-muted);">Hoàn thành</div>
+                    </div>
+                    <div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center;border:1px solid var(--border);">
+                        <div style="font-size:22px;font-weight:700;color:#f97316;">${doingAll}</div>
+                        <div style="font-size:11px;color:var(--text-muted);">Đang làm</div>
+                    </div>
+                    <div style="background:#fef2f2;border-radius:8px;padding:10px;text-align:center;border:1px solid #fecaca;">
+                        <div style="font-size:22px;font-weight:700;color:#dc2626;">${overdueAll}</div>
+                        <div style="font-size:11px;color:#dc2626;">⚠️ Quá hạn</div>
+                    </div>
+                </div>
+                ${Object.keys(byUser).length > 0 ? `
+                <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;">Theo nhân viên</div>
+                <table style="width:100%;border-collapse:collapse;">
+                    <thead><tr style="background:#f3f4f6;">
+                        <th style="padding:5px 10px;text-align:left;font-size:11px;color:var(--text-muted);">Nhân viên</th>
+                        <th style="padding:5px 10px;text-align:center;font-size:11px;color:var(--text-muted);">Cần</th>
+                        <th style="padding:5px 10px;text-align:center;font-size:11px;color:var(--text-muted);">Đang</th>
+                        <th style="padding:5px 10px;text-align:center;font-size:11px;color:var(--text-muted);">Xong</th>
+                    </tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>` : '<div style="text-align:center;color:var(--text-muted);font-size:12px;padding:8px;">Chưa có task nào</div>'}
+            </div>`;
+    } catch (e) {
+        console.error('[Todo] _loadAdminStats error:', e);
+    }
+}
+
+// ===== STATS (cá nhân) =====
 function _renderStats() {
     const today = new Date().toISOString().split('T')[0];
     const od = _todoFiltered.filter(t => t.status !== 'done' && t.due_date && t.due_date < today).length;
