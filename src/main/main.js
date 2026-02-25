@@ -5,6 +5,7 @@ const { initUserController } = require('../controllers/userController');
 const { initPermissionController } = require('../controllers/permissionController');
 const { initSystemController } = require('../controllers/systemController');
 const { initKpiController } = require('../controllers/kpiController');
+const { initTodoController } = require('../controllers/todoController');
 
 let mainWindow;
 
@@ -18,6 +19,7 @@ async function bootstrap() {
         initPermissionController();
         initSystemController();
         initKpiController();
+        initTodoController();
 
         // 3. Create the Main Window
         createWindow();

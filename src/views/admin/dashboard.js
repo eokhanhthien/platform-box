@@ -26,6 +26,10 @@ async function initDashboardContext() {
         window.APP_CONFIG.PERMISSIONS = {};
     }
 
+    // Lưu context user toàn cục để các module con sử dụng (todo.js, kpi.js...)
+    window._currentUser = currentUser;
+    window._currentUserPermissions = window.APP_CONFIG.PERMISSIONS[currentUser.role] || {};
+
     // Build Sidebar Navigation Động dựa trên Role
     const navMenu = document.querySelector('.nav-menu');
     navMenu.innerHTML = ''; // Clear default items
@@ -106,6 +110,8 @@ async function switchSection(moduleId) {
             renderPermissionsUI();
         } else if (moduleId === 'kpi' && typeof initKpiModule === 'function') {
             initKpiModule();
+        } else if (moduleId === 'todo' && typeof initTodoModule === 'function') {
+            await initTodoModule();
         }
     } else {
         // Nếu module chưa có màn hình (placeholder)

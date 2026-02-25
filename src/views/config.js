@@ -18,6 +18,7 @@ window.APP_CONFIG = {
         { id: 'dashboard', label: 'Dashboard', icon: 'fas fa-border-all', url: '#' },
         { id: 'users', label: 'Quản lý Users', icon: 'fas fa-users', url: '#' },
         { id: 'permissions', label: 'Phân quyền', icon: 'fas fa-user-shield', url: '#' },
-        { id: 'kpi', label: 'Quản lý KPI', icon: 'fas fa-chart-line', url: '#' }
+        { id: 'kpi', label: 'Quản lý KPI', icon: 'fas fa-chart-line', url: '#' },
+        { id: 'todo', label: 'Todo List', icon: 'fas fa-tasks', url: '#' }
     ]
 };

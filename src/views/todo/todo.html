@@ -1,0 +1,891 @@
+<!-- TODO MODULE — Fragment HTML only (no html/body tags) -->
+<div class="todo-root">
+
+    <style>
+        /* ===== TODO ROOT ===== */
+        .todo-root {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-main);
+            min-height: 100%;
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .todo-page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .todo-page-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 4px;
+        }
+
+        .todo-page-header p {
+            font-size: 14px;
+            margin: 0;
+            color: var(--text-muted);
+        }
+
+        /* ===== LAYOUT ===== */
+        .todo-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        /* ===== LEFT PANEL: KANBAN ===== */
+        .todo-kanban-panel {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Toolbar */
+        .todo-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .todo-search {
+            flex: 1;
+            min-width: 160px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            outline: none;
+            background: white;
+            transition: border-color .15s;
+        }
+
+        .todo-search:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 118, 254, .1);
+        }
+
+        .todo-filter-select {
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            outline: none;
+            background: white;
+            color: var(--text-main);
+            transition: border-color .15s;
+        }
+
+        .todo-filter-select:focus {
+            border-color: var(--primary);
+        }
+
+        /* Kanban Board */
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .kanban-col {
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            min-height: 200px;
+        }
+
+        .kanban-col-header {
+            padding: 14px 16px 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .kanban-col-header .col-title {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .kanban-col-header .col-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .kanban-col-header .col-count {
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--border);
+            color: var(--text-muted);
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+
+        .kanban-col-body {
+            padding: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .kanban-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 12px;
+            color: var(--text-muted);
+            gap: 6px;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .kanban-empty i {
+            font-size: 20px;
+            opacity: .3;
+        }
+
+        /* Task Card */
+        .task-card {
+            background: white;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            padding: 14px 14px 12px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, .05);
+            cursor: pointer;
+            transition: box-shadow .18s, transform .18s, border-color .18s;
+        }
+
+        .task-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 118, 254, .1);
+            border-color: rgba(0, 118, 254, .25);
+            transform: translateY(-1px);
+        }
+
+        .task-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .task-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.4;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .task-card-title.done-title {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .task-card-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .task-action-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            transition: background .15s, color .15s;
+        }
+
+        .task-action-btn:hover {
+            background: #f3f4f6;
+            color: var(--text-main);
+        }
+
+        .task-action-btn.danger:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .task-card-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .task-card-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .task-priority-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .priority-high {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .priority-medium {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .priority-low {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .task-due-badge {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #f3f4f6;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .task-due-badge.overdue {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .task-due-badge.today {
+            background: #eef5ff;
+            color: var(--primary);
+        }
+
+        .task-assignee {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .task-card-status-btns {
+            display: flex;
+            gap: 4px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f3f4f6;
+        }
+
+        .status-quick-btn {
+            flex: 1;
+            padding: 4px 6px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: white;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all .15s;
+        }
+
+        .status-quick-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .status-quick-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* ===== RIGHT PANEL: CALENDAR + NOTES ===== */
+        .todo-right-panel {
+            width: 280px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .todo-panel-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+            overflow: hidden;
+        }
+
+        .todo-panel-card .panel-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            background: #f9fafb;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .todo-panel-card .panel-body {
+            padding: 14px 16px;
+        }
+
+        /* Mini Calendar */
+        .mini-cal-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .mini-cal-title {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .mini-cal-nav-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            transition: all .15s;
+        }
+
+        .mini-cal-nav-btn:hover {
+            background: #eef5ff;
+            color: var(--primary);
+        }
+
+        .mini-cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            text-align: center;
+        }
+
+        .mini-cal-dow {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 4px 0;
+            text-transform: uppercase;
+        }
+
+        .mini-cal-day {
+            font-size: 12px;
+            padding: 5px 2px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background .15s, color .15s;
+            line-height: 1;
+            position: relative;
+        }
+
+        .mini-cal-day:hover {
+            background: #f3f4f6;
+        }
+
+        .mini-cal-day.other-month {
+            color: #d1d5db;
+        }
+
+        .mini-cal-day.today {
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+        }
+
+        .mini-cal-day.has-task::after {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 4px;
+            background: #f97316;
+            border-radius: 50%;
+            margin: 2px auto 0;
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .mini-cal-day.today.has-task::after {
+            background: white;
+        }
+
+        .mini-cal-day.selected {
+            background: #eef5ff;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .mini-cal-day.today.selected {
+            background: var(--primary);
+            color: white;
+        }
+
+        .cal-day-tasks {
+            margin-top: 12px;
+        }
+
+        .cal-day-tasks-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+        }
+
+        .cal-task-item {
+            padding: 8px 10px;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+            background: #f8fafc;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .cal-task-item .ct-title {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .cal-task-item .ct-sub {
+            color: var(--text-muted);
+            font-size: 11px;
+        }
+
+        /* Stats panel */
+        .todo-stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .todo-stat-item {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 10px 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .todo-stat-item .stat-num {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .todo-stat-item .stat-lbl {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        /* ===== MODAL ===== */
+        .todo-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, .55);
+            backdrop-filter: blur(2px);
+            z-index: 5000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .todo-modal-overlay.active {
+            display: flex;
+        }
+
+        .todo-modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .18);
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+            animation: todoModalIn .2s ease;
+        }
+
+        @keyframes todoModalIn {
+            from {
+                transform: scale(.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .todo-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .todo-modal-header h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .todo-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: #f3f4f6;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: var(--text-muted);
+            transition: background .15s;
+        }
+
+        .todo-modal-close:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .todo-modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .todo-modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: #f9fafb;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .todo-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .todo-form-group {
+            margin-bottom: 14px;
+        }
+
+        .todo-form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+
+        .todo-form-group input[type="text"],
+        .todo-form-group input[type="date"],
+        .todo-form-group select,
+        .todo-form-group textarea {
+            width: 100%;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+            color: var(--text-main);
+            transition: border-color .15s, box-shadow .15s;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .todo-form-group input:focus,
+        .todo-form-group select:focus,
+        .todo-form-group textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 118, 254, .1);
+        }
+
+        .todo-form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Buttons */
+        .todo-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .todo-btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .todo-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            color: var(--text-main);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .todo-btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+    </style>
+
+    <!-- PAGE HEADER -->
+    <div class="todo-page-header">
+        <div>
+            <h2><i class="fas fa-tasks" style="color:var(--primary); margin-right:10px;"></i>Todo List</h2>
+            <p>Quản lý công việc cá nhân theo Kanban Board và Lịch</p>
+        </div>
+        <button class="todo-btn-primary" id="btnAddTodo" onclick="todoOpenModal()">
+            <i class="fas fa-plus"></i> Thêm task
+        </button>
+    </div>
+
+    <div class="todo-layout">
+        <!-- LEFT: KANBAN -->
+        <div class="todo-kanban-panel">
+            <!-- Toolbar -->
+            <div class="todo-toolbar">
+                <input type="text" class="todo-search" id="todoSearch" placeholder="&#xf002;  Tìm kiếm task..."
+                    oninput="todoApplyFilter()">
+                <select class="todo-filter-select" id="todoPriorityFilter" onchange="todoApplyFilter()">
+                    <option value="">Tất cả độ ưu tiên</option>
+                    <option value="high">🔴 Cao</option>
+                    <option value="medium">🟠 Trung bình</option>
+                    <option value="low">🟢 Thấp</option>
+                </select>
+                <select class="todo-filter-select" id="todoAssigneeFilter" onchange="todoApplyFilter()"
+                    style="display:none;">
+                    <option value="">Tất cả người thực hiện</option>
+                </select>
+            </div>
+
+            <!-- Kanban Board -->
+            <div class="kanban-board" id="kanbanBoard">
+                <!-- Col: Todo -->
+                <div class="kanban-col" id="col-todo">
+                    <div class="kanban-col-header">
+                        <div class="col-title">
+                            <span class="col-dot" style="background:#6b7280;"></span>
+                            Cần làm
+                        </div>
+                        <span class="col-count" id="count-todo">0</span>
+                    </div>
+                    <div class="kanban-col-body" id="cards-todo"></div>
+                </div>
+                <!-- Col: Doing -->
+                <div class="kanban-col" id="col-doing">
+                    <div class="kanban-col-header">
+                        <div class="col-title">
+                            <span class="col-dot" style="background:#f97316;"></span>
+                            Đang làm
+                        </div>
+                        <span class="col-count" id="count-doing">0</span>
+                    </div>
+                    <div class="kanban-col-body" id="cards-doing"></div>
+                </div>
+                <!-- Col: Done -->
+                <div class="kanban-col" id="col-done">
+                    <div class="kanban-col-header">
+                        <div class="col-title">
+                            <span class="col-dot" style="background:#16a34a;"></span>
+                            Hoàn thành
+                        </div>
+                        <span class="col-count" id="count-done">0</span>
+                    </div>
+                    <div class="kanban-col-body" id="cards-done"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: CALENDAR + STATS -->
+        <div class="todo-right-panel">
+            <!-- Stats -->
+            <div class="todo-panel-card">
+                <div class="panel-head"><i class="fas fa-chart-pie"></i> Tổng quan</div>
+                <div class="panel-body">
+                    <div class="todo-stats-row">
+                        <div class="todo-stat-item">
+                            <div class="stat-num" id="statTotal">—</div>
+                            <div class="stat-lbl">Tổng</div>
+                        </div>
+                        <div class="todo-stat-item">
+                            <div class="stat-num" id="statDoing" style="color:#f97316;">—</div>
+                            <div class="stat-lbl">Đang làm</div>
+                        </div>
+                        <div class="todo-stat-item">
+                            <div class="stat-num" id="statDone" style="color:#16a34a;">—</div>
+                            <div class="stat-lbl">Xong</div>
+                        </div>
+                        <div class="todo-stat-item" style="grid-column: span 3; margin-top:4px;">
+                            <div class="stat-num" id="statOverdue" style="color:#dc2626; font-size:16px;">—</div>
+                            <div class="stat-lbl">⚠️ Quá hạn</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Calendar -->
+            <div class="todo-panel-card">
+                <div class="panel-head"><i class="fas fa-calendar-alt"></i> Lịch</div>
+                <div class="panel-body">
+                    <div class="mini-cal-nav">
+                        <button class="mini-cal-nav-btn" onclick="todoCalPrev()"><i
+                                class="fas fa-chevron-left"></i></button>
+                        <div class="mini-cal-title" id="calTitle"></div>
+                        <button class="mini-cal-nav-btn" onclick="todoCalNext()"><i
+                                class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div class="mini-cal-grid" id="calGrid"></div>
+                    <div class="cal-day-tasks" id="calDayTasks"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Add / Edit Task -->
+    <div class="todo-modal-overlay" id="todoModalOverlay">
+        <div class="todo-modal">
+            <div class="todo-modal-header">
+                <h3 id="todoModalTitle">Thêm task mới</h3>
+                <button class="todo-modal-close" onclick="todoCloseModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="todo-modal-body">
+                <input type="hidden" id="todoEditId">
+                <div class="todo-form-group">
+                    <label>Tiêu đề *</label>
+                    <input type="text" id="todoTitle" placeholder="Nhập tiêu đề công việc...">
+                </div>
+                <div class="todo-form-group">
+                    <label>Mô tả</label>
+                    <textarea id="todoDesc" placeholder="Chi tiết công việc (không bắt buộc)..."></textarea>
+                </div>
+                <div class="todo-form-row">
+                    <div class="todo-form-group">
+                        <label>Trạng thái</label>
+                        <select id="todoStatus">
+                            <option value="todo">🔘 Cần làm</option>
+                            <option value="doing">🔶 Đang làm</option>
+                            <option value="done">✅ Hoàn thành</option>
+                        </select>
+                    </div>
+                    <div class="todo-form-group">
+                        <label>Độ ưu tiên</label>
+                        <select id="todoPriority">
+                            <option value="low">🟢 Thấp</option>
+                            <option value="medium" selected>🟠 Trung bình</option>
+                            <option value="high">🔴 Cao</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="todo-form-row">
+                    <div class="todo-form-group">
+                        <label>Ngày đến hạn</label>
+                        <input type="date" id="todoDueDate">
+                    </div>
+                    <div class="todo-form-group" id="assigneeGroup" style="display:none;">
+                        <label>Giao cho</label>
+                        <select id="todoAssignee">
+                            <option value="">— Bản thân —</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="todo-form-group">
+                    <label>Ghi chú <span
+                            style="font-weight:400;color:var(--text-muted);font-size:12px;">(nhanh)</span></label>
+                    <textarea id="todoNote" placeholder="Ghi chú nhanh cho task này..."
+                        style="min-height:60px;"></textarea>
+                </div>
+            </div>
+            <div class="todo-modal-footer">
+                <button class="todo-btn-secondary" onclick="todoCloseModal()">Hủy</button>
+                <button class="todo-btn-primary" id="todoSaveBtn" onclick="todoSave()">
+                    <i class="fas fa-save"></i> Lưu task
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>

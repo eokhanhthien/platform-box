@@ -26,5 +26,13 @@ contextBridge.exposeInMainWorld('api', {
     saveKpiTemplate: (department, config) => ipcRenderer.invoke('saveKpiTemplate', department, config),
     getKpiReports: (filters) => ipcRenderer.invoke('getKpiReports', filters),
     getUserKpiReport: (userId, period) => ipcRenderer.invoke('getUserKpiReport', userId, period),
-    saveUserKpiReport: (userId, department, period, kpiData) => ipcRenderer.invoke('saveUserKpiReport', userId, department, period, kpiData)
+    saveUserKpiReport: (userId, department, period, kpiData) => ipcRenderer.invoke('saveUserKpiReport', userId, department, period, kpiData),
+
+    // Todo Feature
+    getTodos: (filters) => ipcRenderer.invoke('getTodos', filters),
+    getTodoById: (id) => ipcRenderer.invoke('getTodoById', id),
+    addTodo: (data) => ipcRenderer.invoke('addTodo', data),
+    updateTodo: (id, data) => ipcRenderer.invoke('updateTodo', id, data),
+    updateTodoStatus: (id, status) => ipcRenderer.invoke('updateTodoStatus', id, status),
+    deleteTodo: (id) => ipcRenderer.invoke('deleteTodo', id)
 });
