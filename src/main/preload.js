@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld('api', {
     getKpiReports: (filters) => ipcRenderer.invoke('getKpiReports', filters),
     getUserKpiReport: (userId, period) => ipcRenderer.invoke('getUserKpiReport', userId, period),
     saveUserKpiReport: (userId, department, period, kpiData) => ipcRenderer.invoke('saveUserKpiReport', userId, department, period, kpiData),
+    deleteKpiReport: (userId, period) => ipcRenderer.invoke('deleteKpiReport', userId, period),
 
     // Todo Feature
     getTodos: (filters) => ipcRenderer.invoke('getTodos', filters),

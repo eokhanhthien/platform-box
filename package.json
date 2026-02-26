@@ -45,6 +45,7 @@
     "cacheable-request": "^7.0.4",
     "call-bind-apply-helpers": "^1.0.2",
     "chalk": "^4.1.2",
+    "chart.js": "^4.5.1",
     "chownr": "^2.0.0",
     "chromium-pickle-js": "^0.2.0",
     "ci-info": "^3.9.0",

@@ -251,6 +251,10 @@ function _renderPeriodInput(containerId, prefix, type) {
     if (!container) return;
 
     switch (type) {
+        case 'all':
+            container.innerHTML = ''; // no filter, show all
+            break;
+
         case 'day':
             container.innerHTML = `
                 <div>
@@ -335,6 +339,9 @@ function _getPeriodDates(prefix, type) {
     const now = new Date();
     try {
         switch (type) {
+            case 'all':
+                return { startDate: null, endDate: null };
+
             case 'day': {
                 const v = document.getElementById(prefix + 'Date').value;
                 if (!v) return null;
@@ -566,6 +573,16 @@ function _initEmployeeView() {
     const view = document.getElementById('kpi-employee-view');
     view.style.display = 'block';
 
+    // Preload Chart.js from local node_modules (script in innerHTML won't execute)
+    if (!window._chartJsLoaded) {
+        window._chartJsLoaded = true;
+        const s = document.createElement('script');
+        // Path relative to dashboard.html (src/views/admin/) → up 3 levels to root → node_modules
+        s.src = '../../../node_modules/chart.js/dist/chart.umd.min.js';
+        s.onerror = () => { window._chartJsLoaded = false; console.warn('[KPI] Chart.js local load failed'); };
+        document.head.appendChild(s);
+    }
+
     // Check today's status first
     _empCheckTodayStatus();
 
@@ -754,23 +771,23 @@ async function empSubmitKpi() {
 
 async function empLoadHistory() {
     const type = document.getElementById('empHistoryPeriodType') ?
-        document.getElementById('empHistoryPeriodType').value : 'month';
+        document.getElementById('empHistoryPeriodType').value : 'all';
     const criteriaKey = document.getElementById('empHistoryCriteriaFilter').value;
-
-    const dates = _getPeriodDates('empHistory', type);
-    if (!dates) return; // input not yet rendered or invalid
-
-    const { startDate, endDate } = dates;
 
     const wrap = document.getElementById('empHistoryTableWrap');
     wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tải...</p></div>`;
 
     try {
-        const res = await window.api.getKpiReports({
-            userId: _kpiCurrentUser.id,
-            startDate,
-            endDate
-        });
+        const filters = { userId: _kpiCurrentUser.id };
+
+        if (type !== 'all') {
+            const dates = _getPeriodDates('empHistory', type);
+            if (!dates) return;
+            if (dates.startDate) filters.startDate = dates.startDate;
+            if (dates.endDate) filters.endDate = dates.endDate;
+        }
+
+        const res = await window.api.getKpiReports(filters);
 
         if (!res.success) {
             wrap.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>Lỗi: ${res.error}</p></div>`;
@@ -786,7 +803,7 @@ async function empLoadHistory() {
 
 function _renderEmpHistoryTable(rows, tplConfig, criteriaKey, container) {
     if (!rows || rows.length === 0) {
-        container.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-inbox"></i><p>Kh\u00f4ng c\u00f3 d\u1eef li\u1ec7u trong kho\u1ea3ng th\u1eddi gian \u0111\u00e3 ch\u1ecdn.</p></div>`;
+        container.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-inbox"></i><p>Không có dữ liệu trong khoảng thời gian đã chọn.</p></div>`;
         return;
     }
 
@@ -806,7 +823,7 @@ function _renderEmpHistoryTable(rows, tplConfig, criteriaKey, container) {
     }
 
     let html = `<table class="kpi-report-table"><thead><tr>
-        <th>Ng\u00e0y</th>`;
+        <th>Ngày</th>`;
 
     cols.forEach(c => {
         const label = (tplConfig && tplConfig[c]) ? tplConfig[c].name : c;
@@ -814,21 +831,67 @@ function _renderEmpHistoryTable(rows, tplConfig, criteriaKey, container) {
         html += `<th class="num">${label}${unit}</th>`;
     });
 
-    html += `</tr></thead><tbody>`;
+    html += `<th style="width:80px;text-align:center;">Hành động</th></tr></thead><tbody>`;
 
     rows.forEach(r => {
         html += `<tr><td style="color:var(--text-muted); font-variant-numeric:tabular-nums;">${r.period}</td>`;
         cols.forEach(c => {
             const v = r[c];
-            const disp = (v != null) ? Number(v).toLocaleString('vi-VN') : '<span style="color:#ccc;">\u2014</span>';
+            const disp = (v != null) ? Number(v).toLocaleString('vi-VN') : '<span style="color:#ccc;">—</span>';
             html += `<td class="num">${disp}</td>`;
         });
-        html += `</tr>`;
+        html += `<td style="text-align:center; white-space:nowrap;">
+            <button onclick="empEditKpiRow('${r.period}')" title="Sửa"
+                style="background:#eff6ff;color:#3b82f6;border:none;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;margin-right:4px;">
+                <i class="fas fa-pen"></i>
+            </button>
+            <button onclick="empDeleteKpiRow('${r.period}')" title="Xóa"
+                style="background:#fef2f2;color:#dc2626;border:none;border-radius:6px;padding:4px 9px;cursor:pointer;font-size:12px;">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td></tr>`;
     });
 
     html += `</tbody></table>`;
     container.innerHTML = html;
 }
+
+async function empEditKpiRow(period) {
+    // Open the input modal with the given period pre-filled
+    const overlay = document.getElementById('kpiInputModalOverlay');
+    overlay.style.display = 'flex';
+    const dept = _kpiCurrentUser.department || '(Chưa có phòng ban)';
+    document.getElementById('empModalDept').textContent = dept;
+    document.getElementById('empKpiPeriod').value = period;
+    empModalLoadForm();
+}
+
+async function empDeleteKpiRow(period) {
+    const conf = await Swal.fire({
+        title: 'Xóa kết quả KPI?',
+        html: `Bạn sắp xóa dữ liệu ngày <strong>${period}</strong>.<br>Thao tác này không thể hoàn tác.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Xóa',
+        cancelButtonText: 'Hủy',
+        confirmButtonColor: '#dc2626'
+    });
+    if (!conf.isConfirmed) return;
+
+    try {
+        const res = await window.api.deleteKpiReport(_kpiCurrentUser.id, period);
+        if (res.success) {
+            Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1500, showConfirmButton: false });
+            _empCheckTodayStatus();
+            empLoadHistory();
+        } else {
+            Swal.fire('Lỗi', res.error, 'error');
+        }
+    } catch (err) {
+        Swal.fire('Lỗi', 'Không thể kết nối tới server.', 'error');
+    }
+}
+
 
 // ============================================================================
 // NUMBER FORMAT HELPERS
@@ -892,4 +955,231 @@ function _attachNumFormatListeners() {
             }
         });
     });
+}
+
+// ============================================================================
+// STATS MODAL — Employee KPI Comparison
+// ============================================================================
+
+let _statsChartInstances = [];
+
+function empOpenStatsModal() {
+    const overlay = document.getElementById('kpiStatsModalOverlay');
+    overlay.style.display = 'flex';
+    // Reset tabs
+    document.getElementById('statsTabWeek').classList.add('active');
+    document.getElementById('statsTabMonth').classList.remove('active');
+    empLoadStats('week');
+}
+
+function empCloseStatsModal() {
+    document.getElementById('kpiStatsModalOverlay').style.display = 'none';
+    // Destroy all chart instances to free memory
+    _statsChartInstances.forEach(c => { try { c.destroy(); } catch (e) { } });
+    _statsChartInstances = [];
+}
+
+async function empLoadStats(compareType) {
+    // Update active tab
+    document.getElementById('statsTabWeek').classList.toggle('active', compareType === 'week');
+    document.getElementById('statsTabMonth').classList.toggle('active', compareType === 'month');
+
+    const body = document.getElementById('kpiStatsBody');
+    body.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-spinner fa-spin"></i><p>Đang tải dữ liệu...</p></div>`;
+
+    // Destroy previous charts
+    _statsChartInstances.forEach(c => { try { c.destroy(); } catch (e) { } });
+    _statsChartInstances = [];
+
+    const now = new Date();
+    let curStart, curEnd, prevStart, prevEnd, curLabel, prevLabel;
+
+    if (compareType === 'week') {
+        // ISO week: Monday–Sunday
+        const dow = now.getDay() === 0 ? 7 : now.getDay();
+        const mon = new Date(now); mon.setDate(now.getDate() - dow + 1); mon.setHours(0, 0, 0, 0);
+        const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+        const pMon = new Date(mon); pMon.setDate(mon.getDate() - 7);
+        const pSun = new Date(sun); pSun.setDate(sun.getDate() - 7);
+        curStart = _fmtDate(mon); curEnd = _fmtDate(sun);
+        prevStart = _fmtDate(pMon); prevEnd = _fmtDate(pSun);
+        curLabel = `Tuần này (${curStart} – ${curEnd})`;
+        prevLabel = `Tuần trước (${prevStart} – ${prevEnd})`;
+    } else {
+        // Month
+        const yr = now.getFullYear(), mo = now.getMonth();
+        curStart = _fmtDate(new Date(yr, mo, 1));
+        curEnd = _fmtDate(new Date(yr, mo + 1, 0));
+        prevStart = _fmtDate(new Date(yr, mo - 1, 1));
+        prevEnd = _fmtDate(new Date(yr, mo, 0));
+        const moNames = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'];
+        curLabel = `Tháng này (${moNames[mo]}/${yr})`;
+        prevLabel = `Tháng trước (${moNames[mo === 0 ? 11 : mo - 1]}/${mo === 0 ? yr - 1 : yr})`;
+    }
+
+    try {
+        // Load template + current + previous period in parallel
+        const [tplRes, curRes, prevRes] = await Promise.all([
+            window.api.getKpiTemplate(_kpiCurrentUser.department),
+            window.api.getKpiReports({ userId: _kpiCurrentUser.id, startDate: curStart, endDate: curEnd }),
+            window.api.getKpiReports({ userId: _kpiCurrentUser.id, startDate: prevStart, endDate: prevEnd })
+        ]);
+
+        const tpl = (tplRes.success && tplRes.data && tplRes.data.config) ? tplRes.data.config : _kpiEmpTemplate || {};
+        const curRows = curRes.success ? curRes.data : [];
+        const prevRows = prevRes.success ? prevRes.data : [];
+
+        // Aggregate totals per KPI key
+        const sum = (rows, key) => rows.reduce((acc, r) => {
+            const v = parseFloat(r[key]);
+            return acc + (isNaN(v) ? 0 : v);
+        }, 0);
+
+        const keys = Object.keys(tpl).sort((a, b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
+
+        if (keys.length === 0) {
+            body.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-tools"></i><p>Phòng ban chưa cấu hình tiêu chí KPI.</p></div>`;
+            return;
+        }
+
+        // Group keys by unit
+        const unitGroups = {};
+        keys.forEach(k => {
+            const unit = (tpl[k] && tpl[k].unit) ? tpl[k].unit.trim() : '(không có đơn vị)';
+            if (!unitGroups[unit]) unitGroups[unit] = [];
+            unitGroups[unit].push(k);
+        });
+
+        // Period label header
+        let html = `
+        <div style="display:flex;gap:16px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;">
+                <span class="kpi-legend-dot" style="background:#3b82f6;"></span>${curLabel}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--text-muted);">
+                <span class="kpi-legend-dot" style="background:#d1d5db;"></span>${prevLabel}
+            </div>
+        </div>`;
+
+        Object.entries(unitGroups).forEach(([unit, groupKeys]) => {
+            const groupLabels = groupKeys.map(k => tpl[k] ? tpl[k].name : k);
+            const curVals = groupKeys.map(k => sum(curRows, k));
+            const prevVals = groupKeys.map(k => sum(prevRows, k));
+
+            const chartId = `statsChart_${unit.replace(/[^a-z0-9]/gi, '_')}`;
+
+            html += `<div class="kpi-stat-group">
+                <div class="kpi-stat-group-title">
+                    <i class="fas fa-layer-group"></i> Đơn vị: <strong>${unit}</strong>
+                </div>
+                <div class="kpi-stats-chart-wrap">
+                    <canvas id="${chartId}"></canvas>
+                </div>
+                <div class="kpi-stats-summary-grid">`;
+
+            groupKeys.forEach((k, i) => {
+                const cur = curVals[i], prev = prevVals[i];
+                const name = tpl[k] ? tpl[k].name : k;
+                let deltaHtml = '';
+                if (prev === 0 && cur === 0) {
+                    deltaHtml = `<span class="sc-delta flat"><i class="fas fa-minus"></i> Không có dữ liệu</span>`;
+                } else if (prev === 0) {
+                    deltaHtml = `<span class="sc-delta up"><i class="fas fa-arrow-up"></i> Mới</span>`;
+                } else {
+                    const pct = ((cur - prev) / prev * 100).toFixed(1);
+                    const cls = parseFloat(pct) > 0 ? 'up' : parseFloat(pct) < 0 ? 'down' : 'flat';
+                    const icon = cls === 'up' ? 'fa-arrow-up' : cls === 'down' ? 'fa-arrow-down' : 'fa-minus';
+                    deltaHtml = `<span class="sc-delta ${cls}"><i class="fas ${icon}"></i> ${pct}%</span>`;
+                }
+                html += `<div class="kpi-stat-card">
+                    <div class="sc-label" title="${name}">${name}</div>
+                    <div class="sc-val">${Number(cur).toLocaleString('vi-VN')}</div>
+                    <div class="sc-prev">Kỳ trước: ${Number(prev).toLocaleString('vi-VN')} ${unit}</div>
+                    ${deltaHtml}
+                </div>`;
+            });
+
+            html += `</div></div>`;
+        });
+
+        body.innerHTML = html;
+
+        // Wait for Chart.js to load if needed, then render charts
+        const _doRender = () => {
+            Object.entries(unitGroups).forEach(([unit, groupKeys]) => {
+                const chartId = `statsChart_${unit.replace(/[^a-z0-9]/gi, '_')}`;
+                const canvas = document.getElementById(chartId);
+                if (!canvas) return;
+
+                const groupLabels = groupKeys.map(k => tpl[k] ? tpl[k].name : k);
+                const curVals = groupKeys.map(k => sum(curRows, k));
+                const prevVals = groupKeys.map(k => sum(prevRows, k));
+
+                const chart = new window.Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: groupLabels,
+                        datasets: [
+                            {
+                                label: 'Kỳ này',
+                                data: curVals,
+                                backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                                borderRadius: 6,
+                                borderSkipped: false
+                            },
+                            {
+                                label: 'Kỳ trước',
+                                data: prevVals,
+                                backgroundColor: 'rgba(209, 213, 219, 0.85)',
+                                borderRadius: 6,
+                                borderSkipped: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 600, easing: 'easeOutQuart' },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: { font: { size: 12 }, usePointStyle: true, pointStyle: 'rect' }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => ` ${ctx.dataset.label}: ${Number(ctx.raw).toLocaleString('vi-VN')} ${unit}`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: 'rgba(0,0,0,0.05)' },
+                                ticks: {
+                                    font: { size: 11 },
+                                    callback: v => Number(v).toLocaleString('vi-VN')
+                                }
+                            },
+                            x: { grid: { display: false }, ticks: { font: { size: 11 } } }
+                        }
+                    }
+                });
+                _statsChartInstances.push(chart);
+            });
+        };
+
+        if (window.Chart) {
+            _doRender();
+        } else {
+            // Wait for CDN script to load
+            const interval = setInterval(() => {
+                if (window.Chart) { clearInterval(interval); _doRender(); }
+            }, 100);
+        }
+
+    } catch (err) {
+        console.error('empLoadStats error:', err);
+        body.innerHTML = `<div class="kpi-empty-state"><i class="fas fa-exclamation-circle"></i><p>Lỗi khi tải thống kê.</p></div>`;
+    }
 }

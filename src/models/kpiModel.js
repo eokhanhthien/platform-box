@@ -175,10 +175,25 @@ function saveUserKpiReport(userId, department, period, kpiData) {
     });
 }
 
+function deleteKpiReport(userId, period) {
+    return new Promise((resolve, reject) => {
+        try {
+            const db = getDB();
+            db.run('DELETE FROM kpi_reports WHERE user_id = ? AND period = ?', [userId, period], function (err) {
+                if (err) reject({ success: false, error: err.message });
+                else resolve({ success: true, changes: this.changes });
+            });
+        } catch (error) {
+            reject({ success: false, error: error.message });
+        }
+    });
+}
+
 module.exports = {
     getKpiTemplate,
     saveKpiTemplate,
     getKpiReports,
     getUserKpiReport,
-    saveUserKpiReport
+    saveUserKpiReport,
+    deleteKpiReport
 };
