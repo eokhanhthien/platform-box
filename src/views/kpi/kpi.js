@@ -573,13 +573,24 @@ function _initEmployeeView() {
     const view = document.getElementById('kpi-employee-view');
     view.style.display = 'block';
 
-    // Preload Chart.js from local node_modules (script in innerHTML won't execute)
+    // Preload Chart.js from local node_modules (offline mode)
     if (!window._chartJsLoaded) {
         window._chartJsLoaded = true;
         const s = document.createElement('script');
-        // Path relative to dashboard.html (src/views/admin/) → up 3 levels to root → node_modules
+        // Path from dashboard.html (src/views/admin/) up to project root then into node_modules
         s.src = '../../../node_modules/chart.js/dist/chart.umd.min.js';
-        s.onerror = () => { window._chartJsLoaded = false; console.warn('[KPI] Chart.js local load failed'); };
+        s.onload = () => console.log('[KPI] Chart.js loaded from local');
+        s.onerror = () => {
+            // Fallback to CDN if local fails
+            console.warn('[KPI] Local Chart.js not found, trying CDN...');
+            const s2 = document.createElement('script');
+            s2.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+            s2.onerror = () => {
+                window._chartJsLoaded = false;
+                console.error('[KPI] Chart.js could not be loaded.');
+            };
+            document.head.appendChild(s2);
+        };
         document.head.appendChild(s);
     }
 
