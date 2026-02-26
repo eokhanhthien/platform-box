@@ -6,6 +6,10 @@ const { initPermissionController } = require('../controllers/permissionControlle
 const { initSystemController } = require('../controllers/systemController');
 const { initKpiController } = require('../controllers/kpiController');
 const { initTodoController } = require('../controllers/todoController');
+const { initNoteController } = require('../controllers/noteController');
+
+// REQUIRED for Windows 10/11 Toast Notifications to work in Electron
+app.setAppUserModelId('com.skyAdmin.platformBox');
 
 let mainWindow;
 
@@ -20,6 +24,7 @@ async function bootstrap() {
         initSystemController();
         initKpiController();
         initTodoController();
+        initNoteController();
 
         // 3. Create the Main Window
         createWindow();

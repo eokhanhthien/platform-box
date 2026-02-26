@@ -19,6 +19,7 @@ window.APP_CONFIG = {
         { id: 'users', label: 'Quản lý Users', icon: 'fas fa-users', url: '#' },
         { id: 'permissions', label: 'Phân quyền', icon: 'fas fa-user-shield', url: '#' },
         { id: 'kpi', label: 'Quản lý KPI', icon: 'fas fa-chart-line', url: '#' },
-        { id: 'todo', label: 'Todo List', icon: 'fas fa-tasks', url: '#' }
+        { id: 'todo', label: 'Todo List', icon: 'fas fa-tasks', url: '#' },
+        { id: 'notes', label: 'Ghi Chú', icon: 'fas fa-sticky-note', url: '#' }
     ]
 };

@@ -34,5 +34,16 @@ contextBridge.exposeInMainWorld('api', {
     addTodo: (data) => ipcRenderer.invoke('addTodo', data),
     updateTodo: (id, data) => ipcRenderer.invoke('updateTodo', id, data),
     updateTodoStatus: (id, status) => ipcRenderer.invoke('updateTodoStatus', id, status),
-    deleteTodo: (id) => ipcRenderer.invoke('deleteTodo', id)
+    deleteTodo: (id) => ipcRenderer.invoke('deleteTodo', id),
+
+    // Notes Feature
+    getNotes: (filters) => ipcRenderer.invoke('getNotes', filters),
+    getNoteById: (id) => ipcRenderer.invoke('getNoteById', id),
+    addNote: (data) => ipcRenderer.invoke('addNote', data),
+    updateNote: (id, data) => ipcRenderer.invoke('updateNote', id, data),
+    deleteNote: (id) => ipcRenderer.invoke('deleteNote', id),
+    getAllTags: (ownerId) => ipcRenderer.invoke('getAllTags', ownerId),
+    markReminderFired: (id) => ipcRenderer.invoke('markReminderFired', id),
+    testReminderNotification: () => ipcRenderer.invoke('testReminderNotification'),
+    checkRemindersNow: () => ipcRenderer.invoke('checkRemindersNow')
 });

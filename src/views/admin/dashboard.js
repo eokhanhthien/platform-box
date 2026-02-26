@@ -112,6 +112,8 @@ async function switchSection(moduleId) {
             initKpiModule();
         } else if (moduleId === 'todo' && typeof initTodoModule === 'function') {
             await initTodoModule();
+        } else if (moduleId === 'notes' && typeof initNotesModule === 'function') {
+            await initNotesModule(window._currentUser);
         }
     } else {
         // Nếu module chưa có màn hình (placeholder)

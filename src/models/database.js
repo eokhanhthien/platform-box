@@ -93,6 +93,41 @@ function initDB() {
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )`);
 
+                // 6. Notes table
+                await runQuery(`CREATE TABLE IF NOT EXISTS notes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL DEFAULT '',
+                    content TEXT DEFAULT '',
+                    color TEXT DEFAULT 'default',
+                    is_pinned INTEGER DEFAULT 0,
+                    is_locked INTEGER DEFAULT 0,
+                    reminder_date TEXT,
+                    reminder_time TEXT DEFAULT '08:00',
+                    reminder_fired INTEGER DEFAULT 0,
+                    owner_id INTEGER NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )`);
+
+                // 7. Note tags table
+                await runQuery(`CREATE TABLE IF NOT EXISTS note_tags (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    note_id INTEGER NOT NULL,
+                    tag TEXT NOT NULL,
+                    FOREIGN KEY(note_id) REFERENCES notes(id) ON DELETE CASCADE
+                )`);
+
+                // Migration: add new columns to notes if they don't exist yet (safe for existing DBs)
+                const migrateCol = async (col, def) => {
+                    try { await runQuery(`ALTER TABLE notes ADD COLUMN ${col} ${def}`); } catch (_) { }
+                };
+                await migrateCol('reminder_time', 'TEXT DEFAULT \'08:00\'');
+                await migrateCol('reminder_fired', 'INTEGER DEFAULT 0');
+
+                // Enable FK
+                await runQuery(`PRAGMA foreign_keys = ON`);
+
+
                 // 6. Seed default admin if no users
                 const userCount = await getRow('SELECT COUNT(*) as count FROM users');
                 if (userCount.count === 0) {
@@ -107,7 +142,8 @@ function initDB() {
                         game: ['view'],
                         permissions: ['view', 'update'],
                         kpi: ['view', 'create', 'update', 'delete', 'config'],
-                        todo: ['view', 'create', 'update', 'delete', 'view_all']
+                        todo: ['view', 'create', 'update', 'delete', 'view_all'],
+                        notes: ['view', 'create', 'update', 'delete']
                     });
                     await runQuery(
                         'INSERT OR IGNORE INTO role_permissions (role, permissions) VALUES (?, ?)',

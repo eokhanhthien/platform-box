@@ -1,0 +1,1214 @@
+<!-- NOTES MODULE — Fragment HTML only (no html/body tags) -->
+<div class="notes-root">
+
+    <style>
+        /* ===== ROOT ===== */
+        .notes-root {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-main);
+            min-height: 100%;
+        }
+
+        /* ===== HEADER ===== */
+        .notes-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .notes-header h2 {
+            font-size: 22px;
+            font-weight: 700;
+            margin: 0 0 3px;
+        }
+
+        .notes-header p {
+            font-size: 13px;
+            margin: 0;
+            color: var(--text-muted);
+        }
+
+        .notes-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ===== TOOLBAR ===== */
+        .notes-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+
+        .notes-search-wrap {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .notes-search-wrap i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 13px;
+            pointer-events: none;
+        }
+
+        .notes-search {
+            width: 100%;
+            padding: 9px 12px 9px 34px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            background: white;
+            transition: border-color .15s, box-shadow .15s;
+            box-sizing: border-box;
+        }
+
+        .notes-search:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 118, 254, .1);
+        }
+
+        .notes-filter-select {
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-size: 13px;
+            outline: none;
+            background: white;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: border-color .15s;
+        }
+
+        .notes-filter-select:focus {
+            border-color: var(--primary);
+        }
+
+        /* Color Filter Dots */
+        .notes-color-filter {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+        }
+
+        .notes-color-filter-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-right: 2px;
+        }
+
+        .color-dot-filter {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2.5px solid transparent;
+            transition: transform .15s, border-color .15s;
+            flex-shrink: 0;
+        }
+
+        .color-dot-filter:hover {
+            transform: scale(1.2);
+        }
+
+        .color-dot-filter.active {
+            border-color: #374151;
+            transform: scale(1.1);
+        }
+
+        /* ===== BODY LAYOUT ===== */
+        .notes-body {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        /* ===== LEFT: TAG SIDEBAR ===== */
+        .notes-tag-sidebar {
+            width: 200px;
+            flex-shrink: 0;
+        }
+
+        .notes-sidebar-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+            overflow: hidden;
+        }
+
+        .notes-sidebar-head {
+            padding: 12px 14px;
+            background: #f9fafb;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notes-tag-list {
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .notes-tag-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 10px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: background .15s, color .15s;
+            user-select: none;
+        }
+
+        .notes-tag-item:hover {
+            background: #f3f4f6;
+            color: var(--text-main);
+        }
+
+        .notes-tag-item.active {
+            background: #eef5ff;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .notes-tag-item.active i {
+            color: var(--primary);
+        }
+
+        .notes-tag-item i {
+            font-size: 12px;
+            margin-right: 7px;
+        }
+
+        .notes-tag-count {
+            font-size: 11px;
+            background: #f3f4f6;
+            color: var(--text-muted);
+            padding: 1px 7px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* Stats mini */
+        .notes-mini-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            padding: 10px;
+        }
+
+        .notes-mini-stat {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .notes-mini-stat .msn {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .notes-mini-stat .msl {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 1px;
+        }
+
+        /* ===== RIGHT: GRID ===== */
+        .notes-grid-panel {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* Masonry-style using CSS columns */
+        .notes-grid {
+            columns: 3;
+            column-gap: 16px;
+        }
+
+        @media (max-width: 1200px) {
+            .notes-grid {
+                columns: 2;
+            }
+        }
+
+        .notes-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .notes-empty i {
+            font-size: 40px;
+            opacity: .25;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .notes-empty p {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* ===== NOTE CARD ===== */
+        .note-card {
+            break-inside: avoid;
+            margin-bottom: 16px;
+            border-radius: 14px;
+            border: 1.5px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+            cursor: pointer;
+            transition: box-shadow .2s, transform .2s, border-color .2s;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .note-card:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+            transform: translateY(-2px);
+        }
+
+        /* Note Color Themes */
+        .note-card.color-default {
+            background: #ffffff;
+        }
+
+        .note-card.color-yellow {
+            background: #fffde7;
+            border-color: #fcd34d;
+        }
+
+        .note-card.color-green {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .note-card.color-blue {
+            background: #eff6ff;
+            border-color: #93c5fd;
+        }
+
+        .note-card.color-purple {
+            background: #faf5ff;
+            border-color: #c4b5fd;
+        }
+
+        .note-card.color-pink {
+            background: #fdf2f8;
+            border-color: #f9a8d4;
+        }
+
+        .note-card.color-orange {
+            background: #fff7ed;
+            border-color: #fdba74;
+        }
+
+        .note-card.color-red {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+
+        .note-card-stripe {
+            height: 4px;
+        }
+
+        .color-default .note-card-stripe {
+            background: #e5e7eb;
+        }
+
+        .color-yellow .note-card-stripe {
+            background: #fbbf24;
+        }
+
+        .color-green .note-card-stripe {
+            background: #22c55e;
+        }
+
+        .color-blue .note-card-stripe {
+            background: #3b82f6;
+        }
+
+        .color-purple .note-card-stripe {
+            background: #8b5cf6;
+        }
+
+        .color-pink .note-card-stripe {
+            background: #ec4899;
+        }
+
+        .color-orange .note-card-stripe {
+            background: #f97316;
+        }
+
+        .color-red .note-card-stripe {
+            background: #ef4444;
+        }
+
+        .note-card-inner {
+            padding: 14px;
+        }
+
+        .note-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .note-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.4;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .note-card-badges {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .note-badge {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+
+        .badge-pin {
+            background: #fef9c3;
+            color: #ca8a04;
+        }
+
+        .badge-lock {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .note-card-body {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-word;
+        }
+
+        .note-card-footer {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0, 0, 0, .07);
+        }
+
+        .note-tag-chip {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, .06);
+            color: #4b5563;
+        }
+
+        .note-reminder-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #eef5ff;
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .note-reminder-badge.overdue {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .note-reminder-badge.today {
+            background: #fef9c3;
+            color: #ca8a04;
+        }
+
+        .note-card-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity .15s;
+        }
+
+        .note-card:hover .note-card-actions {
+            opacity: 1;
+        }
+
+        .note-action-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(0, 0, 0, .06);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #6b7280;
+            transition: background .15s, color .15s;
+        }
+
+        .note-action-btn:hover {
+            background: rgba(0, 0, 0, .12);
+            color: var(--text-main);
+        }
+
+        .note-action-btn.danger:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* ===== MODAL ===== */
+        .notes-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, .55);
+            backdrop-filter: blur(3px);
+            z-index: 6000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .notes-modal-overlay.active {
+            display: flex;
+        }
+
+        .notes-modal {
+            background: white;
+            border-radius: 18px;
+            width: 100%;
+            max-width: 680px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, .2);
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+            animation: noteModalIn .2s ease;
+        }
+
+        @keyframes noteModalIn {
+            from {
+                transform: scale(.95) translateY(10px);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .notes-modal-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .notes-modal-title-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            background: transparent;
+            font-family: inherit;
+        }
+
+        .notes-modal-title-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .notes-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: #f3f4f6;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            color: var(--text-muted);
+            transition: background .15s;
+            flex-shrink: 0;
+        }
+
+        .notes-modal-close:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* Color picker in modal */
+        .notes-color-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 22px;
+            border-bottom: 1px solid var(--border);
+            background: #fafafa;
+            flex-wrap: wrap;
+        }
+
+        .notes-color-row-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            margin-right: 4px;
+        }
+
+        .color-swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2.5px solid transparent;
+            transition: transform .15s, border-color .15s;
+            flex-shrink: 0;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.2);
+        }
+
+        .color-swatch.active {
+            border-color: #1f2937;
+            transform: scale(1.1);
+        }
+
+        .color-swatch[data-color="default"] {
+            background: #e5e7eb;
+        }
+
+        .color-swatch[data-color="yellow"] {
+            background: #fbbf24;
+        }
+
+        .color-swatch[data-color="green"] {
+            background: #22c55e;
+        }
+
+        .color-swatch[data-color="blue"] {
+            background: #3b82f6;
+        }
+
+        .color-swatch[data-color="purple"] {
+            background: #8b5cf6;
+        }
+
+        .color-swatch[data-color="pink"] {
+            background: #ec4899;
+        }
+
+        .color-swatch[data-color="orange"] {
+            background: #f97316;
+        }
+
+        .color-swatch[data-color="red"] {
+            background: #ef4444;
+        }
+
+        /* Rich text toolbar */
+        .notes-editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 22px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .editor-tool-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 7px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #6b7280;
+            transition: background .15s, color .15s;
+        }
+
+        .editor-tool-btn:hover {
+            background: #f3f4f6;
+            color: var(--text-main);
+        }
+
+        .editor-tool-btn.active {
+            background: #eef5ff;
+            color: var(--primary);
+        }
+
+        .editor-tool-sep {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+            margin: 0 4px;
+        }
+
+        /* Content editable */
+        .notes-editor-area {
+            flex: 1;
+            padding: 16px 22px;
+            min-height: 180px;
+            max-height: 320px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        .notes-editor-area:empty::before {
+            content: attr(data-placeholder);
+            color: #9ca3af;
+        }
+
+        .notes-editor-area ul,
+        .notes-editor-area ol {
+            padding-left: 22px;
+            margin: 4px 0;
+        }
+
+        /* Modal bottom row */
+        .notes-modal-meta {
+            padding: 12px 22px;
+            border-top: 1px solid var(--border);
+            background: #fafafa;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .notes-tags-input-wrap {
+            flex: 1;
+            min-width: 160px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+        }
+
+        .notes-tags-input-wrap i {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .notes-tags-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 13px;
+            font-family: inherit;
+            min-width: 80px;
+        }
+
+        .notes-tag-chips-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .notes-tag-chip-rm {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #eef5ff;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .notes-tag-chip-rm i {
+            font-size: 9px;
+        }
+
+        .notes-reminder-input {
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 13px;
+            outline: none;
+            font-family: inherit;
+            color: var(--text-main);
+            background: white;
+        }
+
+        .notes-reminder-input:focus {
+            border-color: var(--primary);
+        }
+
+        .notes-toggle-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border);
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #6b7280;
+            transition: all .15s;
+            position: relative;
+        }
+
+        .notes-toggle-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .notes-toggle-btn.on {
+            background: #eef5ff;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Template Picker */
+        .notes-template-btn {
+            padding: 6px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all .15s;
+        }
+
+        .notes-template-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .notes-template-dropdown {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+            min-width: 200px;
+            z-index: 10;
+            overflow: hidden;
+            display: none;
+        }
+
+        .notes-template-dropdown.open {
+            display: block;
+        }
+
+        .template-item {
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-main);
+            transition: background .15s;
+        }
+
+        .template-item:hover {
+            background: #f9fafb;
+        }
+
+        .template-item i {
+            width: 16px;
+            color: var(--primary);
+        }
+
+        /* Modal footer */
+        .notes-modal-footer {
+            padding: 14px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            background: #f9fafb;
+            border-radius: 0 0 18px 18px;
+        }
+
+        .notes-footer-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .notes-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .notes-btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .notes-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 20px;
+            background: white;
+            color: var(--text-main);
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .notes-btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .notes-btn-danger {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 20px;
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1.5px solid #fca5a5;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .notes-btn-danger:hover {
+            background: #dc2626;
+            color: white;
+        }
+
+        .note-count-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+    </style>
+
+    <!-- PAGE HEADER -->
+    <div class="notes-header">
+        <div>
+            <h2><i class="fas fa-sticky-note" style="color:var(--primary);margin-right:10px;"></i>Ghi Chú</h2>
+            <p>Ghi lại mọi ý tưởng · Phân loại bằng tag · Ghim · Nhắc nhở</p>
+        </div>
+        <div class="notes-header-actions">
+            <button class="notes-btn-primary" id="btnAddNote" onclick="noteOpenModal()">
+                <i class="fas fa-plus"></i> Ghi chú mới
+            </button>
+        </div>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="notes-toolbar">
+        <div class="notes-search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" class="notes-search" id="notesSearch" placeholder="Tìm kiếm ghi chú...">
+        </div>
+        <div class="notes-color-filter" id="notesColorFilter">
+            <span class="notes-color-filter-label">Màu:</span>
+            <div class="color-dot-filter active" data-color="all" style="background:#e5e7eb;" title="Tất cả"></div>
+            <div class="color-dot-filter" data-color="yellow" style="background:#fbbf24;" title="Vàng"></div>
+            <div class="color-dot-filter" data-color="green" style="background:#22c55e;" title="Xanh lá"></div>
+            <div class="color-dot-filter" data-color="blue" style="background:#3b82f6;" title="Xanh dương"></div>
+            <div class="color-dot-filter" data-color="purple" style="background:#8b5cf6;" title="Tím"></div>
+            <div class="color-dot-filter" data-color="pink" style="background:#ec4899;" title="Hồng"></div>
+            <div class="color-dot-filter" data-color="orange" style="background:#f97316;" title="Cam"></div>
+            <div class="color-dot-filter" data-color="red" style="background:#ef4444;" title="Đỏ"></div>
+        </div>
+    </div>
+
+    <!-- BODY -->
+    <div class="notes-body">
+
+        <!-- LEFT: TAG SIDEBAR -->
+        <div class="notes-tag-sidebar">
+            <!-- Stats -->
+            <div class="notes-sidebar-card" style="margin-bottom:14px;">
+                <div class="notes-sidebar-head"><i class="fas fa-chart-pie"></i> Tổng quan</div>
+                <div class="notes-mini-stats">
+                    <div class="notes-mini-stat">
+                        <div class="msn" id="noteStatTotal">—</div>
+                        <div class="msl">Tổng</div>
+                    </div>
+                    <div class="notes-mini-stat">
+                        <div class="msn" id="noteStatPinned" style="color:#ca8a04;">—</div>
+                        <div class="msl">Đã ghim</div>
+                    </div>
+                    <div class="notes-mini-stat">
+                        <div class="msn" id="noteStatLocked" style="color:#dc2626;">—</div>
+                        <div class="msl">Đã khóa</div>
+                    </div>
+                    <div class="notes-mini-stat">
+                        <div class="msn" id="noteStatReminder" style="color:var(--primary);">—</div>
+                        <div class="msl">Nhắc nhở</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="notes-sidebar-card">
+                <div class="notes-sidebar-head"><i class="fas fa-tag"></i> Tags</div>
+                <div class="notes-tag-list" id="notesTagList">
+                    <div class="notes-tag-item active" data-tag="" id="tagItemAll">
+                        <span><i class="fas fa-layer-group"></i>Tất cả</span>
+                        <span class="notes-tag-count" id="tagCountAll">0</span>
+                    </div>
+                    <div class="notes-tag-item" data-tag="__pinned__">
+                        <span><i class="fas fa-thumbtack"></i>Đã ghim</span>
+                    </div>
+                    <div class="notes-tag-item" data-tag="__reminder__">
+                        <span><i class="fas fa-bell"></i>Có nhắc nhở</span>
+                    </div>
+                    <!-- Dynamic tags rendered by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: NOTES GRID -->
+        <div class="notes-grid-panel">
+            <div class="note-count-label" id="noteCountLabel"></div>
+            <div class="notes-grid" id="notesGrid"></div>
+            <div class="notes-empty" id="notesEmpty" style="display:none;">
+                <i class="fas fa-sticky-note"></i>
+                <p id="notesEmptyMsg">Chưa có ghi chú nào. Nhấn <b>+ Ghi chú mới</b> để bắt đầu!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL ===== -->
+    <div class="notes-modal-overlay" id="notesModalOverlay">
+        <div class="notes-modal" id="notesModal">
+
+            <!-- Header: Title input + close -->
+            <div class="notes-modal-header">
+                <input type="text" class="notes-modal-title-input" id="noteModalTitle" placeholder="Tiêu đề ghi chú...">
+                <button class="notes-modal-close" onclick="noteCloseModal()"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Color picker -->
+            <div class="notes-color-row">
+                <span class="notes-color-row-label">Màu</span>
+                <div class="color-swatch active" data-color="default" title="Mặc định"></div>
+                <div class="color-swatch" data-color="yellow" title="Vàng"></div>
+                <div class="color-swatch" data-color="green" title="Xanh lá"></div>
+                <div class="color-swatch" data-color="blue" title="Xanh dương"></div>
+                <div class="color-swatch" data-color="purple" title="Tím"></div>
+                <div class="color-swatch" data-color="pink" title="Hồng"></div>
+                <div class="color-swatch" data-color="orange" title="Cam"></div>
+                <div class="color-swatch" data-color="red" title="Đỏ"></div>
+            </div>
+
+            <!-- Rich text toolbar -->
+            <div class="notes-editor-toolbar">
+                <button class="editor-tool-btn" title="In đậm (Ctrl+B)" onclick="noteExecCmd('bold')"><i
+                        class="fas fa-bold"></i></button>
+                <button class="editor-tool-btn" title="In nghiêng (Ctrl+I)" onclick="noteExecCmd('italic')"><i
+                        class="fas fa-italic"></i></button>
+                <button class="editor-tool-btn" title="Gạch chân (Ctrl+U)" onclick="noteExecCmd('underline')"><i
+                        class="fas fa-underline"></i></button>
+                <button class="editor-tool-btn" title="Gạch ngang" onclick="noteExecCmd('strikeThrough')"><i
+                        class="fas fa-strikethrough"></i></button>
+                <div class="editor-tool-sep"></div>
+                <button class="editor-tool-btn" title="Danh sách không đánh số"
+                    onclick="noteExecCmd('insertUnorderedList')"><i class="fas fa-list-ul"></i></button>
+                <button class="editor-tool-btn" title="Danh sách đánh số" onclick="noteExecCmd('insertOrderedList')"><i
+                        class="fas fa-list-ol"></i></button>
+                <div class="editor-tool-sep"></div>
+                <button class="editor-tool-btn" title="Căn trái" onclick="noteExecCmd('justifyLeft')"><i
+                        class="fas fa-align-left"></i></button>
+                <button class="editor-tool-btn" title="Căn giữa" onclick="noteExecCmd('justifyCenter')"><i
+                        class="fas fa-align-center"></i></button>
+                <div class="editor-tool-sep"></div>
+                <button class="editor-tool-btn" title="Xóa định dạng" onclick="noteExecCmd('removeFormat')"><i
+                        class="fas fa-eraser"></i></button>
+            </div>
+
+            <!-- Editor area -->
+            <div class="notes-editor-area" id="noteEditorArea" contenteditable="true"
+                data-placeholder="Nội dung ghi chú..."></div>
+
+            <!-- Meta row: tags + reminder + pin + lock -->
+            <div class="notes-modal-meta">
+                <!-- Tags -->
+                <div style="flex:1; min-width: 180px;">
+                    <div class="notes-tag-chips-preview" id="noteModalTagsPreview"></div>
+                    <div class="notes-tags-input-wrap" style="margin-top:6px;">
+                        <i class="fas fa-tag"></i>
+                        <input type="text" class="notes-tags-input" id="noteModalTagInput"
+                            placeholder="Thêm tag, nhấn Enter...">
+                    </div>
+                </div>
+                <!-- Reminder -->
+                <div>
+                    <label
+                        style="font-size:11px;font-weight:600;color:var(--text-muted);display:flex;align-items:center;gap:6px;margin-bottom:6px;cursor:pointer;">
+                        <input type="checkbox" id="noteReminderCheck" onchange="noteToggleReminderInputs(this)"
+                            style="width:14px;height:14px;cursor:pointer;accent-color:var(--primary);">
+                        <i class="fas fa-bell"></i> Nhắc nhở
+                    </label>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <input type="date" class="notes-reminder-input" id="noteModalReminder"
+                            style="width:130px;opacity:.45;pointer-events:none;" title="Ngày nhắc nhở" disabled>
+                        <input type="time" class="notes-reminder-input" id="noteModalReminderTime" value="08:00"
+                            style="width:90px;opacity:.45;pointer-events:none;" title="Giờ nhắc nhở" disabled>
+                    </div>
+                    <div style="font-size:10px;color:#9ca3af;margin-top:3px;">Thông báo Windows lúc đúng giờ</div>
+                </div>
+                <!-- Pin -->
+                <div>
+                    <label
+                        style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Ghim</label>
+                    <button class="notes-toggle-btn" id="notePinBtn" title="Ghim ghi chú" onclick="noteTogglePin()">
+                        <i class="fas fa-thumbtack"></i>
+                    </button>
+                </div>
+                <!-- Lock -->
+                <div>
+                    <label
+                        style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px;">Khóa</label>
+                    <button class="notes-toggle-btn" id="noteLockBtn" title="Khóa ghi chú (chỉ đọc)"
+                        onclick="noteToggleLock()">
+                        <i class="fas fa-lock"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="notes-modal-footer">
+                <div class="notes-footer-left">
+                    <!-- Templates -->
+                    <button class="notes-template-btn" onclick="noteToggleTemplates(event)">
+                        <i class="fas fa-file-alt"></i> Mẫu nhanh
+                    </button>
+                    <div class="notes-template-dropdown" id="noteTemplateDropdown">
+                        <div class="template-item" onclick="noteApplyTemplate('meeting')">
+                            <i class="fas fa-users"></i> Biên bản họp
+                        </div>
+                        <div class="template-item" onclick="noteApplyTemplate('plan')">
+                            <i class="fas fa-calendar-alt"></i> Kế hoạch công việc
+                        </div>
+                        <div class="template-item" onclick="noteApplyTemplate('checklist')">
+                            <i class="fas fa-check-square"></i> Checklist
+                        </div>
+                        <div class="template-item" onclick="noteApplyTemplate('idea')">
+                            <i class="fas fa-lightbulb"></i> Brainstorm ý tưởng
+                        </div>
+                        <div class="template-item" onclick="noteApplyTemplate('daily')">
+                            <i class="fas fa-sun"></i> Nhật ký hàng ngày
+                        </div>
+                    </div>
+                    <!-- Delete (only when editing) -->
+                    <button class="notes-btn-danger" id="noteDeleteBtn" style="display:none;"
+                        onclick="noteDeleteCurrent()">
+                        <i class="fas fa-trash-alt"></i> Xóa
+                    </button>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="notes-btn-secondary" onclick="noteCloseModal()">Hủy</button>
+                    <button class="notes-btn-primary" onclick="noteSave()" id="noteSaveBtn"><i class="fas fa-save"></i>
+                        Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
