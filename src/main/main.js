@@ -8,10 +8,17 @@ const { initKpiController } = require('../controllers/kpiController');
 const { initTodoController } = require('../controllers/todoController');
 const { initNoteController } = require('../controllers/noteController');
 
-// REQUIRED for Windows 10/11 Toast Notifications to work in Electron
-app.setAppUserModelId('com.skyAdmin.platformBox');
+// App identity
+app.setName('SkyAdmin');
+app.setAppUserModelId('com.skyadmin.app');
 
 let mainWindow;
+const iconPath = path.join(__dirname, '../images/icon.png');
+
+// Set Dock icon for macOS (especially needed during dev mode)
+if (process.platform === 'darwin') {
+    app.dock.setIcon(iconPath);
+}
 
 async function bootstrap() {
     try {
@@ -38,6 +45,8 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1000,
         height: 700,
+        title: 'SkyAdmin',
+        icon: iconPath,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,

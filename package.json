@@ -1,7 +1,7 @@
 {
-  "name": "fee",
+  "name": "skyadmin",
   "version": "1.0.0",
-  "description": "",
+  "description": "SkyAdmin - Internal Management System",
   "main": "src/main/main.js",
   "dependencies": {
     "7zip-bin": "^5.2.0",
@@ -298,12 +298,39 @@
   "scripts": {
     "start": "electron src/main/main.js",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win --x64",
+    "dist:mac": "electron-builder --mac"
   },
   "build": {
-    "appId": "com.hcth.usermanager",
+    "appId": "com.skyadmin.app",
+    "productName": "SkyAdmin",
+    "copyright": "Copyright © 2025 SkyAdmin",
+    "icon": "src/images/icon",
+    "files": [
+      "src/**/*",
+      "!src/**/*.test.js"
+    ],
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "src/images/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "src/images/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   },
   "keywords": [],
