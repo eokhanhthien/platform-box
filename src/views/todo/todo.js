@@ -55,6 +55,23 @@ async function initTodoModule() {
             await _loadTodoUsers();
         }
 
+        // Preload SortableJS
+        if (!window._sortableJsLoaded) {
+            window._sortableJsLoaded = true;
+            const s = document.createElement('script');
+            // Path relative to dashboard.html
+            s.src = '../../../node_modules/sortablejs/Sortable.min.js';
+            s.onload = () => { console.log('[Todo] SortableJS loaded locally'); _renderKanban(); };
+            s.onerror = () => {
+                console.warn('[Todo] Local SortableJS not found, trying CDN...');
+                const s2 = document.createElement('script');
+                s2.src = 'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js';
+                s2.onload = () => _renderKanban();
+                document.head.appendChild(s2);
+            };
+            document.head.appendChild(s);
+        }
+
         // Init calendar
         const now = new Date();
         _calY = now.getFullYear();
@@ -117,12 +134,38 @@ function _renderKanban() {
         if (!body) return;
         count.textContent = cols[s].length;
 
+        if (body._sortable) {
+            body._sortable.destroy();
+            body._sortable = null;
+        }
+
         if (!cols[s].length) {
             const msg = { todo: 'Chưa có việc cần làm', doing: 'Chưa có việc đang làm', done: 'Chưa hoàn thành task nào' }[s];
             body.innerHTML = `<div class="kanban-empty"><i class="fas fa-inbox"></i><span>${msg}</span></div>`;
-            return;
+        } else {
+            body.innerHTML = cols[s].map(t => _cardHTML(t, s)).join('');
         }
-        body.innerHTML = cols[s].map(t => _cardHTML(t, s)).join('');
+
+        // Initialize drag-and-drop if Sortable is available
+        if (window.Sortable) {
+            body._sortable = new Sortable(body, {
+                group: 'kanban',
+                animation: 150,
+                draggable: '.draggable-card',
+                ghostClass: 'sortable-ghost',
+                onEnd: function (evt) {
+                    const itemEl = evt.item;
+                    const taskId = itemEl.getAttribute('data-id');
+                    const toCol = evt.to.id.replace('cards-', '');
+                    const fromCol = evt.from.id.replace('cards-', '');
+
+                    if (taskId && toCol !== fromCol) {
+                        // Immediately snap to new state via API, UI will rebuild upon success
+                        todoChangeStatus(taskId, toCol);
+                    }
+                }
+            });
+        }
     });
 }
 
@@ -160,7 +203,9 @@ function _cardHTML(t, status) {
              onclick="event.stopPropagation();todoChangeStatus(${t.id},'${s}')">${labelMap[s]}</button>`
     ).join('')}</div>` : '';
 
-    return `<div class="task-card" onclick="todoOpenModal(${t.id})">
+    const draggableCls = canEdit ? ' draggable-card' : '';
+
+    return `<div class="task-card${draggableCls}" data-id="${t.id}" onclick="todoOpenModal(${t.id})">
         <div class="task-card-top">
             <div class="task-card-title ${status === 'done' ? 'done-title' : ''}">${_esc(t.title)}</div>
             <div class="task-card-actions">${editBtn}${delBtn}</div>
