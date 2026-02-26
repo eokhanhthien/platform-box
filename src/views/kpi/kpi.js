@@ -693,13 +693,20 @@ async function empModalLoadForm() {
             const cfg = _kpiEmpTemplate[k];
             const rawVal = (existing && existing[k] != null) ? existing[k] : '';
             const displayVal = rawVal !== '' ? _formatNumDisplay(rawVal) : '';
+            const unitText = cfg.unit ? `(${cfg.unit})` : '';
             html += `
             <div class="kpi-field-item">
-                <label>${cfg.name}<span class="unit-hint">${cfg.unit ? '(' + cfg.unit + ')' : ''}</span></label>
-                <input type="text" inputmode="numeric" class="kpi-num-input" data-kpi-id="${k}" data-raw="${rawVal}" value="${displayVal}" placeholder="Nh\u1eadp s\u1ed1 li\u1ec7u...">
+                <label>${cfg.name}<span class="unit-hint">${unitText}</span>
+                    <span title="Dấu chấm (.) là phân cách ngàn&#10;Dấu phẩy (,) là phân cách thập phân&#10;Ví dụ: 1.500.000 hoặc 6,7"
+                          style="margin-left:5px;color:#9ca3af;cursor:help;font-size:11px;font-weight:400;">
+                        <i class="fas fa-circle-info"></i>
+                    </span>
+                </label>
+                <input type="text" inputmode="numeric" class="kpi-num-input" data-kpi-id="${k}" data-raw="${rawVal}" value="${displayVal}" placeholder="Nhập số liệu...">
             </div>`;
         });
         html += `</div>`;
+
 
         area.innerHTML = html;
         _attachNumFormatListeners();
@@ -898,64 +905,93 @@ async function empDeleteKpiRow(period) {
 // ============================================================================
 
 /**
- * Format a raw number for display using vi-VN locale: 1500000 -> "1.500.000"
+ * Parse vi-VN number: dots = thousands separator, comma = decimal separator.
+ * Examples: "1.500.000" → 1500000 | "6,7" → 6.7 | "1.500,75" → 1500.75
  */
-function _formatNumDisplay(val) {
-    if (val === '' || val === null || val === undefined) return '';
-    const num = parseFloat(String(val).replace(/\./g, '').replace(/,/g, '.'));
-    if (isNaN(num)) return String(val);
-    return num.toLocaleString('vi-VN');
+function _parseViNumber(str) {
+    str = String(str).trim().replace(/\s/g, '');
+    if (!str) return NaN;
+    // Remove dots (thousands), replace comma with dot (decimal)
+    return parseFloat(str.replace(/\./g, '').replace(',', '.'));
 }
 
 /**
- * Attach input/focus/blur events to all .kpi-num-input elements
- * to provide real-time number formatting.
+ * Format for display — vi-VN locale: "1.500.000" for integers, "6,75" for decimals.
+ */
+function _formatNumDisplay(val) {
+    if (val === '' || val === null || val === undefined) return '';
+    const num = _parseViNumber(String(val));
+    if (isNaN(num)) return String(val);
+    return num.toLocaleString('vi-VN', { minimumFractionDigits: 0, maximumFractionDigits: 4 });
+}
+
+/**
+ * Attach input/focus/blur listeners to .kpi-num-input elements.
+ * - Format while typing (vi-VN: dots=thousands, comma=decimal)
+ * - On focus: show editable form (remove thousand-dots, keep decimal comma)
+ * - On blur: apply full formatting
  */
 function _attachNumFormatListeners() {
     document.querySelectorAll('.kpi-num-input').forEach(input => {
-        // On input: strip formatting, reformat, store raw value
         input.addEventListener('input', function () {
-            // Allow digits, one dot or comma for decimal
+            // Allow digits, dots, one comma (decimal)
             let raw = this.value.replace(/[^\d,.]/g, '');
-            // Remove all dots (thousand separators), treat comma as decimal
-            let numStr = raw.replace(/\./g, '').replace(',', '.');
-            const num = parseFloat(numStr);
-            if (!isNaN(num)) {
-                this.setAttribute('data-raw', num);
-                // Format and show with thousands separator
+            // Split by comma to protect decimal part
+            const parts = raw.split(',');
+            const intPart = parts[0].replace(/\./g, ''); // remove existing dots
+            const decPart = parts.length > 1 ? parts[1].replace(/[,.]/g, '') : null;
+
+            const num = _parseViNumber(raw);
+            if (!isNaN(num) && raw !== '' && raw !== ',') {
+                this.setAttribute('data-raw', String(num));
                 const caretPos = this.selectionStart;
                 const prevLen = this.value.length;
-                this.value = num.toLocaleString('vi-VN');
-                // Adjust caret: keep offset from end
+                // Rebuild: format integer part + keep comma+decimal as typed
+                const intFormatted = parseInt(intPart || '0').toLocaleString('vi-VN');
+                this.value = decPart !== null ? intFormatted + ',' + decPart : intFormatted;
                 const diff = this.value.length - prevLen;
-                this.setSelectionRange(caretPos + diff, caretPos + diff);
+                try { this.setSelectionRange(caretPos + diff, caretPos + diff); } catch (e) { }
             } else if (raw === '' || raw === '0') {
                 this.setAttribute('data-raw', raw === '' ? '' : '0');
                 this.value = raw;
+            } else if (raw === ',') {
+                this.setAttribute('data-raw', '');
+                this.value = '0,';
             } else {
                 this.setAttribute('data-raw', '');
             }
         });
 
-        // On focus: show raw number for easy editing
+        // On focus: show editable form (no thousand dots, keep decimal comma)
         input.addEventListener('focus', function () {
             const raw = this.getAttribute('data-raw');
             if (raw !== null && raw !== '') {
-                this.value = raw;
-                // Select all for quick re-entry
+                const num = parseFloat(raw);
+                if (!isNaN(num)) {
+                    // Show as editable vi number: "6.7" → "6,7"; "1500000" → "1500000" (no dots when editing)
+                    const hasDecimal = !Number.isInteger(num);
+                    this.value = hasDecimal
+                        ? num.toLocaleString('vi-VN', { minimumFractionDigits: 1, maximumFractionDigits: 4 })
+                        : String(num); // raw integer — no dots so easy to edit
+                }
                 this.select();
             }
         });
 
-        // On blur: re-apply display formatting
+        // On blur: full formatting
         input.addEventListener('blur', function () {
-            const raw = this.getAttribute('data-raw');
-            if (raw !== null && raw !== '') {
-                this.value = _formatNumDisplay(raw);
+            const raw = this.getAttribute('data-raw') || this.value;
+            if (!raw) return;
+            const num = _parseViNumber(raw);
+            if (!isNaN(num)) {
+                this.setAttribute('data-raw', String(num));
+                this.value = _formatNumDisplay(num);
             }
         });
     });
 }
+
+
 
 // ============================================================================
 // STATS MODAL — Employee KPI Comparison
