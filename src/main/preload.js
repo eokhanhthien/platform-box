@@ -45,6 +45,7 @@ contextBridge.exposeInMainWorld('api', {
     addNote: (data) => ipcRenderer.invoke('addNote', data),
     updateNote: (id, data) => ipcRenderer.invoke('updateNote', id, data),
     deleteNote: (id) => ipcRenderer.invoke('deleteNote', id),
+    updateNoteOrders: (updates) => ipcRenderer.invoke('updateNoteOrders', updates),
     getAllTags: (ownerId) => ipcRenderer.invoke('getAllTags', ownerId),
     markReminderFired: (id) => ipcRenderer.invoke('markReminderFired', id),
     testReminderNotification: () => ipcRenderer.invoke('testReminderNotification'),

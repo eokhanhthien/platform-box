@@ -177,13 +177,20 @@
         }
     }
 
-    // ── Grid rendering ──────────────────────────────────────────────────────
+    let _sortablePinned = null;
+    let _sortableUnpinned = null;
+
     function _renderGrid() {
-        const grid = document.getElementById('notesGrid');
+        const pinnedGrid = document.getElementById('pinnedNotesGrid');
+        const unpinnedGrid = document.getElementById('notesGrid');
+        const pinnedSection = document.getElementById('pinnedSection');
+        const unpinnedSection = document.getElementById('unpinnedSection');
         const emptyEl = document.getElementById('notesEmpty');
         const emptyMsg = document.getElementById('notesEmptyMsg');
         const countLabel = document.getElementById('noteCountLabel');
-        if (!grid) return;
+        const pinnedCount = document.getElementById('pinnedCount');
+
+        if (!unpinnedGrid || !pinnedGrid) return;
 
         let notes = [..._allNotes];
 
@@ -210,8 +217,13 @@
             );
         }
 
+        // Note: order is already handled by backend query (order_index ASC)
+
         if (notes.length === 0) {
-            grid.innerHTML = '';
+            unpinnedGrid.innerHTML = '';
+            pinnedGrid.innerHTML = '';
+            pinnedSection.style.display = 'none';
+            unpinnedSection.style.display = 'none';
             emptyEl.style.display = 'block';
             if (_filterQuery) {
                 emptyMsg.innerHTML = `Không có kết quả cho <b>"${_filterQuery}"</b>`;
@@ -223,9 +235,69 @@
         }
 
         emptyEl.style.display = 'none';
-        countLabel.textContent = `${notes.length} ghi chú`;
+        countLabel.textContent = `${notes.length} ghi chú hiển thị`;
 
-        grid.innerHTML = notes.map(n => _noteCardHtml(n)).join('');
+        // Split lists
+        const pinnedList = notes.filter(n => n.is_pinned);
+        const unpinnedList = notes.filter(n => !n.is_pinned);
+
+        // Render Pinned
+        if (pinnedList.length > 0) {
+            pinnedSection.style.display = 'block';
+            pinnedCount.textContent = pinnedList.length;
+            pinnedGrid.innerHTML = pinnedList.map(n => _noteCardHtml(n)).join('');
+        } else {
+            pinnedSection.style.display = 'none';
+            pinnedGrid.innerHTML = '';
+        }
+
+        // Render Unpinned
+        if (unpinnedList.length > 0) {
+            unpinnedSection.style.display = 'block';
+            unpinnedGrid.innerHTML = unpinnedList.map(n => _noteCardHtml(n)).join('');
+        } else {
+            unpinnedSection.style.display = 'none';
+            unpinnedGrid.innerHTML = '';
+        }
+
+        // Init Sortable UI
+        _initSortable(pinnedGrid, 'pinnedGroup');
+        _initSortable(unpinnedGrid, 'unpinnedGroup');
+    }
+
+    function _initSortable(el, groupName) {
+        if (!el || !window.Sortable) return;
+        return new Sortable(el, {
+            group: groupName, // Prevent dragging between pinned and unpinned
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: async function () {
+                // Collect new order
+                const items = Array.from(el.querySelectorAll('.note-card'));
+                const updates = items.map((card, index) => {
+                    return {
+                        id: parseInt(card.dataset.id, 10),
+                        order_index: index
+                    };
+                });
+
+                // Update backend quietly
+                // We update JS state to match what was dragged immediately
+                updates.forEach(upd => {
+                    const note = _allNotes.find(n => n.id === upd.id);
+                    if (note) note.order_index = upd.order_index;
+                });
+                // Sort _allNotes in memory so future renders remain correct without having to refetch
+                _allNotes.sort((a, b) => {
+                    if (a.is_pinned === b.is_pinned) {
+                        return (a.order_index || 0) - (b.order_index || 0);
+                    }
+                    return a.is_pinned ? -1 : 1;
+                });
+
+                await window.api.updateNoteOrders(updates);
+            }
+        });
     }
 
     function _noteCardHtml(n) {
@@ -443,6 +515,8 @@
     window.noteDeleteCurrent = noteDeleteCurrent;
 
     window.noteCardClick = async function (id, e) {
+        // Lock the click if dragging occurred
+        // Find if target is an action button
         if (e.target.closest('.note-action-btn') || e.target.closest('[data-stop]')) return;
         const note = _allNotes.find(n => n.id === id);
         if (note) noteOpenModal(note);

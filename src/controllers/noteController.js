@@ -1,4 +1,4 @@
-const { getNotes, getNoteById, addNote, updateNote, deleteNote, getAllTags, getPendingReminders, markReminderFired } = require('../models/noteModel');
+const { getNotes, getNoteById, addNote, updateNote, deleteNote, getAllTags, getPendingReminders, markReminderFired, updateNoteOrders } = require('../models/noteModel');
 const { ipcMain, Notification, app } = require('electron');
 const path = require('path');
 
@@ -111,6 +111,11 @@ function initNoteController() {
 
     ipcMain.handle('deleteNote', async (event, id) => {
         try { return await deleteNote(id); }
+        catch (e) { return { success: false, error: e.message }; }
+    });
+
+    ipcMain.handle('updateNoteOrders', async (event, updates) => {
+        try { return await updateNoteOrders(updates); }
         catch (e) { return { success: false, error: e.message }; }
     });
 

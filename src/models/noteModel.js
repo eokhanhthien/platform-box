@@ -83,7 +83,7 @@ async function getNotes(filters = {}) {
             params.push(filters.tag);
         }
 
-        sql += ` ORDER BY is_pinned DESC, updated_at DESC`;
+        sql += ` ORDER BY is_pinned DESC, order_index ASC, updated_at DESC`;
 
         const rows = await allQ(sql, params);
         if (!rows.length) return { success: true, data: [] };
@@ -142,6 +142,22 @@ async function updateNote(id, data) {
     }
 }
 
+// Bulk update note order
+async function updateNoteOrders(updates) {
+    // updates is an array: [{ id: 1, order_index: 0 }, { id: 2, order_index: 1 }]
+    try {
+        await runQ('BEGIN TRANSACTION');
+        for (const item of updates) {
+            await runQ('UPDATE notes SET order_index = ? WHERE id = ?', [item.order_index, item.id]);
+        }
+        await runQ('COMMIT');
+        return { success: true };
+    } catch (e) {
+        await runQ('ROLLBACK');
+        return { success: false, error: e.message };
+    }
+}
+
 // Get notes with upcoming reminders that haven't been fired yet
 async function getPendingReminders() {
     try {
@@ -191,5 +207,4 @@ async function getAllTags(ownerId) {
     }
 }
 
-module.exports = { getNotes, getNoteById, addNote, updateNote, deleteNote, getAllTags, getPendingReminders, markReminderFired };
-
+module.exports = { getNotes, getNoteById, addNote, updateNote, deleteNote, getAllTags, getPendingReminders, markReminderFired, updateNoteOrders };

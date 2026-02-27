@@ -101,6 +101,7 @@ function initDB() {
                     color TEXT DEFAULT 'default',
                     is_pinned INTEGER DEFAULT 0,
                     is_locked INTEGER DEFAULT 0,
+                    order_index INTEGER DEFAULT 0,
                     reminder_date TEXT,
                     reminder_time TEXT DEFAULT '08:00',
                     reminder_fired INTEGER DEFAULT 0,
@@ -123,6 +124,7 @@ function initDB() {
                 };
                 await migrateCol('reminder_time', 'TEXT DEFAULT \'08:00\'');
                 await migrateCol('reminder_fired', 'INTEGER DEFAULT 0');
+                await migrateCol('order_index', 'INTEGER DEFAULT 0');
 
                 // Enable FK
                 await runQuery(`PRAGMA foreign_keys = ON`);
