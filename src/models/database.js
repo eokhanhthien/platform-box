@@ -128,7 +128,33 @@ function initDB() {
                 await runQuery(`PRAGMA foreign_keys = ON`);
 
 
-                // 6. Seed default admin if no users
+                // 8. System Config table
+                await runQuery(`CREATE TABLE IF NOT EXISTS system_config (
+                    key TEXT PRIMARY KEY,
+                    value TEXT
+                )`);
+
+                // Seed default configs if empty
+                const configCount = await getRow('SELECT COUNT(*) as count FROM system_config');
+                if (configCount.count === 0) {
+                    const defaultRoles = JSON.stringify(['Nhân viên', 'Lãnh đạo', 'Admin']);
+                    const defaultDepts = JSON.stringify(['Ban GĐ', 'Phòng DN Lớn', 'Phòng DN VVN', 'Phòng Bán lẻ', 'Phòng DVKH']);
+                    const defaultNav = JSON.stringify([
+                        { id: 'dashboard', label: 'Dashboard', icon: 'fas fa-border-all', url: '#' },
+                        { id: 'users', label: 'Quản lý Users', icon: 'fas fa-users', url: '#' },
+                        { id: 'permissions', label: 'Phân quyền', icon: 'fas fa-user-shield', url: '#' },
+                        { id: 'kpi', label: 'Quản lý KPI', icon: 'fas fa-chart-line', url: '#' },
+                        { id: 'todo', label: 'Todo List', icon: 'fas fa-tasks', url: '#' },
+                        { id: 'notes', label: 'Ghi Chú', icon: 'fas fa-sticky-note', url: '#' },
+                        { id: 'system_config', label: 'Cấu hình hệ thống', icon: 'fas fa-cog', url: '#' }
+                    ]);
+
+                    await runQuery('INSERT INTO system_config (key, value) VALUES (?, ?)', ['ROLES', defaultRoles]);
+                    await runQuery('INSERT INTO system_config (key, value) VALUES (?, ?)', ['DEPARTMENTS', defaultDepts]);
+                    await runQuery('INSERT INTO system_config (key, value) VALUES (?, ?)', ['NAVIGATION', defaultNav]);
+                }
+
+                // 9. Seed default admin if no users
                 const userCount = await getRow('SELECT COUNT(*) as count FROM users');
                 if (userCount.count === 0) {
                     await runQuery(
@@ -143,7 +169,8 @@ function initDB() {
                         permissions: ['view', 'update'],
                         kpi: ['view', 'create', 'update', 'delete', 'config'],
                         todo: ['view', 'create', 'update', 'delete', 'view_all'],
-                        notes: ['view', 'create', 'update', 'delete']
+                        notes: ['view', 'create', 'update', 'delete'],
+                        system_config: ['view', 'update']
                     });
                     await runQuery(
                         'INSERT OR IGNORE INTO role_permissions (role, permissions) VALUES (?, ?)',

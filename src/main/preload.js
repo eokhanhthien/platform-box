@@ -20,6 +20,8 @@ contextBridge.exposeInMainWorld('api', {
 
     // System Components
     loadTemplate: (moduleName) => ipcRenderer.invoke('loadTemplate', moduleName),
+    getConfig: () => ipcRenderer.invoke('getConfig'),
+    saveConfig: (key, value) => ipcRenderer.invoke('saveConfig', key, value),
 
     // KPI Feature
     getKpiTemplate: (department) => ipcRenderer.invoke('getKpiTemplate', department),

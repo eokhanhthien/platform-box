@@ -4,35 +4,42 @@ let usersModuleInitialized = false;
 function initUsersModule() {
     // Load options from config
     const roleSelect = document.getElementById('userRole');
+    roleSelect.innerHTML = '';
     window.APP_CONFIG.ROLES.forEach(r => roleSelect.add(new Option(r, r)));
 
-    const deptSelect = document.getElementById('userDepartment');
-    window.APP_CONFIG.DEPARTMENTS.forEach(d => deptSelect.add(new Option(d, d)));
+    const deptSelect = $('#userDepartment');
+    deptSelect.empty();
+    window.APP_CONFIG.DEPARTMENTS.forEach(d => deptSelect.append(new Option(d, d, false, false)));
+    deptSelect.trigger('change');
 
     // Handle role change to hide/show department
-    roleSelect.addEventListener('change', function () {
-        const deptGroup = document.getElementById('deptGroup');
-        if (this.value === 'Admin') {
-            deptGroup.style.display = 'none';
-        } else {
-            deptGroup.style.display = 'block';
-        }
-    });
+    // Ensure we only bind this once
+    if (!roleSelect.dataset.bound) {
+        roleSelect.addEventListener('change', function () {
+            const deptGroup = document.getElementById('deptGroup');
+            if (this.value === 'Admin') {
+                deptGroup.style.display = 'none';
+            } else {
+                deptGroup.style.display = 'block';
+            }
+        });
+        roleSelect.dataset.bound = 'true';
+    }
 
     // Khởi tạo Select2 cho phép THÊM MỚI (tags: true) và Mutilple select (nhiều tag)
-    $('#userDepartment').select2({
-        tags: true,
-        tokenSeparators: [',', '+'],
-        placeholder: "Chọn hoặc nhập thêm phòng ban...",
-        allowClear: true
-    });
+    if (!deptSelect.hasClass("select2-hidden-accessible")) {
+        deptSelect.select2({
+            tags: true,
+            tokenSeparators: [',', '+'],
+            placeholder: "Chọn hoặc nhập thêm phòng ban...",
+            allowClear: true
+        });
+    }
 }
 
 async function loadUsers() {
-    if (!usersModuleInitialized) {
-        initUsersModule();
-        usersModuleInitialized = true;
-    }
+    // Always re-init to ensure fresh options from config
+    initUsersModule();
 
     const res = await window.api.getUsers();
     if (res.success) {

@@ -1,0 +1,103 @@
+<div class="page-header">
+    <div class="page-title">
+        <h1>Cấu Hình Hệ Thống</h1>
+        <p>Quản lý các danh mục dữ liệu dùng chung</p>
+    </div>
+</div>
+
+<div class="config-container" style="display: flex; flex-direction: column; gap: 24px;">
+
+    <!-- Card Roles -->
+    <div class="config-panel">
+        <div class="config-panel-header">
+            <div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Chức Vụ Hệ Thống</h3>
+                <p style="margin: 2px 0 0; font-size: 13px; color: var(--text-muted);">Sử dụng trong Quản lý người dùng
+                </p>
+            </div>
+            <button class="btn-primary btn-sm" onclick="addConfigItem('ROLES', 'Thêm Chức Vụ')">
+                <i class="fas fa-plus"></i> Thêm mới
+            </button>
+        </div>
+        <div class="config-panel-body">
+            <div id="list-ROLES" class="config-list">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Card Departments -->
+    <div class="config-panel">
+        <div class="config-panel-header">
+            <div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Phòng Ban</h3>
+                <p style="margin: 2px 0 0; font-size: 13px; color: var(--text-muted);">Sử dụng trong Quản lý người dùng,
+                    KPI</p>
+            </div>
+            <button class="btn-primary btn-sm" onclick="addConfigItem('DEPARTMENTS', 'Thêm Phòng Ban')">
+                <i class="fas fa-plus"></i> Thêm mới
+            </button>
+        </div>
+        <div class="config-panel-body">
+            <div id="list-DEPARTMENTS" class="config-list">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .config-panel {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-card);
+        overflow: hidden;
+    }
+
+    .config-panel-header {
+        padding: 16px 20px;
+        background: #f9fafb;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .config-panel-body {
+        padding: 0;
+    }
+
+    .config-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .config-item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        transition: background 0.2s;
+    }
+
+    .config-item-row:last-child {
+        border-bottom: none;
+    }
+
+    .config-item-row:hover {
+        background: #f3f4f6;
+    }
+
+    .config-item-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-main);
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+</style>

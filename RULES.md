@@ -58,7 +58,7 @@ Khi bạn hoặc người khác cần thêm một tính năng mới (Ví dụ: T
 2. Tách bạch hoàn toàn Code Giao diện (HTML/CSS) và Code Logic (Javascript).
    * Không viết thẻ `<script>` dài thòng lọng trong file `.html`. Dùng `<script src="filename.js"></script>`.
 3. Khi cần load thư viện ngoại (jQuery, Select2, ChartJS...), tải file `.min.js` và `.min.css` đưa vào thư mục `src/views/assets/` và gọi qua thẻ script đường dẫn tương đối. TUYỆT ĐỐI không dùng `require()` ngoài file HTML ở Renderer để tránh lỗi `nodeIntegration`!
-4. **Quản lý Cấu hình Tập trung:** Nếu có các danh sách dữ liệu tĩnh cấu hình ứng dụng (như các loại `Role`, `Department`, `Categories`...), hãy khai báo vào file cấu hình dùng chung `src/views/config.js` (gắn vào thẻ `<script>` trong HTML trước các file logic) để lấy ra dùng qua biến `window.APP_CONFIG`. Tuyệt đối không hardcode cứng trên mã HTML.
+4. **Quản lý Cấu hình Tập trung:** Nếu có các danh sách dữ liệu tĩnh cấu hình ứng dụng (như các loại `Role`, `Department`, `Categories`...), hệ thống sẽ lưu chúng trong table `system_config` của SQLite. Các module sẽ lấy cấu hình này thông qua biến toàn cục `window.APP_CONFIG` (được nạp tự động bất đồng bộ ở `dashboard.js` lúc init). Giao diện quản lý cấu hình nằm ở thư mục `src/views/system_config/`. Tuyệt đối không hardcode cứng trên mã HTML hay tạo file cấu hình tĩnh gán script DOM.
 
 ## BƯỚC 6: CHIA MODULE THEO TÍNH NĂNG (CHUẨN FRAMEWORK)
 **Vị trí:** `src/views/tên-module`

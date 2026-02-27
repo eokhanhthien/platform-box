@@ -14,6 +14,16 @@ async function initDashboardContext() {
         return;
     }
 
+    // Fetch master config from Database
+    const configRes = await window.api.getConfig();
+    if (configRes && configRes.success && configRes.data) {
+        window.APP_CONFIG = configRes.data;
+    } else {
+        console.error("Failed to load APP_CONFIG from database.");
+        alert("Lỗi khi tải cấu hình hệ thống từ cơ sở dữ liệu!");
+        return;
+    }
+
     // Render tên và role ở góc trên phải
     document.querySelector('.user-profile .name').innerText = currentUser.full_name;
     document.querySelector('.user-profile .role').innerText = currentUser.role;
@@ -114,6 +124,8 @@ async function switchSection(moduleId) {
             await initTodoModule();
         } else if (moduleId === 'notes' && typeof initNotesModule === 'function') {
             await initNotesModule(window._currentUser);
+        } else if (moduleId === 'system_config' && typeof initSystemConfigModule === 'function') {
+            initSystemConfigModule();
         }
     } else {
         // Nếu module chưa có màn hình (placeholder)

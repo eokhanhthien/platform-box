@@ -7,6 +7,7 @@ const { initSystemController } = require('../controllers/systemController');
 const { initKpiController } = require('../controllers/kpiController');
 const { initTodoController } = require('../controllers/todoController');
 const { initNoteController } = require('../controllers/noteController');
+const { initConfigController } = require('../controllers/configController');
 
 // App identity
 app.setName('SkyAdmin');
@@ -32,6 +33,7 @@ async function bootstrap() {
         initKpiController();
         initTodoController();
         initNoteController();
+        initConfigController();
 
         // 3. Create the Main Window
         createWindow();
