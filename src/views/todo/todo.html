@@ -208,11 +208,11 @@
         }
 
         .task-action-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgb(235, 235, 235);
         }
 
         .task-action-btn.danger:hover {
-            background: rgba(239, 68, 68, 0.2);
+            background: rgba(253, 253, 253);
             color: var(--td-danger);
         }
 
@@ -252,7 +252,7 @@
             display: flex;
             align-items: center;
             padding: 16px 20px;
-            background: var(--td-bg-card);
+            background: #ffffff;
             border: 1px solid var(--td-border-light);
             border-radius: 12px;
             margin-bottom: 10px;
@@ -263,18 +263,22 @@
         }
 
         .task-list-item:hover {
-            background: var(--td-bg-card-hover);
-            border-color: var(--td-border);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            background: #f6f7f7;
+        }
+
+        .task-list-item.done,
+        .task-list-item.done:hover,
+        .task-card.done,
+        .task-card.done:hover {
+            background: #f8fafb;
         }
 
         .task-list-checkbox {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
-            border: 2px solid var(--td-text-muted);
-            margin-right: 18px;
+            border: 2px solid var(--td-border);
+            margin-right: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -282,7 +286,8 @@
             flex-shrink: 0;
             transition: all 0.2s;
             color: transparent;
-            font-size: 12px;
+            font-size: 11px;
+            background: transparent;
         }
 
         .task-list-checkbox:hover {
@@ -294,7 +299,7 @@
             background: var(--td-primary);
             border-color: var(--td-primary);
             color: white;
-            box-shadow: 0 0 10px rgba(0, 118, 254, 0.4);
+            box-shadow: none;
         }
 
         .task-list-item.done .task-list-title {
@@ -353,13 +358,11 @@
         }
 
         .kanban-col {
-            background: var(--td-bg-card);
-            border-radius: 12px;
+            background: transparent;
             width: 320px;
             min-width: 320px;
             display: flex;
             flex-direction: column;
-            border: 1px solid var(--td-border);
         }
 
         .kanban-col-header {
@@ -372,42 +375,46 @@
         }
 
         .col-count {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--td-text-main);
+            background: #e2e8f0;
+            color: #64748b;
             padding: 2px 8px;
             border-radius: 12px;
-            font-size: 12px;
+            font-size: 11px;
+            font-weight: 700;
         }
 
         .kanban-col-body {
-            padding: 0 16px 16px;
+            padding: 12px;
             flex: 1;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            min-height: 50px;
+            min-height: 150px;
+            background: #f8fafc;
+            border: 1px dashed #e2e8f0;
+            border-radius: 16px;
         }
 
         .task-card {
-            background: var(--td-bg-card);
-            border-radius: 10px;
-            padding: 10px 12px;
+            background: #ffffff;
+            padding: 12px 14px;
             border: 1px solid var(--td-border-light);
+            border-radius: 10px;
             cursor: grab;
             transition: all 0.2s;
         }
 
         .task-card:active {
             cursor: grabbing;
-            backdrop-filter: none;
         }
 
         .task-card:hover {
-            background: var(--td-bg-card-hover);
-            border-color: var(--td-border);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            background: #f6f7f7;
+        }
+
+        .task-card.done {
+            background: #f8fafb;
         }
 
         .task-card-actions {
@@ -469,36 +476,35 @@
         }
 
         .next7-col {
-            width: 280px;
-            min-width: 280px;
+            width: 300px;
+            min-width: 300px;
             max-height: 100%;
-            background: var(--td-bg-card);
-            border: 1px solid var(--td-border);
-            border-radius: 12px;
+            background: transparent;
             display: flex;
             flex-direction: column;
-            padding: 16px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         .next7-col-header {
             padding-bottom: 12px;
-            border-bottom: 1px solid var(--td-border);
-            margin-bottom: 16px;
+            margin-bottom: 4px;
             display: flex;
-            align-items: baseline;
-            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .next7-day-name {
             font-size: 16px;
             font-weight: 700;
             color: var(--td-text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .next7-date {
-            font-size: 13px;
-            color: var(--td-text-muted);
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 600;
         }
 
         .next7-col.is-today .next7-col-header {
@@ -515,31 +521,34 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
-            min-height: 100px;
-            padding: 4px;
-            border-radius: 12px;
+            min-height: 150px;
+            padding: 12px;
+            background: #f8fafc;
+            border: 1px dashed #e2e8f0;
+            border-radius: 16px;
         }
 
         .next7-add-task-btn {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             padding: 12px;
             background: transparent;
             border: none;
-            color: var(--td-text-muted);
-            font-size: 14px;
-            font-weight: 500;
+            color: #94a3b8;
+            font-size: 13px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            border-radius: 8px;
-            margin-top: 8px;
+            border-radius: 12px;
+            margin-top: 4px;
             width: 100%;
         }
 
         .next7-add-task-btn:hover {
-            background: var(--td-bg-hover);
-            color: var(--td-text-main);
+            background: rgba(0, 0, 0, 0.02);
+            color: var(--td-primary);
         }
 
         /* Calendar View */
@@ -857,10 +866,12 @@
         }
 
         .task-priority-badge {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 3px 8px;
-            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 999px;
+            letter-spacing: 0.5px;
         }
 
         .priority-high {
@@ -882,16 +893,18 @@
         }
 
         .task-due-badge {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 20px;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 999px;
             background: rgba(255, 255, 255, 0.05);
             color: var(--td-text-muted);
             border: 1px solid var(--td-border-light);
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            font-weight: 500;
+            gap: 4px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .task-due-badge.overdue {
@@ -973,12 +986,16 @@
             <!-- VIEW: MY DAY -->
             <div class="todo-view active" id="view-today">
                 <div id="list-today"></div>
-                <div id="empty-today" style="display:none; padding-top: 80px; text-align: center;">
-                    <i class="fas fa-sun" style="font-size: 40px; color: #fbbf24; opacity: 0.9;"></i>
-                    <p style="font-size: 18px; font-weight: 600; color: var(--td-text-main); margin-top: 16px;">Bạn có
-                        một ngày rảnh rỗi!</p>
-                    <p style="color: var(--td-text-muted); font-size: 14px; margin-top: 8px;">Tận hưởng hoặc thêm mục
-                        tiêu mới.</p>
+                <div id="empty-today"
+                    style="display:none; padding-top: 100px; text-align: center; flex-direction: column; align-items: center; justify-content: center;">
+                    <div
+                        style="width: 80px; height: 80px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+                        <i class="fas fa-mug-hot" style="font-size: 32px; color: #94a3b8;"></i>
+                    </div>
+                    <p style="font-size: 18px; font-weight: 700; color: #334155; margin-bottom: 8px;">Đã xong mọi việc
+                        cho hôm nay!</p>
+                    <p style="color: #64748b; font-size: 14px; max-width: 250px; line-height: 1.5;">Thư giãn với một
+                        tách cà phê hoặc lên kế hoạch cho những ngày tiếp theo.</p>
                 </div>
             </div>
 
@@ -1001,23 +1018,47 @@
                 <div class="kanban-board-wrapper">
                     <div class="kanban-board" id="kanbanBoard">
                         <div class="kanban-col" id="col-todo">
-                            <div class="kanban-col-header">
-                                <div><span style="color:#6b7280; margin-right:8px;">●</span>Todo</div>
-                                <span class="col-count" id="count-todo">0</span>
+                            <div class="kanban-col-header"
+                                style="padding-bottom:12px; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span
+                                        style="font-size:16px; font-weight:700; color:var(--td-text-main); display:flex; align-items:center; gap:8px;">
+                                        <div style="width:8px;height:8px;border-radius:50%;background:#6b7280;"></div>
+                                        Todo
+                                    </span>
+                                    <span class="col-count" id="count-todo"
+                                        style="font-size:11px; padding:2px 6px;">0</span>
+                                </div>
                             </div>
                             <div class="kanban-col-body" id="cards-todo"></div>
                         </div>
                         <div class="kanban-col" id="col-doing">
-                            <div class="kanban-col-header">
-                                <div><span style="color:#f97316; margin-right:8px;">●</span>In Progress</div>
-                                <span class="col-count" id="count-doing">0</span>
+                            <div class="kanban-col-header"
+                                style="padding-bottom:12px; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span
+                                        style="font-size:16px; font-weight:700; color:var(--td-text-main); display:flex; align-items:center; gap:8px;">
+                                        <div style="width:8px;height:8px;border-radius:50%;background:#f97316;"></div>
+                                        In Progress
+                                    </span>
+                                    <span class="col-count" id="count-doing"
+                                        style="font-size:11px; padding:2px 6px;">0</span>
+                                </div>
                             </div>
                             <div class="kanban-col-body" id="cards-doing"></div>
                         </div>
                         <div class="kanban-col" id="col-done">
-                            <div class="kanban-col-header">
-                                <div><span style="color:#22c55e; margin-right:8px;">●</span>Done</div>
-                                <span class="col-count" id="count-done">0</span>
+                            <div class="kanban-col-header"
+                                style="padding-bottom:12px; margin-bottom:4px; display:flex; align-items:center; justify-content:space-between;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <span
+                                        style="font-size:16px; font-weight:700; color:var(--td-text-main); display:flex; align-items:center; gap:8px;">
+                                        <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;"></div>
+                                        Done
+                                    </span>
+                                    <span class="col-count" id="count-done"
+                                        style="font-size:11px; padding:2px 6px;">0</span>
+                                </div>
                             </div>
                             <div class="kanban-col-body" id="cards-done"></div>
                         </div>

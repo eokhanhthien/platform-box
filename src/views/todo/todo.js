@@ -236,8 +236,7 @@ function _buildListItemHTML(t) {
                 <div class="task-list-title">${_esc(t.title)}</div>
                 <div class="task-list-meta">
                     <span>${pCfg[t.priority] || pCfg.medium}</span>
-                    ${t.department ? `<span><i class="fas fa-building" style="margin-right:4px;"></i>${_esc(t.department)}</span>` : ''}
-                    ${t.note ? `<i class="fas fa-sticky-note" title="Có ghi chú"></i>` : ''}
+                    ${t.description ? `<span style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${_esc(t.description)}"><i class="fas fa-align-left" style="margin-right:4px; opacity:0.7;"></i>${_esc(t.description)}</span>` : ''}
                 </div>
             </div>
             <div class="task-list-actions">
@@ -275,7 +274,15 @@ function _renderNext7Days() {
     for (let i = 0; i < 7; i++) {
         const ds = dates[i];
         const isToday = i === 0;
-        const tasks = _todoFiltered.filter(t => t.due_date === ds);
+        let tasks = _todoFiltered.filter(t => t.due_date === ds);
+
+        // Sort: undone first, then done. Within undone, stick to original order_index
+        tasks.sort((a, b) => {
+            if (a.status === 'done' && b.status !== 'done') return 1;
+            if (a.status !== 'done' && b.status === 'done') return -1;
+            return (a.order_index || 0) - (b.order_index || 0);
+        });
+
         const name = isToday ? 'Today' : (i === 1 ? 'Tomorrow' : dayNames[dateObjs[i].getDay()]);
         const subDate = dateObjs[i].toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -285,11 +292,15 @@ function _renderNext7Days() {
         html += `
             <div class="next7-col ${isToday ? 'is-today' : ''}">
                 <div class="next7-col-header">
-                    <span class="next7-day-name">${name}</span>
-                    <span class="next7-date">${subDate} • ${tasks.length} tasks</span>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="next7-day-name">${name}</span>
+                        <span class="col-count" style="font-size:11px; padding:2px 6px;">${tasks.length}</span>
+                    </div>
+                    <span class="next7-date">${subDate}</span>
                 </div>
                 <div class="next7-col-body" id="next7-col-${ds}" data-date="${ds}">
                     ${cardsHtml}
+                    ${tasks.length === 0 ? '<div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#cbd5e1; font-size:12px; font-weight:700;"><i class="fas fa-download" style="font-size:20px; margin-bottom:8px;"></i>+ Drop here</div>' : ''}
                 </div>
                 <button class="next7-add-task-btn" onclick="todoOpenModal(null, '${ds}')">
                     <i class="fas fa-plus"></i> Add Task
@@ -354,7 +365,15 @@ function _renderKanban() {
 
         if (!cols[s].length) {
             const msg = { todo: 'Chưa có việc cần làm', doing: 'Chưa có việc đang làm', done: 'Chưa hoàn thành task nào' }[s];
-            body.innerHTML = `<div class="kanban-empty"><i class="fas fa-inbox" style="font-size:20px; opacity:0.3; margin-bottom:8px; display:block;"></i><span>${msg}</span></div>`;
+            const icon = { todo: 'fa-clipboard-list', doing: 'fa-spinner', done: 'fa-check-circle' }[s];
+            body.innerHTML = `
+                <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; text-align:center; padding: 20px;">
+                    <div style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                        <i class="fas ${icon}" style="font-size:20px;"></i>
+                    </div>
+                    <span style="font-size:13px; font-weight:600; color:#64748b;">${msg}</span>
+                </div>
+            `;
         } else {
             body.innerHTML = cols[s].map(t => _buildKanbanCardHTML(t)).join('');
         }
@@ -397,42 +416,44 @@ function _buildKanbanCardHTML(t) {
 
     const isDone = t.status === 'done';
 
-    const pCfg = { high: ['🔴', 'Cao', 'priority-high'], medium: ['🟠', 'T.Bình', 'priority-medium'], low: ['🟢', 'Thấp', 'priority-low'] };
-    const [pIco, pLbl, pCls] = pCfg[t.priority] || pCfg.medium;
+    const pCfg = { high: '#ef4444', medium: '#f97316', low: '#22c55e' };
+    const dotColor = pCfg[t.priority] || '#f97316';
 
-    let dueBadge = '';
+    let topLabel = '';
     if (t.due_date) {
-        const cls = (t.status !== 'done' && t.due_date < today) ? 'overdue' : t.due_date === today ? 'today' : '';
         const [y, m, d] = t.due_date.split('-');
-        const lbl = t.due_date === today ? 'Hôm nay' : `${d}/${m}`;
-        dueBadge = `<span class="task-due-badge ${cls}"><i class="fas fa-calendar-alt"></i>${lbl}</span>`;
+        const dateText = t.due_date === today ? 'HÔM NAY' : `${d}/${m}`;
+        const dotHtml = `<div style="width:6px;height:6px;border-radius:50%;background:${dotColor};"></div>`;
+        topLabel = `<div style="display:flex; align-items:center; gap:6px; font-size:10px; font-weight:800; color:${dotColor}; margin-bottom:10px; letter-spacing:0.5px;">${dotHtml}${dateText}</div>`;
     }
 
-    const checkAction = canEdit
-        ? `onclick="event.stopPropagation(); todoToggleCheck(${t.id}, '${t.status}')"`
-        : `onclick="event.stopPropagation();"`;
+    const checkIcon = isDone
+        ? `<i class="fas fa-check-circle" style="color:var(--td-primary);font-size:15px;"></i>`
+        : `<i class="far fa-circle" style="color:#cbd5e1;font-size:15px;"></i>`;
+
+    const checkBtn = canEdit
+        ? `<div onclick="event.stopPropagation(); todoToggleCheck(${t.id}, '${t.status}')" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:24px; height:24px;" title="${isDone ? 'Bỏ tick hoàn thành' : 'Đánh dấu hoàn thành'}">${checkIcon}</div>`
+        : '';
 
     const editBtn = canEdit ? `<button class="task-action-btn" title="Sửa" onclick="event.stopPropagation();todoOpenModal(${t.id})"><i class="fas fa-edit"></i></button>` : '';
     const delBtn = canDel ? `<button class="task-action-btn danger" title="Xóa" onclick="event.stopPropagation();todoDelete(${t.id})"><i class="fas fa-trash"></i></button>` : '';
     const draggableCls = canEdit ? ' draggable-card' : '';
 
+    const avatarHtml = `<div style="width:20px;height:20px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#64748b;font-weight:700;">${(t.title || 'T')[0].toUpperCase()}</div>`;
+
     return `
         <div class="task-card${draggableCls} ${isDone ? 'done' : ''}" data-id="${t.id}" onclick="todoOpenModal(${t.id})">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px;">
-                <div style="display:flex; align-items:flex-start; min-width:0;">
-                    <div class="task-list-checkbox" style="margin-right:8px; width:18px; height:18px; font-size:9px; margin-top:2px;" ${checkAction} title="${isDone ? 'Bỏ tick hoàn thành' : 'Đánh dấu hoàn thành'}">
-                        <i class="fas fa-check"></i>
-                    </div>
-                    <div class="task-card-title ${isDone ? 'done-title' : ''}" style="margin-bottom:0;">${_esc(t.title)}</div>
-                </div>
+            ${topLabel}
+            <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:${t.description ? '6px' : '20px'};">
+                ${checkBtn ? `<div style="margin-top:2px;">${checkBtn}</div>` : ''}
+                <div class="task-card-title ${isDone ? 'done-title' : ''}" style="margin-bottom:0; font-size:15px; font-weight:700; line-height:1.4;">${_esc(t.title)}</div>
             </div>
-            ${t.description ? `<div class="task-card-desc" style="${isDone ? 'opacity:0.6;' : ''}">${_esc(t.description)}</div>` : ''}
-            <div class="task-card-meta" style="${isDone ? 'opacity:0.6;' : ''}">
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <span class="task-priority-badge ${pCls}">${pIco}</span>
-                    ${dueBadge}
+            ${t.description ? `<div class="task-card-desc" style="margin-bottom:16px; ${isDone ? 'opacity:0.6;' : ''}">${_esc(t.description)}</div>` : ''}
+            
+            <div style="display:flex; justify-content:flex-end; align-items:center;">
+                <div style="display:flex; gap:4px; align-items:center;">
+                    <div class="task-card-actions" style="display:flex; gap:4px;">${editBtn}${delBtn}</div>
                 </div>
-                <div class="task-card-actions" style="display:flex; gap:4px;">${editBtn}${delBtn}</div>
             </div>
         </div>`;
 }
