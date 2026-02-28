@@ -729,3 +729,63 @@ window.todoExecCmd = function (cmd) {
         document.execCommand(cmd, false, null);
     }
 };
+
+let _todoEmojiPickerLoaded = false;
+
+window.todoToggleEmojiPicker = async function (e) {
+    if (e) e.stopPropagation();
+    const container = document.getElementById('todoEmojiContainer');
+    if (!container) return;
+
+    if (!_todoEmojiPickerLoaded) {
+        const btn = document.getElementById('btnTodoEmoji');
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        try {
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.src = 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+
+            const picker = document.createElement('emoji-picker');
+            picker.addEventListener('emoji-click', event => {
+                window.todoInsertEmoji(event.detail.unicode, new Event('click'));
+            });
+            container.appendChild(picker);
+            _todoEmojiPickerLoaded = true;
+        } catch (err) {
+            console.error('Failed to load emoji picker:', err);
+        }
+
+        btn.innerHTML = oldHtml;
+    }
+
+    container.classList.toggle('active');
+};
+
+window.todoInsertEmoji = function (emoji, e) {
+    if (e) e.stopPropagation();
+    const area = document.getElementById('todoDescArea');
+    if (area) {
+        area.focus();
+        document.execCommand('insertText', false, emoji);
+    }
+    const container = document.getElementById('todoEmojiContainer');
+    if (container) {
+        container.classList.remove('active');
+    }
+};
+
+// Close emoji popover when clicking outside
+document.addEventListener('click', function (e) {
+    const container = document.getElementById('todoEmojiContainer');
+    const wrapper = e.target.closest('.todo-emoji-wrapper');
+    if (container && container.classList.contains('active') && !wrapper) {
+        container.classList.remove('active');
+    }
+});

@@ -838,7 +838,8 @@
         .todo-editor-wrapper {
             border: 1px solid var(--td-border);
             border-radius: 8px;
-            overflow: hidden;
+            overflow: visible;
+            /* Changed from hidden to visible so emoji picker isn't clipped */
             background: var(--td-bg-input);
             display: flex;
             flex-direction: column;
@@ -881,6 +882,26 @@
             color: var(--td-text-main);
         }
 
+        .todo-emoji-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        #todoEmojiContainer {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+        }
+
+        #todoEmojiContainer.active {
+            display: block;
+        }
+
         .todo-editor-separator {
             width: 1px;
             height: 18px;
@@ -890,8 +911,9 @@
 
         .todo-editor-area {
             padding: 12px 14px;
-            min-height: 100px;
-            max-height: 250px;
+            min-height: 200px;
+            /* Increased min-height to give more room for the popup naturally */
+            max-height: 400px;
             overflow-y: auto;
             font-size: 14px;
             line-height: 1.6;
@@ -1203,6 +1225,14 @@
                                 onclick="todoExecCmd('insertUnorderedList')"><i class="fas fa-list-ul"></i></button>
                             <button class="todo-editor-btn" type="button" title="Danh sách số"
                                 onclick="todoExecCmd('insertOrderedList')"><i class="fas fa-list-ol"></i></button>
+                            <div class="todo-editor-separator"></div>
+
+                            <div class="todo-emoji-wrapper">
+                                <button class="todo-editor-btn" type="button" title="Chèn biểu tượng" id="btnTodoEmoji"
+                                    onclick="todoToggleEmojiPicker(event)"><i class="far fa-smile"></i></button>
+                                <div id="todoEmojiContainer"></div>
+                            </div>
+
                             <div class="todo-editor-separator"></div>
                             <button class="todo-editor-btn" type="button" title="Xóa định dạng"
                                 onclick="todoExecCmd('removeFormat')"><i class="fas fa-eraser"></i></button>
