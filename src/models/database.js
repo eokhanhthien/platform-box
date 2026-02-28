@@ -90,6 +90,9 @@ function initDB() {
                     department TEXT,
                     note TEXT,
                     order_index INTEGER DEFAULT 0,
+                    reminder_date TEXT,
+                    reminder_time TEXT DEFAULT '08:00',
+                    reminder_fired INTEGER DEFAULT 0,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )`);
@@ -127,8 +130,11 @@ function initDB() {
                 await migrateCol('notes', 'reminder_fired', 'INTEGER DEFAULT 0');
                 await migrateCol('notes', 'order_index', 'INTEGER DEFAULT 0');
 
-                // Migrate todos order_index
+                // Migrate todos
                 await migrateCol('todos', 'order_index', 'INTEGER DEFAULT 0');
+                await migrateCol('todos', 'reminder_date', 'TEXT');
+                await migrateCol('todos', 'reminder_time', 'TEXT DEFAULT \'08:00\'');
+                await migrateCol('todos', 'reminder_fired', 'INTEGER DEFAULT 0');
 
                 // Enable FK
                 await runQuery(`PRAGMA foreign_keys = ON`);

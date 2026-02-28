@@ -83,12 +83,12 @@ function addTodo(data) {
     return new Promise((resolve, reject) => {
         try {
             const db = getDB();
-            const { title, description, status, priority, due_date, owner_id, assignee_id, department, note } = data;
+            const { title, description, status, priority, due_date, owner_id, assignee_id, department, note, reminder_date, reminder_time } = data;
             db.run(
-                `INSERT INTO todos (title, description, status, priority, due_date, owner_id, assignee_id, department, note)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                `INSERT INTO todos (title, description, status, priority, due_date, owner_id, assignee_id, department, note, reminder_date, reminder_time, reminder_fired)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
                 [title, description || null, status || 'todo', priority || 'medium',
-                    due_date || null, owner_id, assignee_id || null, department || null, note || null],
+                    due_date || null, owner_id, assignee_id || null, department || null, note || null, reminder_date || null, reminder_time || '08:00'],
                 function (err) {
                     if (err) {
                         reject({ success: false, error: err.message });
@@ -107,12 +107,12 @@ function updateTodo(id, data) {
     return new Promise((resolve, reject) => {
         try {
             const db = getDB();
-            const { title, description, status, priority, due_date, assignee_id, note } = data;
+            const { title, description, status, priority, due_date, assignee_id, note, reminder_date, reminder_time } = data;
             db.run(
                 `UPDATE todos SET title=?, description=?, status=?, priority=?, due_date=?,
-                 assignee_id=?, note=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
+                 assignee_id=?, note=?, reminder_date=?, reminder_time=?, reminder_fired=0, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
                 [title, description || null, status, priority, due_date || null,
-                    assignee_id || null, note || null, id],
+                    assignee_id || null, note || null, reminder_date || null, reminder_time || '08:00', id],
                 function (err) {
                     if (err) {
                         reject({ success: false, error: err.message });
@@ -190,6 +190,42 @@ function updateTodoOrder(items) {
     });
 }
 
+function getPendingTodoReminders() {
+    return new Promise((resolve, reject) => {
+        try {
+            const db = getDB();
+            db.all(
+                `SELECT * FROM todos WHERE COALESCE(reminder_fired, 0) = 0 AND reminder_date IS NOT NULL AND status != 'done'`,
+                [],
+                (err, rows) => {
+                    if (err) reject({ success: false, error: err.message });
+                    else resolve({ success: true, data: rows || [] });
+                }
+            );
+        } catch (error) {
+            reject({ success: false, error: error.message });
+        }
+    });
+}
+
+function markTodoReminderFired(id) {
+    return new Promise((resolve, reject) => {
+        try {
+            const db = getDB();
+            db.run(
+                `UPDATE todos SET reminder_fired = 1 WHERE id = ?`,
+                [id],
+                function (err) {
+                    if (err) reject({ success: false, error: err.message });
+                    else resolve({ success: true, message: 'Đã đánh dấu báo nhắc' });
+                }
+            );
+        } catch (error) {
+            reject({ success: false, error: error.message });
+        }
+    });
+}
+
 module.exports = {
     getTodos,
     getTodoById,
@@ -197,5 +233,7 @@ module.exports = {
     updateTodo,
     updateTodoStatus,
     deleteTodo,
-    updateTodoOrder
+    updateTodoOrder,
+    getPendingTodoReminders,
+    markTodoReminderFired
 };

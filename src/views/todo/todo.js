@@ -233,7 +233,10 @@ function _buildListItemHTML(t) {
                 <i class="fas fa-check"></i>
             </div>
             <div class="task-list-content">
-                <div class="task-list-title">${_esc(t.title)}</div>
+                <div class="task-list-title">
+                    ${_esc(t.title)}
+                    ${t.reminder_date ? '<i class="fas fa-bell" style="color:#ef4444; font-size:11px; margin-left:6px;" title="Có hẹn giờ nhắc nhở"></i>' : ''}
+                </div>
                 <div class="task-list-meta">
                     <span>${pCfg[t.priority] || pCfg.medium}</span>
                     ${t.description ? `<span style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${_esc(t.description)}"><i class="fas fa-align-left" style="margin-right:4px; opacity:0.7;"></i>${_esc(t.description)}</span>` : ''}
@@ -446,7 +449,10 @@ function _buildKanbanCardHTML(t) {
             ${topLabel}
             <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:${t.description ? '6px' : '20px'};">
                 ${checkBtn ? `<div style="margin-top:2px;">${checkBtn}</div>` : ''}
-                <div class="task-card-title ${isDone ? 'done-title' : ''}" style="margin-bottom:0; font-size:15px; font-weight:700; line-height:1.4;">${_esc(t.title)}</div>
+                <div class="task-card-title ${isDone ? 'done-title' : ''}" style="margin-bottom:0; font-size:15px; font-weight:700; line-height:1.4;">
+                    ${_esc(t.title)}
+                    ${t.reminder_date ? '<i class="fas fa-bell" style="color:#ef4444; font-size:11px; margin-left:6px;" title="Có hẹn giờ nhắc nhở"></i>' : ''}
+                </div>
             </div>
             ${t.description ? `<div class="task-card-desc" style="margin-bottom:16px; ${isDone ? 'opacity:0.6;' : ''}">${_esc(t.description)}</div>` : ''}
             
@@ -578,16 +584,28 @@ async function todoOpenModal(id, defaultDate = null) {
     const overlay = document.getElementById('todoModalOverlay');
     if (!overlay) return;
 
-    // Reset form
-    ['todoEditId', 'todoTitle', 'todoDueDate'].forEach(fid => {
-        const e = document.getElementById(fid); if (e) e.value = '';
+    // Reset form fields
+    const formElsToClear = ['todoEditId', 'todoTitle', 'todoDueDate', 'todoReminderDate'];
+    formElsToClear.forEach(fid => {
+        const e = document.getElementById(fid);
+        if (e) e.value = '';
     });
     const descArea = document.getElementById('todoDescArea');
     if (descArea) descArea.innerHTML = '';
+
     if (document.getElementById('todoStatus')) document.getElementById('todoStatus').value = 'todo';
     if (document.getElementById('todoPriority')) document.getElementById('todoPriority').value = 'medium';
     const assignEl = document.getElementById('todoAssignee');
     if (assignEl) assignEl.value = '';
+
+    const reminderTimeEl = document.getElementById('todoReminderTime');
+    if (reminderTimeEl) reminderTimeEl.value = '08:00'; // Set default reminder time
+
+    const reminderCheck = document.getElementById('todoReminderCheck');
+    if (reminderCheck) {
+        reminderCheck.checked = false;
+        todoToggleReminderInputs(reminderCheck);
+    }
 
     document.getElementById('todoModalTitle').textContent = 'Thêm task mới';
     document.getElementById('todoSaveBtn').style.display = '';
@@ -627,6 +645,16 @@ async function todoOpenModal(id, defaultDate = null) {
             document.getElementById('todoStatus').value = t.status;
             document.getElementById('todoPriority').value = t.priority;
             document.getElementById('todoDueDate').value = t.due_date || '';
+
+            const hasReminder = !!t.reminder_date;
+            document.getElementById('todoReminderDate').value = t.reminder_date || '';
+            document.getElementById('todoReminderTime').value = t.reminder_time || '08:00';
+
+            if (reminderCheck) {
+                reminderCheck.checked = hasReminder;
+                todoToggleReminderInputs(reminderCheck);
+            }
+
             if (assignEl) assignEl.value = t.assignee_id || '';
 
             if (!canEdit) {
@@ -660,12 +688,16 @@ async function todoSave() {
     let descHtml = descArea ? descArea.innerHTML : '';
     if (descHtml === '<br>') descHtml = ''; // Fix empty contenteditable anomaly
 
+    const reminderChecked = document.getElementById('todoReminderCheck')?.checked;
+
     const data = {
         title: titleVal,
         description: descHtml || null,
         status: document.getElementById('todoStatus')?.value || 'todo',
         priority: document.getElementById('todoPriority')?.value || 'medium',
         due_date: document.getElementById('todoDueDate')?.value || null,
+        reminder_date: reminderChecked ? (document.getElementById('todoReminderDate')?.value || null) : null,
+        reminder_time: reminderChecked ? (document.getElementById('todoReminderTime')?.value || '08:00') : '08:00',
         note: null,
         assignee_id: document.getElementById('todoAssignee')?.value || null,
         owner_id: _todoUser?.id,
@@ -731,6 +763,35 @@ window.todoExecCmd = function (cmd) {
 };
 
 let _todoEmojiPickerLoaded = false;
+
+window.todoToggleReminderInputs = function (checkbox) {
+    const dInput = document.getElementById('todoReminderDate');
+    const tInput = document.getElementById('todoReminderTime');
+    if (!dInput || !tInput) return;
+
+    if (checkbox.checked) {
+        dInput.disabled = false;
+        dInput.style.opacity = '1';
+        dInput.style.pointerEvents = 'auto';
+
+        tInput.disabled = false;
+        tInput.style.opacity = '1';
+        tInput.style.pointerEvents = 'auto';
+
+        if (!dInput.value) {
+            dInput.value = _fmtDateObj(new Date());
+        }
+    } else {
+        dInput.disabled = true;
+        dInput.style.opacity = '0.45';
+        dInput.style.pointerEvents = 'none';
+
+        tInput.disabled = true;
+        tInput.style.opacity = '0.45';
+        tInput.style.pointerEvents = 'none';
+        dInput.value = '';
+    }
+};
 
 window.todoToggleEmojiPicker = async function (e) {
     if (e) e.stopPropagation();

@@ -1269,6 +1269,19 @@
                         <label>Ngày hết hạn</label>
                         <input type="date" id="todoDueDate">
                     </div>
+                    <div class="todo-form-group" style="margin-bottom: 0; min-width: 250px;">
+                        <label style="cursor:pointer; display:flex; align-items:center; gap:6px; margin-bottom: 6px;">
+                            <input type="checkbox" id="todoReminderCheck" onchange="todoToggleReminderInputs(this)"
+                                style="width:14px;height:14px;cursor:pointer;accent-color:var(--td-primary);">
+                            Nhắc nhở <i class="far fa-bell" style="color: #94a3b8;"></i>
+                        </label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="date" id="todoReminderDate" style="flex:2; opacity:.45; pointer-events:none;"
+                                disabled>
+                            <input type="time" id="todoReminderTime" style="flex:1; opacity:.45; pointer-events:none;"
+                                disabled>
+                        </div>
+                    </div>
                     <div class="todo-form-group" id="assigneeGroup" style="display:none; margin-bottom: 0;">
                         <label>Giao cho</label>
                         <select id="todoAssignee">

@@ -1,5 +1,72 @@
-const { ipcMain } = require('electron');
+const { ipcMain, Notification, app } = require('electron');
 const todoModel = require('../models/todoModel');
+
+// ── Todo Reminder Scheduler ────────────────────────────────────────────────────────
+let _todoReminderInterval = null;
+
+function startTodoReminderScheduler() {
+    console.log('[Todo Reminder] Scheduler started. Checking every 60 seconds...');
+    _checkTodoReminders();
+    _todoReminderInterval = setInterval(_checkTodoReminders, 60 * 1000);
+}
+
+function stopTodoReminderScheduler() {
+    if (_todoReminderInterval) {
+        clearInterval(_todoReminderInterval);
+        _todoReminderInterval = null;
+    }
+}
+
+async function _checkTodoReminders() {
+    try {
+        const res = await todoModel.getPendingTodoReminders();
+        if (!res.success) {
+            console.error('[Todo Reminder] getPendingTodoReminders failed:', res.error);
+            return;
+        }
+
+        const now = new Date();
+        const nowDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const nowTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        if (!res.data || !res.data.length) return;
+
+        for (const todo of res.data) {
+            const tDate = (todo.reminder_date || '').trim();
+            const tTime = (todo.reminder_time || '08:00').trim();
+
+            let shouldFire = false;
+            if (tDate && tDate < nowDate) {
+                shouldFire = true;
+            } else if (tDate && tDate === nowDate && tTime <= nowTime) {
+                shouldFire = true;
+            }
+
+            if (shouldFire) {
+                await _sendTodoNotification(todo);
+                await todoModel.markTodoReminderFired(todo.id);
+            }
+        }
+    } catch (e) {
+        console.error('[Todo Reminder] Error in _checkTodoReminders:', e.message);
+    }
+}
+
+async function _sendTodoNotification(todo) {
+    try {
+        if (!Notification.isSupported()) return;
+
+        const notif = new Notification({
+            title: '🔔 Việc cần làm: ' + (todo.title || 'Task'),
+            body: `Đã đến hạn chót nhắc nhở (${todo.reminder_time || '08:00'} ngày ${todo.reminder_date})`,
+            urgency: 'critical'
+        });
+        notif.show();
+        console.log(`[Todo Reminder] Sent notification for task id=${todo.id} "${todo.title}"`);
+    } catch (e) {
+        console.error('[Todo Reminder] Failed to send notification:', e.message);
+    }
+}
 
 function initTodoController() {
 
@@ -65,6 +132,17 @@ function initTodoController() {
             return { success: false, error: 'Database error updating todo order' };
         }
     });
+
+    ipcMain.handle('markTodoReminderFired', async (event, id) => {
+        try { return await todoModel.markTodoReminderFired(id); }
+        catch (e) { return { success: false, error: e.message }; }
+    });
+
+    // Start the reminder scheduler
+    startTodoReminderScheduler();
+
+    // Cleanup on quit
+    app.on('before-quit', stopTodoReminderScheduler);
 }
 
 module.exports = { initTodoController };
