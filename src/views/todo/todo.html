@@ -184,13 +184,13 @@
         .todo-search:focus,
         .todo-filter-select:focus {
             border-color: var(--td-primary);
-            background: rgba(0, 0, 0, 0.4);
+            background: #ffffff;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
 
         .todo-filter-select option {
-            background: #1f2937;
-            color: #fff;
+            background: #ffffff;
+            color: var(--td-text-main);
         }
 
         .task-action-btn {
@@ -263,7 +263,9 @@
         }
 
         .task-list-item:hover {
-            background: #f6f7f7;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
         }
 
         .task-list-item.done,
@@ -410,7 +412,9 @@
         }
 
         .task-card:hover {
-            background: #f6f7f7;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            border-color: rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
         }
 
         .task-card.done {
@@ -686,7 +690,7 @@
             border: 1px solid var(--td-border);
             border-radius: 16px;
             width: 100%;
-            max-width: 520px;
+            max-width: 720px;
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
@@ -830,6 +834,83 @@
             border-color: rgba(0, 0, 0, 0.3);
         }
 
+        /* ===== TODO RICH TEXT EDITOR ===== */
+        .todo-editor-wrapper {
+            border: 1px solid var(--td-border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--td-bg-input);
+            display: flex;
+            flex-direction: column;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+
+        .todo-editor-wrapper:focus-within {
+            border-color: var(--td-primary);
+            box-shadow: 0 0 0 3px rgba(0, 120, 212, .15);
+            background: #fff;
+        }
+
+        .todo-editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 12px;
+            border-bottom: 1px solid var(--td-border);
+            background: #fafafa;
+            flex-wrap: wrap;
+        }
+
+        .todo-editor-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #6b7280;
+            transition: background .15s, color .15s;
+        }
+
+        .todo-editor-btn:hover {
+            background: #e2e8f0;
+            color: var(--td-text-main);
+        }
+
+        .todo-editor-separator {
+            width: 1px;
+            height: 18px;
+            background: var(--td-border);
+            margin: 0 4px;
+        }
+
+        .todo-editor-area {
+            padding: 12px 14px;
+            min-height: 100px;
+            max-height: 250px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--td-text-main);
+            outline: none;
+        }
+
+        .todo-editor-area:empty::before {
+            content: attr(data-placeholder);
+            color: #94a3b8;
+            pointer-events: none;
+        }
+
+        .todo-editor-area ul,
+        .todo-editor-area ol {
+            padding-left: 20px;
+            margin: 6px 0;
+        }
+
         .task-card-title {
             font-size: 13px;
             font-weight: 600;
@@ -968,7 +1049,7 @@
 
             <div class="todo-header-actions">
                 <input type="text" class="todo-search" id="todoSearch" placeholder="&#xf002; Tìm kiếm..."
-                    oninput="todoApplyFilter()" style="font-family: Arial, 'Font Awesome 5 Free'">
+                    oninput="todoApplyFilter()" style="font-family: Arial, 'Font Awesome 5 Free'; font-weight: 900;">
                 <select class="todo-filter-select" id="todoPriorityFilter" onchange="todoApplyFilter()">
                     <option value="">Tất cả độ ưu tiên</option>
                     <option value="high">🔴 Cao</option>
@@ -1107,7 +1188,31 @@
 
                 <div class="todo-form-group">
                     <label>Mô tả chi tiết</label>
-                    <textarea id="todoDesc" placeholder="Chi tiết công việc cần làm..." rows="3"></textarea>
+                    <div class="todo-editor-wrapper">
+                        <div class="todo-editor-toolbar">
+                            <button class="todo-editor-btn" type="button" title="In đậm (Ctrl+B)"
+                                onclick="todoExecCmd('bold')"><i class="fas fa-bold"></i></button>
+                            <button class="todo-editor-btn" type="button" title="In nghiêng (Ctrl+I)"
+                                onclick="todoExecCmd('italic')"><i class="fas fa-italic"></i></button>
+                            <button class="todo-editor-btn" type="button" title="Gạch chân (Ctrl+U)"
+                                onclick="todoExecCmd('underline')"><i class="fas fa-underline"></i></button>
+                            <button class="todo-editor-btn" type="button" title="Gạch ngang"
+                                onclick="todoExecCmd('strikeThrough')"><i class="fas fa-strikethrough"></i></button>
+                            <div class="todo-editor-separator"></div>
+                            <button class="todo-editor-btn" type="button" title="Danh sách chấm"
+                                onclick="todoExecCmd('insertUnorderedList')"><i class="fas fa-list-ul"></i></button>
+                            <button class="todo-editor-btn" type="button" title="Danh sách số"
+                                onclick="todoExecCmd('insertOrderedList')"><i class="fas fa-list-ol"></i></button>
+                            <div class="todo-editor-separator"></div>
+                            <button class="todo-editor-btn" type="button" title="Xóa định dạng"
+                                onclick="todoExecCmd('removeFormat')"><i class="fas fa-eraser"></i></button>
+                            <button class="todo-editor-btn" type="button" title="Xóa trắng"
+                                onclick="document.getElementById('todoDescArea').innerHTML=''"><i
+                                    class="fas fa-trash-alt" style="font-size:12px;"></i></button>
+                        </div>
+                        <div class="todo-editor-area" id="todoDescArea" contenteditable="true"
+                            data-placeholder="Nhập chi tiết công việc cần làm, ghi chú, checklist..."></div>
+                    </div>
                 </div>
 
                 <div class="todo-form-row">

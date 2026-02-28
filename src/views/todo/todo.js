@@ -579,9 +579,11 @@ async function todoOpenModal(id, defaultDate = null) {
     if (!overlay) return;
 
     // Reset form
-    ['todoEditId', 'todoTitle', 'todoDesc', 'todoDueDate'].forEach(fid => {
+    ['todoEditId', 'todoTitle', 'todoDueDate'].forEach(fid => {
         const e = document.getElementById(fid); if (e) e.value = '';
     });
+    const descArea = document.getElementById('todoDescArea');
+    if (descArea) descArea.innerHTML = '';
     if (document.getElementById('todoStatus')) document.getElementById('todoStatus').value = 'todo';
     if (document.getElementById('todoPriority')) document.getElementById('todoPriority').value = 'medium';
     const assignEl = document.getElementById('todoAssignee');
@@ -620,7 +622,8 @@ async function todoOpenModal(id, defaultDate = null) {
             document.getElementById('todoModalTitle').textContent = canEdit ? 'Chỉnh sửa task' : 'Chi tiết task';
             document.getElementById('todoEditId').value = t.id;
             document.getElementById('todoTitle').value = t.title;
-            document.getElementById('todoDesc').value = t.description || '';
+            const descArea = document.getElementById('todoDescArea');
+            if (descArea) descArea.innerHTML = t.description || '';
             document.getElementById('todoStatus').value = t.status;
             document.getElementById('todoPriority').value = t.priority;
             document.getElementById('todoDueDate').value = t.due_date || '';
@@ -653,9 +656,13 @@ async function todoSave() {
     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
 
     const editId = document.getElementById('todoEditId').value;
+    const descArea = document.getElementById('todoDescArea');
+    let descHtml = descArea ? descArea.innerHTML : '';
+    if (descHtml === '<br>') descHtml = ''; // Fix empty contenteditable anomaly
+
     const data = {
         title: titleVal,
-        description: (document.getElementById('todoDesc')?.value || '').trim() || null,
+        description: descHtml || null,
         status: document.getElementById('todoStatus')?.value || 'todo',
         priority: document.getElementById('todoPriority')?.value || 'medium',
         due_date: document.getElementById('todoDueDate')?.value || null,
@@ -712,5 +719,13 @@ window.todoScrollNext7 = function (dir) {
     const board = document.getElementById('next7-board');
     if (board) {
         board.scrollBy({ left: dir * 320, behavior: 'smooth' });
+    }
+};
+
+window.todoExecCmd = function (cmd) {
+    const area = document.getElementById('todoDescArea');
+    if (area) {
+        area.focus();
+        document.execCommand(cmd, false, null);
     }
 };
