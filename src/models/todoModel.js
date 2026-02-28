@@ -43,7 +43,7 @@ function getTodos(filters) {
                 query += ' WHERE ' + conditions.join(' AND ');
             }
 
-            query += ' ORDER BY t.due_date ASC, t.created_at DESC';
+            query += ' ORDER BY t.order_index ASC, t.due_date ASC, t.created_at DESC';
 
             db.all(query, params, (err, rows) => {
                 if (err) {
@@ -165,11 +165,37 @@ function deleteTodo(id) {
     });
 }
 
+function updateTodoOrder(items) {
+    return new Promise((resolve, reject) => {
+        try {
+            const db = getDB();
+            db.serialize(() => {
+                db.run('BEGIN TRANSACTION');
+                const stmt = db.prepare('UPDATE todos SET order_index=? WHERE id=?');
+                for (const item of items) {
+                    stmt.run([item.order_index, item.id]);
+                }
+                stmt.finalize();
+                db.run('COMMIT', (err) => {
+                    if (err) {
+                        reject({ success: false, error: err.message });
+                    } else {
+                        resolve({ success: true, message: 'Cập nhật thứ tự thành công' });
+                    }
+                });
+            });
+        } catch (error) {
+            reject({ success: false, error: error.message });
+        }
+    });
+}
+
 module.exports = {
     getTodos,
     getTodoById,
     addTodo,
     updateTodo,
     updateTodoStatus,
-    deleteTodo
+    deleteTodo,
+    updateTodoOrder
 };

@@ -89,6 +89,7 @@ function initDB() {
                     assignee_id INTEGER,
                     department TEXT,
                     note TEXT,
+                    order_index INTEGER DEFAULT 0,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )`);
@@ -119,12 +120,15 @@ function initDB() {
                 )`);
 
                 // Migration: add new columns to notes if they don't exist yet (safe for existing DBs)
-                const migrateCol = async (col, def) => {
-                    try { await runQuery(`ALTER TABLE notes ADD COLUMN ${col} ${def}`); } catch (_) { }
+                const migrateCol = async (table, col, def) => {
+                    try { await runQuery(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`); } catch (_) { }
                 };
-                await migrateCol('reminder_time', 'TEXT DEFAULT \'08:00\'');
-                await migrateCol('reminder_fired', 'INTEGER DEFAULT 0');
-                await migrateCol('order_index', 'INTEGER DEFAULT 0');
+                await migrateCol('notes', 'reminder_time', 'TEXT DEFAULT \'08:00\'');
+                await migrateCol('notes', 'reminder_fired', 'INTEGER DEFAULT 0');
+                await migrateCol('notes', 'order_index', 'INTEGER DEFAULT 0');
+
+                // Migrate todos order_index
+                await migrateCol('todos', 'order_index', 'INTEGER DEFAULT 0');
 
                 // Enable FK
                 await runQuery(`PRAGMA foreign_keys = ON`);

@@ -56,6 +56,15 @@ function initTodoController() {
             return { success: false, error: 'Database error deleting todo' };
         }
     });
+
+    ipcMain.handle('updateTodoOrder', async (event, items) => {
+        try {
+            return await todoModel.updateTodoOrder(items);
+        } catch (error) {
+            console.error('IPC Error updateTodoOrder:', error);
+            return { success: false, error: 'Database error updating todo order' };
+        }
+    });
 }
 
 module.exports = { initTodoController };

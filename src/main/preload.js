@@ -38,6 +38,7 @@ contextBridge.exposeInMainWorld('api', {
     updateTodo: (id, data) => ipcRenderer.invoke('updateTodo', id, data),
     updateTodoStatus: (id, status) => ipcRenderer.invoke('updateTodoStatus', id, status),
     deleteTodo: (id) => ipcRenderer.invoke('deleteTodo', id),
+    updateTodoOrder: (items) => ipcRenderer.invoke('updateTodoOrder', items),
 
     // Notes Feature
     getNotes: (filters) => ipcRenderer.invoke('getNotes', filters),
