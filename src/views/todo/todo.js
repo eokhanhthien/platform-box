@@ -301,9 +301,9 @@ function _renderNext7Days() {
                     </div>
                     <span class="next7-date">${subDate}</span>
                 </div>
-                <div class="next7-col-body" id="next7-col-${ds}" data-date="${ds}">
+                <div class="next7-col-body" id="next7-col-${ds}" data-date="${ds}" style="position:relative;">
+                    ${tasks.length === 0 ? '<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#cbd5e1; font-size:12px; font-weight:700; pointer-events:none; z-index:0;"><i class="fas fa-download" style="font-size:20px; margin-bottom:8px;"></i>+ Drop here</div>' : ''}
                     ${cardsHtml}
-                    ${tasks.length === 0 ? '<div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#cbd5e1; font-size:12px; font-weight:700;"><i class="fas fa-download" style="font-size:20px; margin-bottom:8px;"></i>+ Drop here</div>' : ''}
                 </div>
                 <button class="next7-add-task-btn" onclick="todoOpenModal(null, '${ds}')">
                     <i class="fas fa-plus"></i> Add Task
@@ -366,11 +366,13 @@ function _renderKanban() {
             body._sortable = null;
         }
 
+        body.style.position = 'relative';
+
         if (!cols[s].length) {
             const msg = { todo: 'Chưa có việc cần làm', doing: 'Chưa có việc đang làm', done: 'Chưa hoàn thành task nào' }[s];
             const icon = { todo: 'fa-clipboard-list', doing: 'fa-spinner', done: 'fa-check-circle' }[s];
             body.innerHTML = `
-                <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; text-align:center; padding: 20px;">
+                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; text-align:center; padding: 20px; z-index:0; pointer-events:none;">
                     <div style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
                         <i class="fas ${icon}" style="font-size:20px;"></i>
                     </div>
@@ -445,7 +447,7 @@ function _buildKanbanCardHTML(t) {
     const avatarHtml = `<div style="width:20px;height:20px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#64748b;font-weight:700;">${(t.title || 'T')[0].toUpperCase()}</div>`;
 
     return `
-        <div class="task-card${draggableCls} ${isDone ? 'done' : ''}" data-id="${t.id}" onclick="todoOpenModal(${t.id})">
+        <div class="task-card${draggableCls} ${isDone ? 'done' : ''}" data-id="${t.id}" onclick="todoOpenModal(${t.id})" style="position:relative; z-index:1;">
             ${topLabel}
             <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:${t.description ? '6px' : '20px'};">
                 ${checkBtn ? `<div style="margin-top:2px;">${checkBtn}</div>` : ''}
