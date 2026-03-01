@@ -619,6 +619,70 @@
         document.execCommand(cmd, false, null);
     };
 
+    window._noteEmojiPickerLoaded = false;
+
+    window.noteToggleEmojiPicker = async function (e) {
+        if (e) e.stopPropagation();
+        const container = document.getElementById('noteEmojiContainer');
+        if (!container) return;
+
+        if (!window._noteEmojiPickerLoaded) {
+            const btn = e.currentTarget;
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            try {
+                await new Promise((resolve, reject) => {
+                    if (customElements.get('emoji-picker')) {
+                        resolve();
+                    } else {
+                        const script = document.createElement('script');
+                        script.type = 'module';
+                        script.src = 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    }
+                });
+
+                const picker = document.createElement('emoji-picker');
+                picker.addEventListener('emoji-click', event => {
+                    window.noteInsertEmoji(event.detail.unicode, new Event('click'));
+                });
+                container.appendChild(picker);
+                window._noteEmojiPickerLoaded = true;
+            } catch (err) {
+                console.error('Failed to load emoji picker:', err);
+            }
+
+            btn.innerHTML = oldHtml;
+        }
+
+        container.classList.toggle('active');
+    };
+
+    window.noteInsertEmoji = function (emoji, e) {
+        if (e) e.stopPropagation();
+        const area = document.getElementById('noteEditorArea');
+        if (area) {
+            area.focus();
+            document.execCommand('insertText', false, emoji);
+        }
+        const container = document.getElementById('noteEmojiContainer');
+        if (container) {
+            container.classList.remove('active');
+        }
+    };
+
+    // Close emoji popover when clicking outside
+    document.addEventListener('click', function (e) {
+        const container = document.getElementById('noteEmojiContainer');
+        const wrapper = e.target.closest('.notes-emoji-wrapper');
+        if (container && container.classList.contains('active') && !wrapper) {
+            container.classList.remove('active');
+        }
+    });
+
     window.noteTestNotification = async function () {
         const btn = document.getElementById('btnTestNotif');
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...'; }

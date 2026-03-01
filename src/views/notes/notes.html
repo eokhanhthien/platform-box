@@ -727,6 +727,26 @@
             margin: 0 4px;
         }
 
+        .notes-emoji-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        #noteEmojiContainer {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+        }
+
+        #noteEmojiContainer.active {
+            display: block;
+        }
+
         /* Content editable */
         .notes-editor-area {
             flex: 1;
@@ -1152,6 +1172,17 @@
                         class="fas fa-align-left"></i></button>
                 <button class="editor-tool-btn" title="Căn giữa" onclick="noteExecCmd('justifyCenter')"><i
                         class="fas fa-align-center"></i></button>
+                <div class="editor-tool-sep"></div>
+
+                <!-- Emoji Picker -->
+                <div class="notes-emoji-wrapper">
+                    <button class="editor-tool-btn" title="Chèn biểu tượng cảm xúc"
+                        onclick="noteToggleEmojiPicker(event)">
+                        <i class="far fa-smile"></i>
+                    </button>
+                    <div id="noteEmojiContainer" onclick="event.stopPropagation()"></div>
+                </div>
+
                 <div class="editor-tool-sep"></div>
                 <button class="editor-tool-btn" title="Xóa định dạng" onclick="noteExecCmd('removeFormat')"><i
                         class="fas fa-eraser"></i></button>
