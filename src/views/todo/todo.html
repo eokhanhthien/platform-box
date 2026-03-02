@@ -1072,7 +1072,8 @@
 
             <div class="todo-header-actions">
                 <input type="text" class="todo-search" id="todoSearch" placeholder="&#xf002; Tìm kiếm..."
-                    oninput="todoApplyFilter()" style="font-family: Arial, 'Font Awesome 5 Free'; font-weight: 900;">
+                    spellcheck="false" oninput="todoApplyFilter()"
+                    style="font-family: Arial, 'Font Awesome 5 Free'; font-weight: 900;">
                 <select class="todo-filter-select" id="todoPriorityFilter" onchange="todoApplyFilter()">
                     <option value="">Tất cả độ ưu tiên</option>
                     <option value="high">🔴 Cao</option>
@@ -1206,7 +1207,8 @@
 
                 <div class="todo-form-group">
                     <label>Tiêu đề việc cần làm <span style="color:var(--td-danger)">*</span></label>
-                    <input type="text" id="todoTitle" placeholder="Ví dụ: Lên kế hoạch marketing quý 1...">
+                    <input type="text" id="todoTitle" placeholder="Ví dụ: Lên kế hoạch marketing quý 1..."
+                        spellcheck="false">
                 </div>
 
                 <div class="todo-form-group">
@@ -1241,7 +1243,7 @@
                                 onclick="document.getElementById('todoDescArea').innerHTML=''"><i
                                     class="fas fa-trash-alt" style="font-size:12px;"></i></button>
                         </div>
-                        <div class="todo-editor-area" id="todoDescArea" contenteditable="true"
+                        <div class="todo-editor-area" id="todoDescArea" contenteditable="true" spellcheck="false"
                             data-placeholder="Nhập chi tiết công việc cần làm, ghi chú, checklist..."></div>
                     </div>
                 </div>

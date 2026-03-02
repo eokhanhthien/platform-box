@@ -1036,7 +1036,8 @@
     <div class="notes-toolbar">
         <div class="notes-search-wrap">
             <i class="fas fa-search"></i>
-            <input type="text" class="notes-search" id="notesSearch" placeholder="Tìm kiếm ghi chú...">
+            <input type="text" class="notes-search" id="notesSearch" placeholder="Tìm kiếm ghi chú..."
+                spellcheck="false">
         </div>
         <div class="notes-color-filter" id="notesColorFilter">
             <span class="notes-color-filter-label">Màu:</span>
@@ -1135,7 +1136,8 @@
 
             <!-- Header: Title input + close -->
             <div class="notes-modal-header">
-                <input type="text" class="notes-modal-title-input" id="noteModalTitle" placeholder="Tiêu đề ghi chú...">
+                <input type="text" class="notes-modal-title-input" id="noteModalTitle" placeholder="Tiêu đề ghi chú..."
+                    spellcheck="false">
                 <button class="notes-modal-close" onclick="noteCloseModal()"><i class="fas fa-times"></i></button>
             </div>
 
@@ -1189,7 +1191,7 @@
             </div>
 
             <!-- Editor area -->
-            <div class="notes-editor-area" id="noteEditorArea" contenteditable="true"
+            <div class="notes-editor-area" id="noteEditorArea" contenteditable="true" spellcheck="false"
                 data-placeholder="Nội dung ghi chú..."></div>
 
             <!-- Meta row: tags + reminder + pin + lock -->
@@ -1199,7 +1201,7 @@
                     <div class="notes-tag-chips-preview" id="noteModalTagsPreview"></div>
                     <div class="notes-tags-input-wrap" style="margin-top:6px;">
                         <i class="fas fa-tag"></i>
-                        <input type="text" class="notes-tags-input" id="noteModalTagInput"
+                        <input type="text" class="notes-tags-input" id="noteModalTagInput" spellcheck="false"
                             placeholder="Thêm tag, nhấn Enter...">
                     </div>
                 </div>
