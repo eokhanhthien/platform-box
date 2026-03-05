@@ -176,7 +176,7 @@ function _buildListItemHTML(t) {
                 </div>
                 <div class="task-list-meta">
                     <span>${pCfg[t.priority] || pCfg.medium}</span>
-                    ${t.description ? `<span style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${_esc(t.description)}"><i class="fas fa-align-left" style="margin-right:4px; opacity:0.7;"></i>${_esc(t.description)}</span>` : ''}
+                    ${t.description ? `<span style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${_esc(_stripTags(t.description))}"><i class="fas fa-align-left" style="margin-right:4px; opacity:0.7;"></i>${_esc(_stripTags(t.description))}</span>` : ''}
                 </div>
             </div>
             <div class="task-list-actions">
@@ -238,10 +238,10 @@ function _renderNext7Days() {
                     </div>
                     <span class="next7-date">${subDate}</span>
                 </div>
-                <div class="next7-col-body" id="next7-col-${ds}" data-date="${ds}" style="position:relative;">
+                <div class="next7-col-body" id="next7-col-${ds}" data-date="${ds}" style="position:relative; flex:1; overflow-y:auto; padding:8px;">
                     ${tasks.length === 0 ? `
-                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; min-height:80px; color:rgba(148,163,184,0.3); font-size:12px; font-weight:600; pointer-events:none; text-align:center; gap:8px;">
-                            <i class="fas fa-calendar-check" style="font-size:32px;"></i>
+                        <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:rgba(148,163,184,0.25); font-size:12px; font-weight:600; pointer-events:none; text-align:center; gap:8px; z-index:0;">
+                            <i class="fas fa-calendar-check" style="font-size:28px;"></i>
                             <span>No tasks scheduled</span>
                         </div>` : ''}
                     ${cardsHtml}
@@ -398,7 +398,7 @@ function _buildKanbanCardHTML(t) {
                     ${t.reminder_date ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#ef4444; background:#fef2f2; padding:2px 6px; border-radius:12px; margin-left:8px; border:1px solid #fca5a5;" title="Nhắc nhở lúc ${t.reminder_time || '08:00'} ngày ${t.reminder_date}"><i class="fas fa-bell" style="font-size:10px;"></i> ${t.reminder_time || '08:00'}</span>` : ''}
                 </div>
             </div>
-            ${t.description ? `<div class="task-card-desc" style="margin-bottom:16px; ${isDone ? 'opacity:0.6;' : ''}">${_esc(t.description)}</div>` : ''}
+            ${t.description ? `<div class="task-card-desc" style="margin-bottom:16px; ${isDone ? 'opacity:0.6;' : ''}">${_esc(_stripTags(t.description))}</div>` : ''}
             
             <div style="display:flex; justify-content:flex-end; align-items:center;">
                 <div class="task-card-actions" style="display:flex; gap:4px;">${editBtn}${delBtn}</div>
@@ -603,21 +603,11 @@ async function todoOpenModal(id, defaultDate = null) {
     const deleteBtn = document.getElementById('todoDeleteBtn');
     if (deleteBtn) deleteBtn.style.display = 'none';
 
-    // Pre-fill Date
+    // Pre-fill Date — always default to today
     if (!id) {
-        let sd = defaultDate;
-        if (!sd) {
-            // Context aware default date based on view
-            if (_currentView === 'today') sd = _fmtDateObj(new Date());
-            else if (_currentView === 'next7') {
-                let d = new Date(); d.setDate(d.getDate() + 1); // Default to tomorrow natively
-                sd = _fmtDateObj(d);
-            }
-        }
-        if (sd) {
-            const e = document.getElementById('todoDueDate');
-            if (e) e.value = sd;
-        }
+        let sd = defaultDate || _fmtDateObj(new Date());
+        const e = document.getElementById('todoDueDate');
+        if (e) e.value = sd;
     }
 
     // Load Existing
@@ -717,6 +707,14 @@ function _fmtDateObj(d) {
 
 function _esc(s) {
     return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Strip HTML tags and return plain text
+function _stripTags(html) {
+    if (!html) return '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return (tmp.textContent || tmp.innerText || '').trim();
 }
 
 window.todoScrollNext7 = function (dir) {
