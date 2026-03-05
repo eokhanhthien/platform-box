@@ -584,6 +584,20 @@
             background: rgba(255, 255, 255, 0.02);
         }
 
+        .notes-modal-header-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(251, 191, 36, 0.12);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #fbbf24;
+            flex-shrink: 0;
+        }
+
         .notes-modal-title-input {
             flex: 1;
             border: none;
@@ -734,6 +748,11 @@
             height: 18px;
             background: var(--td-border-light);
             margin: 0 8px;
+        }
+
+        .notes-emoji-wrapper {
+            position: relative;
+            display: inline-flex;
         }
 
         #noteEmojiContainer {
@@ -1147,8 +1166,11 @@
     <div class="notes-modal-overlay" id="notesModalOverlay">
         <div class="notes-modal" id="notesModal">
 
-            <!-- Header: Title input + close -->
+            <!-- Header: Icon + Title input + close -->
             <div class="notes-modal-header">
+                <div class="notes-modal-header-icon">
+                    <i class="fas fa-sticky-note"></i>
+                </div>
                 <input type="text" class="notes-modal-title-input" id="noteModalTitle" placeholder="Tiêu đề ghi chú..."
                     spellcheck="false">
                 <button class="notes-modal-close" onclick="noteCloseModal()"><i class="fas fa-times"></i></button>
