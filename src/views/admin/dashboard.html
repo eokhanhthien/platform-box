@@ -331,16 +331,20 @@
 
         /* ── KANBAN COLUMNS ── */
         .todo-root .kanban-col-body {
-            background: rgba(255, 255, 255, 0.02) !important;
-            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            background: rgba(15, 25, 35, 0.4) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 12px !important;
         }
 
         /* ── TASK CARDS ── */
         .todo-root .task-card,
         .todo-root .task-list-item {
-            background: rgba(255, 255, 255, 0.04) !important;
-            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            background: rgba(15, 25, 35, 0.5) !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 10px !important;
             color: #e2e8f0 !important;
             transition: border-color 0.15s, background 0.15s !important;
@@ -349,15 +353,15 @@
         .todo-root .task-card:hover,
         .todo-root .task-list-item:hover {
             border-color: rgba(0, 127, 255, 0.4) !important;
-            background: rgba(255, 255, 255, 0.06) !important;
+            background: rgba(15, 25, 35, 0.7) !important;
             transform: none !important;
             box-shadow: none !important;
         }
 
         .todo-root .task-card.done,
         .todo-root .task-list-item.done {
-            opacity: 0.45 !important;
-            background: rgba(255, 255, 255, 0.02) !important;
+            opacity: 0.55 !important;
+            background: rgba(15, 25, 35, 0.3) !important;
         }
 
         .todo-root .task-card-title,
@@ -532,8 +536,10 @@
 
         /* ── CALENDAR ── */
         .todo-root .todo-calendar-wrapper {
-            background: rgba(255, 255, 255, 0.02) !important;
-            border-color: rgba(255, 255, 255, 0.07) !important;
+            background: rgba(15, 25, 35, 0.4) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
         }
 
         .todo-root .cal-header-bar {
@@ -541,7 +547,7 @@
         }
 
         .todo-root .cal-dow {
-            background: rgba(0, 0, 0, 0.2) !important;
+            background: rgba(0, 0, 0, 0.4) !important;
             border-color: rgba(255, 255, 255, 0.07) !important;
             color: #64748b !important;
         }
@@ -551,7 +557,7 @@
         }
 
         .todo-root .cal-cell:hover {
-            background: rgba(255, 255, 255, 0.04) !important;
+            background: rgba(15, 25, 35, 0.6) !important;
         }
 
         .todo-root .cal-cell-date {
@@ -695,6 +701,18 @@
                             style="width:40px;height:40px;border-radius:8px;cursor:pointer;background:linear-gradient(135deg,#1a0d2e,#2d1b55 60%,#1f0f3d);border:2px solid transparent; transition: border 0.15s;"
                             onmouseover="this.style.borderColor='#007fff'"
                             onmouseout="this.style.borderColor='transparent'"></div>
+                        <div title="Cảnh quan 1" onclick="setBg('img1')"
+                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_1.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
+                            onmouseover="this.style.borderColor='#007fff'"
+                            onmouseout="this.style.borderColor='transparent'"></div>
+                        <div title="Cảnh quan 2" onclick="setBg('img2')"
+                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_2.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
+                            onmouseover="this.style.borderColor='#007fff'"
+                            onmouseout="this.style.borderColor='transparent'"></div>
+                        <div title="Cảnh quan 3" onclick="setBg('img3')"
+                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_3.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
+                            onmouseover="this.style.borderColor='#007fff'"
+                            onmouseout="this.style.borderColor='transparent'"></div>
                     </div>
                 </div>
                 <div class="nav-item" onclick="window.noteTestNotification && window.noteTestNotification()"
@@ -713,7 +731,7 @@
                 style="position:absolute; inset:0; z-index:0; pointer-events:none; overflow:hidden; transition: opacity 0.4s;">
                 <!-- Flower image -->
                 <div id="bgImageEl"
-                    style="position:absolute; right:-5%; bottom:-10%; width:78%; height:85%; background-image: url('../assets/bg-flower.webp'); background-size:contain; background-repeat:no-repeat; background-position: bottom right; opacity:0.38; filter: saturate(1.2);">
+                    style="position:absolute; right:-5%; bottom:-10%; width:78%; height:85%; background-image: url('../../assets/bg-flower.webp'); background-size:contain; background-repeat:no-repeat; background-position: bottom right; opacity:0.38; filter: saturate(1.2);">
                 </div>
                 <!-- Glow overlay -->
                 <div
@@ -760,7 +778,7 @@
         const _bgPresets = {
             flower: {
                 body: '#0f1923',
-                imgUrl: "url('../assets/bg-flower.webp')",
+                imgUrl: "url('../../assets/bg-flower.webp')",
                 imgOpacity: 0.38
             },
             plain: {
@@ -777,19 +795,78 @@
                 body: 'linear-gradient(135deg,#1a0d2e,#2d1b55 60%,#1f0f3d)',
                 imgUrl: 'none',
                 imgOpacity: 0
+            },
+            img1: {
+                body: '#0f1923',
+                imgUrl: "url('../../assets/img_1.jpg')",
+                imgOpacity: 1,
+                cover: true
+            },
+            img2: {
+                body: '#0f1923',
+                imgUrl: "url('../../assets/img_2.jpg')",
+                imgOpacity: 1,
+                cover: true
+            },
+            img3: {
+                body: '#0f1923',
+                imgUrl: "url('../../assets/img_3.jpg')",
+                imgOpacity: 1,
+                cover: true
             }
         };
 
+        function restoreBgElStyles() {
+            // Restore default inline styles for preset images
+            const imgEl = document.getElementById('bgImageEl');
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) sidebar.style.background = ''; // reset to class styling or presets
+            if (sidebar) sidebar.style.backdropFilter = '';
+            if (sidebar) sidebar.style.webkitBackdropFilter = '';
+
+            if (imgEl) {
+                imgEl.style.backgroundSize = 'contain';
+                imgEl.style.backgroundPosition = 'bottom right';
+                imgEl.style.width = '78%';
+                imgEl.style.height = '85%';
+                imgEl.style.right = '-5%';
+                imgEl.style.bottom = '-10%';
+            }
+        }
+
         function setBg(name) {
+            restoreBgElStyles();
+
             const p = _bgPresets[name];
             if (!p) return;
             document.body.style.background = p.body;
+
             const sidebar = document.getElementById('sidebar');
-            if (sidebar) sidebar.style.background = p.body.startsWith('#') ? p.body : '#0f1923';
+            if (sidebar) {
+                if (p.cover) {
+                    sidebar.style.background = 'rgba(15, 25, 35, 0.5)';
+                    sidebar.style.backdropFilter = 'blur(16px)';
+                    sidebar.style.webkitBackdropFilter = 'blur(16px)';
+                } else {
+                    sidebar.style.background = p.body.startsWith('#') ? p.body : '#0f1923';
+                    sidebar.style.backdropFilter = 'none';
+                    sidebar.style.webkitBackdropFilter = 'none';
+                }
+            }
+
             const imgEl = document.getElementById('bgImageEl');
             if (imgEl) {
                 imgEl.style.backgroundImage = p.imgUrl;
                 imgEl.style.opacity = p.imgOpacity;
+
+                if (p.cover) {
+                    imgEl.style.backgroundSize = 'cover';
+                    imgEl.style.backgroundPosition = 'center';
+                    imgEl.style.width = '100%';
+                    imgEl.style.height = '100%';
+                    imgEl.style.right = '0';
+                    imgEl.style.bottom = '0';
+                }
             }
             // Save choice
             try { localStorage.setItem('bgChoice', name); } catch (_) { }
@@ -806,7 +883,11 @@
         // Restore saved bg on load
         try {
             const saved = localStorage.getItem('bgChoice');
-            if (saved && _bgPresets[saved]) setBg(saved);
+            if (saved && _bgPresets[saved]) {
+                setBg(saved);
+            } else {
+                setBg('flower'); // Default
+            }
         } catch (_) { }
 
     </script>
