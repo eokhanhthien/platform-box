@@ -6,36 +6,21 @@ function getTodos(filters) {
     return new Promise((resolve, reject) => {
         try {
             const db = getDB();
-            let query = `
-                SELECT t.*, 
-                       u1.full_name AS owner_name,
-                       u2.full_name AS assignee_name
-                FROM todos t
-                LEFT JOIN users u1 ON t.owner_id = u1.id
-                LEFT JOIN users u2 ON t.assignee_id = u2.id
-            `;
+            let query = `SELECT * FROM todos`;
             const params = [];
             const conditions = [];
 
-            if (filters.owner_id) {
-                conditions.push('t.owner_id = ?');
-                params.push(filters.owner_id);
-            }
-            if (filters.department) {
-                conditions.push('t.department = ?');
-                params.push(filters.department);
-            }
             if (filters.status) {
-                conditions.push('t.status = ?');
+                conditions.push('status = ?');
                 params.push(filters.status);
             }
             if (filters.due_date) {
-                conditions.push('t.due_date = ?');
+                conditions.push('due_date = ?');
                 params.push(filters.due_date);
             }
             if (filters.due_month) {
                 // Format: YYYY-MM
-                conditions.push("strftime('%Y-%m', t.due_date) = ?");
+                conditions.push("strftime('%Y-%m', due_date) = ?");
                 params.push(filters.due_month);
             }
 
@@ -43,7 +28,7 @@ function getTodos(filters) {
                 query += ' WHERE ' + conditions.join(' AND ');
             }
 
-            query += ' ORDER BY t.order_index ASC, t.due_date ASC, t.created_at DESC';
+            query += ' ORDER BY order_index ASC, due_date ASC, created_at DESC';
 
             db.all(query, params, (err, rows) => {
                 if (err) {
@@ -62,11 +47,7 @@ function getTodoById(id) {
     return new Promise((resolve, reject) => {
         try {
             const db = getDB();
-            db.get(`SELECT t.*, u1.full_name AS owner_name, u2.full_name AS assignee_name
-                    FROM todos t
-                    LEFT JOIN users u1 ON t.owner_id = u1.id
-                    LEFT JOIN users u2 ON t.assignee_id = u2.id
-                    WHERE t.id = ?`, [id], (err, row) => {
+            db.get(`SELECT * FROM todos WHERE id = ?`, [id], (err, row) => {
                 if (err) {
                     reject({ success: false, error: err.message });
                 } else {
@@ -83,12 +64,12 @@ function addTodo(data) {
     return new Promise((resolve, reject) => {
         try {
             const db = getDB();
-            const { title, description, status, priority, due_date, owner_id, assignee_id, department, note, reminder_date, reminder_time } = data;
+            const { title, description, status, priority, due_date, note, reminder_date, reminder_time } = data;
             db.run(
-                `INSERT INTO todos (title, description, status, priority, due_date, owner_id, assignee_id, department, note, reminder_date, reminder_time, reminder_fired)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+                `INSERT INTO todos (title, description, status, priority, due_date, note, reminder_date, reminder_time, reminder_fired)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)`,
                 [title, description || null, status || 'todo', priority || 'medium',
-                    due_date || null, owner_id, assignee_id || null, department || null, note || null, reminder_date || null, reminder_time || '08:00'],
+                    due_date || null, note || null, reminder_date || null, reminder_time || '08:00'],
                 function (err) {
                     if (err) {
                         reject({ success: false, error: err.message });
@@ -107,12 +88,12 @@ function updateTodo(id, data) {
     return new Promise((resolve, reject) => {
         try {
             const db = getDB();
-            const { title, description, status, priority, due_date, assignee_id, note, reminder_date, reminder_time } = data;
+            const { title, description, status, priority, due_date, note, reminder_date, reminder_time } = data;
             db.run(
                 `UPDATE todos SET title=?, description=?, status=?, priority=?, due_date=?,
-                 assignee_id=?, note=?, reminder_date=?, reminder_time=?, reminder_fired=0, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
+                 note=?, reminder_date=?, reminder_time=?, reminder_fired=0, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
                 [title, description || null, status, priority, due_date || null,
-                    assignee_id || null, note || null, reminder_date || null, reminder_time || '08:00', id],
+                    note || null, reminder_date || null, reminder_time || '08:00', id],
                 function (err) {
                     if (err) {
                         reject({ success: false, error: err.message });

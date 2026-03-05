@@ -1063,29 +1063,43 @@
 
     <!-- MAIN CONTENT -->
     <div class="todo-main">
-        <!-- Dynamic Header -->
-        <div class="todo-header">
-            <div class="todo-header-title">
-                <h1 id="todo-view-title">My day</h1>
-                <span class="todo-date-subtitle" id="todo-view-subtitle"></span>
+        <!-- Dynamic Header — Any.do style -->
+        <div class="todo-header" style="padding: 24px 32px 20px; align-items: flex-end;">
+            <div>
+                <h1 id="todo-view-title"
+                    style="font-size:28px; font-weight:700; letter-spacing:-0.5px; margin-bottom:14px;">My Day</h1>
+                <div style="display:flex; gap:16px; align-items:center;">
+                    <span class="todo-date-subtitle" id="todo-view-subtitle"></span>
+                    <select class="todo-filter-select" id="todoPriorityFilter" onchange="todoApplyFilter()"
+                        style="background:rgba(255,255,255,0.06); border:none; border-radius:6px; color:#94a3b8; font-size:12px; padding:4px 8px; cursor:pointer;">
+                        <option value="">Tất cả độ ưu tiên</option>
+                        <option value="high">🔴 Cao</option>
+                        <option value="medium">🟠 Trung bình</option>
+                        <option value="low">🟢 Thấp</option>
+                    </select>
+                    <select class="todo-filter-select" id="todoAssigneeFilter" onchange="todoApplyFilter()"
+                        style="display:none;">
+                        <option value="">Người được giao</option>
+                    </select>
+                </div>
             </div>
-
-            <div class="todo-header-actions">
-                <input type="text" class="todo-search" id="todoSearch" placeholder="&#xf002; Tìm kiếm..."
-                    spellcheck="false" oninput="todoApplyFilter()"
-                    style="font-family: Arial, 'Font Awesome 5 Free'; font-weight: 900;">
-                <select class="todo-filter-select" id="todoPriorityFilter" onchange="todoApplyFilter()">
-                    <option value="">Tất cả độ ưu tiên</option>
-                    <option value="high">🔴 Cao</option>
-                    <option value="medium">🟠 Trung bình</option>
-                    <option value="low">🟢 Thấp</option>
-                </select>
-                <select class="todo-filter-select" id="todoAssigneeFilter" onchange="todoApplyFilter()"
-                    style="display:none;">
-                    <option value="">Người được giao</option>
-                </select>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <input type="text" class="todo-search" id="todoSearch" placeholder="🔍 Tìm kiếm..." spellcheck="false"
+                    oninput="todoApplyFilter()"
+                    style="width:160px; font-size:13px; padding:8px 12px; border-radius:8px;">
+                <button onclick="todoClearCompleted()"
+                    style="background:rgba(255,255,255,0.06); border:none; border-radius:8px; padding:8px 16px; font-size:13px; font-weight:500; color:#94a3b8; cursor:pointer; font-family:inherit; white-space:nowrap; transition: background 0.15s;"
+                    onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#e2e8f0'"
+                    onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.color='#94a3b8'">
+                    Clear completed
+                </button>
+                <button class="todo-btn-primary" id="btnAddTodo" onclick="todoOpenModal()"
+                    style="padding:8px 16px; font-size:13px; border-radius:8px; display:flex; gap:8px; align-items:center; white-space:nowrap; background:#007fff; color:#fff; border:none; cursor:pointer; font-family:inherit; font-weight:600;">
+                    <i class="fas fa-plus"></i> Add Task
+                </button>
             </div>
         </div>
+
 
         <div class="todo-view-container">
             <!-- VIEW: MY DAY -->

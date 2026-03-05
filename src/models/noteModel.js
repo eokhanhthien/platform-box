@@ -58,11 +58,6 @@ async function getNotes(filters = {}) {
         let sql = `SELECT * FROM notes WHERE 1=1`;
         const params = [];
 
-        if (filters.owner_id) {
-            sql += ` AND owner_id = ?`;
-            params.push(filters.owner_id);
-        }
-
         if (filters.color && filters.color !== 'all') {
             sql += ` AND color = ?`;
             params.push(filters.color);
@@ -111,12 +106,12 @@ async function getNoteById(id) {
 async function addNote(data) {
     try {
         const { title = '', content = '', color = 'default', is_pinned = 0, is_locked = 0,
-            reminder_date = null, reminder_time = '08:00', owner_id, tags = [] } = data;
+            reminder_date = null, reminder_time = '08:00', tags = [] } = data;
         const now = new Date().toISOString();
         const result = await runQ(
-            `INSERT INTO notes (title, content, color, is_pinned, is_locked, reminder_date, reminder_time, reminder_fired, owner_id, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
-            [title, content, color, is_pinned ? 1 : 0, is_locked ? 1 : 0, reminder_date, reminder_time || '08:00', owner_id, now, now]
+            `INSERT INTO notes (title, content, color, is_pinned, is_locked, reminder_date, reminder_time, reminder_fired, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+            [title, content, color, is_pinned ? 1 : 0, is_locked ? 1 : 0, reminder_date, reminder_time || '08:00', now, now]
         );
         await setNoteTags(result.lastID, tags);
         return { success: true, data: { id: result.lastID } };
@@ -192,14 +187,12 @@ async function deleteNote(id) {
     }
 }
 
-async function getAllTags(ownerId) {
+async function getAllTags() {
     try {
         const rows = await allQ(
             `SELECT nt.tag, COUNT(*) as count FROM note_tags nt
-             INNER JOIN notes n ON n.id = nt.note_id
-             WHERE n.owner_id = ?
              GROUP BY nt.tag ORDER BY count DESC`,
-            [ownerId]
+            []
         );
         return { success: true, data: rows };
     } catch (e) {

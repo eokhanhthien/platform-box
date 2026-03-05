@@ -1,13 +1,9 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const { initDB } = require('../models/database');
-const { initUserController } = require('../controllers/userController');
-const { initPermissionController } = require('../controllers/permissionController');
 const { initSystemController } = require('../controllers/systemController');
-const { initKpiController } = require('../controllers/kpiController');
 const { initTodoController } = require('../controllers/todoController');
 const { initNoteController } = require('../controllers/noteController');
-const { initConfigController } = require('../controllers/configController');
 
 // App identity
 app.setName('SkyAdmin');
@@ -27,13 +23,9 @@ async function bootstrap() {
         await initDB();
 
         // 2. Initialize Controllers (IPC Event Listeners)
-        initUserController();
-        initPermissionController();
         initSystemController();
-        initKpiController();
         initTodoController();
         initNoteController();
-        initConfigController();
 
         // 3. Create the Main Window
         createWindow();
@@ -57,27 +49,14 @@ function createWindow() {
         show: false // Don't show until ready-to-show
     });
 
-    // Tải màn hình Login làm mặc định
-    mainWindow.loadFile(path.join(__dirname, '../views/auth/login.html'));
+    // Load dashboard directly (no login needed for personal use)
+    mainWindow.loadFile(path.join(__dirname, '../views/admin/dashboard.html'));
 
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
         mainWindow.maximize();
     });
 }
-
-// Lắng nghe sự kiện ipc báo đăng nhập thành công từ renderer để đổi View
-ipcMain.on('navigate-to-dashboard', () => {
-    if (mainWindow) {
-        mainWindow.loadFile(path.join(__dirname, '../views/admin/dashboard.html'));
-    }
-});
-
-ipcMain.on('navigate-to-login', () => {
-    if (mainWindow) {
-        mainWindow.loadFile(path.join(__dirname, '../views/auth/login.html'));
-    }
-});
 
 app.whenReady().then(bootstrap);
 

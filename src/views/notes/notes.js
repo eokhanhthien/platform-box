@@ -65,9 +65,7 @@
     };
 
     // ── Init ────────────────────────────────────────────────────────────────
-    async function initNotesModule(currentUser) {
-        _currentUser = currentUser;
-
+    async function initNotesModule() {
         const sectionEl = document.getElementById('section-notes');
         if (!sectionEl || !sectionEl.querySelector('.notes-root')) return; // Template not loaded yet
 
@@ -161,7 +159,7 @@
 
     // ── Data loading ────────────────────────────────────────────────────────
     async function _loadNotes() {
-        const res = await window.api.getNotes({ owner_id: _currentUser.id });
+        const res = await window.api.getNotes({});
         if (res.success) {
             _allNotes = res.data;
             _renderGrid();
@@ -170,7 +168,7 @@
     }
 
     async function _loadTags() {
-        const res = await window.api.getAllTags(_currentUser.id);
+        const res = await window.api.getAllTags();
         if (res.success) {
             _allTags = res.data;
             _renderTagSidebar();
@@ -483,8 +481,7 @@
             is_locked: _isLocked ? 1 : 0,
             reminder_date: reminder,
             reminder_time: reminderTime,
-            tags: _currentTags,
-            owner_id: _currentUser.id
+            tags: _currentTags
         };
 
         let res;
@@ -804,4 +801,13 @@
     // ── Expose init ─────────────────────────────────────────────────────────
     window.initNotesModule = initNotesModule;
 
+    // ── Expose filter setter for sidebar-driven navigation ──────────────────
+    window._notesSetFilter = function (filterTag) {
+        _filterTag = filterTag;
+        // Reset active state in notes tag sidebar if it exists
+        document.querySelectorAll('.notes-tag-item').forEach(i => i.classList.remove('active'));
+        _renderGrid();
+    };
+
 })();
+

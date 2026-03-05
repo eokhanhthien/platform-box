@@ -1,35 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
-    // Auth
-    login: (username, password) => ipcRenderer.invoke('login', username, password),
-    logout: () => ipcRenderer.invoke('logout'),
-    getCurrentUser: () => ipcRenderer.invoke('getCurrentUser'),
-    navigateToDashboard: () => ipcRenderer.send('navigate-to-dashboard'),
-    navigateToLogin: () => ipcRenderer.send('navigate-to-login'),
-
-    // Users CRUD
-    getUsers: () => ipcRenderer.invoke('getUsers'),
-    addUser: (user) => ipcRenderer.invoke('addUser', user),
-    updateUser: (id, user) => ipcRenderer.invoke('updateUser', id, user),
-    deleteUser: (id) => ipcRenderer.invoke('deleteUser', id),
-
-    // Permissions
-    getPermissions: () => ipcRenderer.invoke('getPermissions'),
-    updatePermissions: (role, config) => ipcRenderer.invoke('updatePermissions', role, config),
-
-    // System Components
+    // System Components (lazy load HTML templates)
     loadTemplate: (moduleName) => ipcRenderer.invoke('loadTemplate', moduleName),
-    getConfig: () => ipcRenderer.invoke('getConfig'),
-    saveConfig: (key, value) => ipcRenderer.invoke('saveConfig', key, value),
-
-    // KPI Feature
-    getKpiTemplate: (department) => ipcRenderer.invoke('getKpiTemplate', department),
-    saveKpiTemplate: (department, config) => ipcRenderer.invoke('saveKpiTemplate', department, config),
-    getKpiReports: (filters) => ipcRenderer.invoke('getKpiReports', filters),
-    getUserKpiReport: (userId, period) => ipcRenderer.invoke('getUserKpiReport', userId, period),
-    saveUserKpiReport: (userId, department, period, kpiData) => ipcRenderer.invoke('saveUserKpiReport', userId, department, period, kpiData),
-    deleteKpiReport: (userId, period) => ipcRenderer.invoke('deleteKpiReport', userId, period),
 
     // Todo Feature
     getTodos: (filters) => ipcRenderer.invoke('getTodos', filters),
@@ -47,7 +20,7 @@ contextBridge.exposeInMainWorld('api', {
     updateNote: (id, data) => ipcRenderer.invoke('updateNote', id, data),
     deleteNote: (id) => ipcRenderer.invoke('deleteNote', id),
     updateNoteOrders: (updates) => ipcRenderer.invoke('updateNoteOrders', updates),
-    getAllTags: (ownerId) => ipcRenderer.invoke('getAllTags', ownerId),
+    getAllTags: () => ipcRenderer.invoke('getAllTags'),
     markReminderFired: (id) => ipcRenderer.invoke('markReminderFired', id),
     testReminderNotification: () => ipcRenderer.invoke('testReminderNotification'),
     checkRemindersNow: () => ipcRenderer.invoke('checkRemindersNow')

@@ -6,70 +6,17 @@
 // ===== STATE =====
 let _todoTasks = [];
 let _todoFiltered = [];
-let _todoUser = null;
-let _todoPerms = [];
-let _todoUsers = [];
 let _calY = 0, _calM = 0, _calSel = null;
 let _currentView = 'today'; // today | next7 | all | calendar
 
 // ===== ENTRY =====
 async function initTodoModule() {
     try {
-        _todoUser = window._currentUser;
-        const rolePerms = (window.APP_CONFIG && window.APP_CONFIG.PERMISSIONS && _todoUser)
-            ? (window.APP_CONFIG.PERMISSIONS[_todoUser.role] || {}) : {};
-        _todoPerms = rolePerms['todo'] || [];
-
-        const isAdmin = _todoUser && _todoUser.role === 'Admin';
-        const canView = isAdmin || _todoPerms.includes('view');
-        const canCreate = isAdmin || _todoPerms.includes('create');
-        const canViewAll = !isAdmin && _todoPerms.includes('view_all');
-
-        // Check Permissions
-        if (!canView) {
-            document.getElementById('section-todo').innerHTML =
-                `<div style="text-align:center;padding:80px 0;color:var(--text-muted);">
-                    <i class="fas fa-lock" style="font-size:40px;opacity:.25;display:block;margin-bottom:16px;"></i>
-                    <h3 style="font-weight:600;margin-bottom:8px;">Không có quyền truy cập</h3>
-                    <p>Liên hệ Admin để được cấp quyền module Todo List.</p>
-                </div>`;
-            return;
-        }
-
-        // Hide "Add Task" button if no permission
-        const btnAdd = document.getElementById('btnAddTodo');
-        if (btnAdd && !canCreate) btnAdd.style.display = 'none';
-
-        // Load users for Assignee dropdown
-        if (isAdmin || canViewAll) {
-            const af = document.getElementById('todoAssigneeFilter');
-            if (af) af.style.display = '';
-            const ag = document.getElementById('assigneeGroup');
-            if (ag) ag.style.display = '';
-            await _loadTodoUsers();
-        }
-
         // Initialize Calendar Date
         const now = new Date();
         _calY = now.getFullYear();
         _calM = now.getMonth();
         _calSel = null;
-
-        // Load SortableJS
-        if (!window._sortableJsLoaded) {
-            window._sortableJsLoaded = true;
-            const s = document.createElement('script');
-            s.src = '../../../node_modules/sortablejs/Sortable.min.js';
-            s.onload = () => { console.log('[Todo] SortableJS loaded locally'); _renderCurrentView(); };
-            s.onerror = () => {
-                console.warn('[Todo] Local SortableJS not found, trying CDN...');
-                const s2 = document.createElement('script');
-                s2.src = 'https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js';
-                s2.onload = () => _renderCurrentView();
-                document.head.appendChild(s2);
-            };
-            document.head.appendChild(s);
-        }
 
         await todoLoadTasks();
 
@@ -85,10 +32,15 @@ async function initTodoModule() {
 function switchTodoView(viewName) {
     _currentView = viewName;
 
-    // Update Sidebar Active State
+    // Update internal nav (if todo module sidebar is visible)
     document.querySelectorAll('.todo-nav-item').forEach(el => el.classList.remove('active'));
-    document.getElementById(`nav-${viewName}`).classList.add('active');
+    const navEl = document.getElementById(`nav-${viewName}`);
+    if (navEl) navEl.classList.add('active');
 
+    // Also update the global dashboard sidebar
+    document.querySelectorAll('.nav-item[data-view]').forEach(el => el.classList.remove('active'));
+    const globalNavEl = document.querySelector(`.nav-item[data-view="${viewName}"]`);
+    if (globalNavEl) globalNavEl.classList.add('active');
     // Update Main Title
     const titles = {
         'today': 'My Day',
@@ -122,11 +74,7 @@ function switchTodoView(viewName) {
 // ===== API & DATA LOADING =====
 async function todoLoadTasks() {
     try {
-        const isAdmin = _todoUser && _todoUser.role === 'Admin';
-        const canViewAll = !isAdmin && _todoPerms.includes('view_all');
-        const filters = canViewAll ? {} : { owner_id: _todoUser ? _todoUser.id : -1 };
-
-        const res = await window.api.getTodos(filters);
+        const res = await window.api.getTodos({});
         _todoTasks = (res && res.success) ? (res.data || []) : [];
         todoApplyFilter();
     } catch (e) {
@@ -139,12 +87,10 @@ async function todoLoadTasks() {
 function todoApplyFilter() {
     const q = (document.getElementById('todoSearch')?.value || '').toLowerCase();
     const pri = document.getElementById('todoPriorityFilter')?.value || '';
-    const uid = document.getElementById('todoAssigneeFilter')?.value || '';
 
     _todoFiltered = _todoTasks.filter(t => {
         if (q && !t.title.toLowerCase().includes(q) && !(t.description || '').toLowerCase().includes(q)) return false;
         if (pri && t.priority !== pri) return false;
-        if (uid && String(t.owner_id) !== uid && String(t.assignee_id || '') !== uid) return false;
         return true;
     });
 
@@ -165,12 +111,16 @@ function _updateSidebarCounts() {
         next7Dates.push(_fmtDateObj(d));
     }
     const next7Count = _todoFiltered.filter(t => next7Dates.includes(t.due_date) && t.status !== 'done').length;
-
     const allCount = _todoFiltered.filter(t => t.status !== 'done').length;
 
-    document.getElementById('count-nav-today').textContent = todayCount;
-    document.getElementById('count-nav-next7').textContent = next7Count;
-    document.getElementById('count-nav-all').textContent = allCount;
+    // Update both internal nav counts and global sidebar counts (safe)
+    const _setCount = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    };
+    _setCount('count-nav-today', todayCount);
+    _setCount('count-nav-next7', next7Count);
+    _setCount('count-nav-all', allCount);
 }
 
 function _renderCurrentView() {
@@ -212,24 +162,11 @@ function _renderMyDay() {
 
 function _buildListItemHTML(t) {
     const isDone = t.status === 'done';
-    const isAdmin = _todoUser?.role === 'Admin';
-    const isOwner = t.owner_id === _todoUser?.id;
-    const canEdit = isAdmin || _todoPerms.includes('update') || isOwner;
-    const canDel = isAdmin || _todoPerms.includes('delete') || isOwner;
-
     const pCfg = { high: '🔴 Cao', medium: '🟠 TB', low: '🟢 Thấp' };
-
-    const checkAction = canEdit
-        ? `onclick="event.stopPropagation(); todoToggleCheck(${t.id}, '${t.status}')"`
-        : `onclick="event.stopPropagation();"`;
-
-    const delBtn = canDel
-        ? `<button class="task-action-btn danger" onclick="event.stopPropagation(); todoDelete(${t.id})"><i class="fas fa-trash"></i></button>`
-        : ``;
 
     return `
         <div class="task-list-item ${isDone ? 'done' : ''}" onclick="todoOpenModal(${t.id})">
-            <div class="task-list-checkbox" ${checkAction} title="${isDone ? 'Bỏ tick hoàn thành' : 'Đánh dấu hoàn thành'}">
+            <div class="task-list-checkbox" onclick="event.stopPropagation(); todoToggleCheck(${t.id}, '${t.status}')" title="${isDone ? 'Bỏ tick hoàn thành' : 'Đánh dấu hoàn thành'}">
                 <i class="fas fa-check"></i>
             </div>
             <div class="task-list-content">
@@ -243,7 +180,7 @@ function _buildListItemHTML(t) {
                 </div>
             </div>
             <div class="task-list-actions">
-                ${delBtn}
+                <button class="task-action-btn danger" onclick="event.stopPropagation(); todoDelete(${t.id})"><i class="fas fa-trash"></i></button>
             </div>
         </div>
     `;
@@ -297,19 +234,34 @@ function _renderNext7Days() {
                 <div class="next7-col-header">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span class="next7-day-name">${name}</span>
-                        <span class="col-count" style="font-size:11px; padding:2px 6px;">${tasks.length}</span>
+                        ${tasks.length > 0 ? `<span class="col-count" style="font-size:11px; padding:2px 6px;">${tasks.length}</span>` : ''}
                     </div>
                     <span class="next7-date">${subDate}</span>
                 </div>
                 <div class="next7-col-body" id="next7-col-${ds}" data-date="${ds}" style="position:relative;">
-                    ${tasks.length === 0 ? '<div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#cbd5e1; font-size:12px; font-weight:700; pointer-events:none; z-index:0;"><i class="fas fa-download" style="font-size:20px; margin-bottom:8px;"></i>+ Drop here</div>' : ''}
+                    ${tasks.length === 0 ? `
+                        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; min-height:80px; color:rgba(148,163,184,0.3); font-size:12px; font-weight:600; pointer-events:none; text-align:center; gap:8px;">
+                            <i class="fas fa-calendar-check" style="font-size:32px;"></i>
+                            <span>No tasks scheduled</span>
+                        </div>` : ''}
                     ${cardsHtml}
                 </div>
-                <button class="next7-add-task-btn" onclick="todoOpenModal(null, '${ds}')">
-                    <i class="fas fa-plus"></i> Add Task
-                </button>
+                <div style="padding: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
+                    <div style="position:relative;">
+                        <i class="fas fa-plus" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color: ${isToday ? '#007fff' : '#475569'}; font-size:13px; pointer-events:none;"></i>
+                        <input
+                            type="text"
+                            placeholder="Add Task"
+                            style="width:100%; background:rgba(255,255,255,0.05); border:none; border-radius:8px; padding:8px 12px 8px 32px; font-size:13px; color:#e2e8f0; outline:none; font-family:inherit; transition:background 0.15s, box-shadow 0.15s;"
+                            onfocus="this.style.boxShadow='0 0 0 1.5px #007fff'; this.style.background='rgba(255,255,255,0.08)';"
+                            onblur="this.style.boxShadow='none'; this.style.background='rgba(255,255,255,0.05)';"
+                            onkeydown="if(event.key==='Enter' && this.value.trim()) { todoQuickAdd(this, '${ds}'); }"
+                        />
+                    </div>
+                </div>
             </div>
         `;
+
     }
 
     board.innerHTML = html;
@@ -413,12 +365,7 @@ function _renderKanban() {
 }
 
 function _buildKanbanCardHTML(t) {
-    const isAdmin = _todoUser?.role === 'Admin';
-    const isOwner = t.owner_id === _todoUser?.id;
-    const canEdit = isAdmin || _todoPerms.includes('update') || isOwner;
-    const canDel = isAdmin || _todoPerms.includes('delete') || isOwner;
     const today = new Date().toISOString().split('T')[0];
-
     const isDone = t.status === 'done';
 
     const pCfg = { high: '#ef4444', medium: '#f97316', low: '#22c55e' };
@@ -436,21 +383,16 @@ function _buildKanbanCardHTML(t) {
         ? `<i class="fas fa-check-circle" style="color:var(--td-primary);font-size:15px;"></i>`
         : `<i class="far fa-circle" style="color:#cbd5e1;font-size:15px;"></i>`;
 
-    const checkBtn = canEdit
-        ? `<div onclick="event.stopPropagation(); todoToggleCheck(${t.id}, '${t.status}')" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:24px; height:24px;" title="${isDone ? 'Bỏ tick hoàn thành' : 'Đánh dấu hoàn thành'}">${checkIcon}</div>`
-        : '';
+    const checkBtn = `<div onclick="event.stopPropagation(); todoToggleCheck(${t.id}, '${t.status}')" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:24px; height:24px;" title="${isDone ? 'Bỏ tick hoàn thành' : 'Đánh dấu hoàn thành'}">${checkIcon}</div>`;
 
-    const editBtn = canEdit ? `<button class="task-action-btn" title="Sửa" onclick="event.stopPropagation();todoOpenModal(${t.id})"><i class="fas fa-edit"></i></button>` : '';
-    const delBtn = canDel ? `<button class="task-action-btn danger" title="Xóa" onclick="event.stopPropagation();todoDelete(${t.id})"><i class="fas fa-trash"></i></button>` : '';
-    const draggableCls = canEdit ? ' draggable-card' : '';
-
-    const avatarHtml = `<div style="width:20px;height:20px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#64748b;font-weight:700;">${(t.title || 'T')[0].toUpperCase()}</div>`;
+    const editBtn = `<button class="task-action-btn" title="Sửa" onclick="event.stopPropagation();todoOpenModal(${t.id})"><i class="fas fa-edit"></i></button>`;
+    const delBtn = `<button class="task-action-btn danger" title="Xóa" onclick="event.stopPropagation();todoDelete(${t.id})"><i class="fas fa-trash"></i></button>`;
 
     return `
-        <div class="task-card${draggableCls} ${isDone ? 'done' : ''}" data-id="${t.id}" onclick="todoOpenModal(${t.id})" style="position:relative; z-index:1;">
+        <div class="task-card draggable-card ${isDone ? 'done' : ''}" data-id="${t.id}" onclick="todoOpenModal(${t.id})" style="position:relative; z-index:1;">
             ${topLabel}
             <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:${t.description ? '6px' : '20px'};">
-                ${checkBtn ? `<div style="margin-top:2px;">${checkBtn}</div>` : ''}
+                <div style="margin-top:2px;">${checkBtn}</div>
                 <div class="task-card-title ${isDone ? 'done-title' : ''}" style="margin-bottom:0; font-size:15px; font-weight:700; line-height:1.4;">
                     ${_esc(t.title)}
                     ${t.reminder_date ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#ef4444; background:#fef2f2; padding:2px 6px; border-radius:12px; margin-left:8px; border:1px solid #fca5a5;" title="Nhắc nhở lúc ${t.reminder_time || '08:00'} ngày ${t.reminder_date}"><i class="fas fa-bell" style="font-size:10px;"></i> ${t.reminder_time || '08:00'}</span>` : ''}
@@ -459,9 +401,7 @@ function _buildKanbanCardHTML(t) {
             ${t.description ? `<div class="task-card-desc" style="margin-bottom:16px; ${isDone ? 'opacity:0.6;' : ''}">${_esc(t.description)}</div>` : ''}
             
             <div style="display:flex; justify-content:flex-end; align-items:center;">
-                <div style="display:flex; gap:4px; align-items:center;">
-                    <div class="task-card-actions" style="display:flex; gap:4px;">${editBtn}${delBtn}</div>
-                </div>
+                <div class="task-card-actions" style="display:flex; gap:4px;">${editBtn}${delBtn}</div>
             </div>
         </div>`;
 }
@@ -535,11 +475,35 @@ function todoCalPrev() { _calM--; if (_calM < 0) { _calM = 11; _calY--; } _rende
 function todoCalNext() { _calM++; if (_calM > 11) { _calM = 0; _calY++; } _renderCalendar(); }
 
 
+// ===== QUICK ADD (inline input in Next7 columns) =====
+async function todoQuickAdd(inputEl, dateStr) {
+    const title = inputEl.value.trim();
+    if (!title) return;
+    inputEl.value = '';
+    inputEl.disabled = true;
+    try {
+        const res = await window.api.addTodo({
+            title,
+            due_date: dateStr,
+            priority: 'medium',
+            status: 'todo'
+        });
+        if (res && res.success) {
+            await todoLoadTasks();
+        }
+    } catch (e) {
+        console.error('[Todo] quickAdd error:', e);
+    }
+    inputEl.disabled = false;
+    inputEl.focus();
+}
+
 // ===== QUICK ACTIONS (Called from UI & Drag Drop) =====
 async function todoToggleCheck(id, currentStatus) {
     const newStatus = currentStatus === 'done' ? 'todo' : 'done';
     await todoChangeStatus(id, newStatus);
 }
+
 
 async function todoChangeStatus(id, status, skipReload = false) {
     const res = await window.api.updateTodoStatus(id, status);
@@ -557,14 +521,30 @@ async function todoChangeDueDate(id, newDate, skipReload = false) {
         status: t.status,
         priority: t.priority,
         due_date: newDate,
-        note: t.note,
-        assignee_id: t.assignee_id,
-        owner_id: t.owner_id,
-        department: t.department
+        note: t.note
     };
 
     const res = await window.api.updateTodo(id, data);
     if (res && res.success && !skipReload) await todoLoadTasks();
+}
+
+async function todoClearCompleted() {
+    const doneTasks = _todoTasks.filter(t => t.status === 'done');
+    if (!doneTasks.length) return;
+    const cf = await Swal.fire({
+        icon: 'warning',
+        title: `Xóa ${doneTasks.length} task đã hoàn thành?`,
+        text: 'Thao tác không thể hoàn tác.',
+        showCancelButton: true,
+        confirmButtonText: 'Xóa ngay',
+        confirmButtonColor: '#dc2626',
+        cancelButtonText: 'Hủy',
+        background: '#1a2535',
+        color: '#e2e8f0'
+    });
+    if (!cf.isConfirmed) return;
+    await Promise.all(doneTasks.map(t => window.api.deleteTodo(t.id)));
+    await todoLoadTasks();
 }
 
 async function todoDelete(id) {
@@ -636,10 +616,8 @@ async function todoOpenModal(id, defaultDate = null) {
         const res = await window.api.getTodoById(id);
         if (res && res.success && res.data) {
             const t = res.data;
-            const isAdmin = _todoUser?.role === 'Admin';
-            const canEdit = isAdmin || _todoPerms.includes('update') || t.owner_id === _todoUser?.id;
 
-            document.getElementById('todoModalTitle').textContent = canEdit ? 'Chỉnh sửa task' : 'Chi tiết task';
+            document.getElementById('todoModalTitle').textContent = 'Chỉnh sửa task';
             document.getElementById('todoEditId').value = t.id;
             document.getElementById('todoTitle').value = t.title;
             const descArea = document.getElementById('todoDescArea');
@@ -655,13 +633,6 @@ async function todoOpenModal(id, defaultDate = null) {
             if (reminderCheck) {
                 reminderCheck.checked = hasReminder;
                 todoToggleReminderInputs(reminderCheck);
-            }
-
-            if (assignEl) assignEl.value = t.assignee_id || '';
-
-            if (!canEdit) {
-                overlay.querySelectorAll('input,select,textarea').forEach(e => e.disabled = true);
-                document.getElementById('todoSaveBtn').style.display = 'none';
             }
         }
     }
@@ -700,10 +671,7 @@ async function todoSave() {
         due_date: document.getElementById('todoDueDate')?.value || null,
         reminder_date: reminderChecked ? (document.getElementById('todoReminderDate')?.value || null) : null,
         reminder_time: reminderChecked ? (document.getElementById('todoReminderTime')?.value || '08:00') : '08:00',
-        note: null,
-        assignee_id: document.getElementById('todoAssignee')?.value || null,
-        owner_id: _todoUser?.id,
-        department: _todoUser?.department || null
+        note: null
     };
 
     let res;
@@ -727,16 +695,6 @@ async function todoSave() {
 }
 
 // ===== UTILS =====
-async function _loadTodoUsers() {
-    const res = await window.api.getUsers();
-    if (!res || !res.success) return;
-    _todoUsers = res.data || [];
-    const opts = _todoUsers.map(u => `<option value="${u.id}">${_esc(u.full_name)} (${u.role})</option>`).join('');
-    const sel1 = document.getElementById('todoAssignee');
-    const sel2 = document.getElementById('todoAssigneeFilter');
-    if (sel1) sel1.innerHTML = `<option value="">— Bản thân —</option>${opts}`;
-    if (sel2) sel2.innerHTML = `<option value="">Tất cả người dùng</option>${opts}`;
-}
 
 function _fmtDateObj(d) {
     const y = d.getFullYear();

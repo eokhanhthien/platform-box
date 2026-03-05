@@ -119,8 +119,8 @@ function initNoteController() {
         catch (e) { return { success: false, error: e.message }; }
     });
 
-    ipcMain.handle('getAllTags', async (event, ownerId) => {
-        try { return await getAllTags(ownerId); }
+    ipcMain.handle('getAllTags', async (event) => {
+        try { return await getAllTags(); }
         catch (e) { return { success: false, error: e.message }; }
     });
 
