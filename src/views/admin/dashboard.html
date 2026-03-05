@@ -334,6 +334,7 @@
             background: rgba(15, 25, 35, 0.4) !important;
             backdrop-filter: blur(12px) !important;
             -webkit-backdrop-filter: blur(12px) !important;
+            transform: translateZ(0) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 12px !important;
         }
@@ -344,18 +345,19 @@
             background: rgba(15, 25, 35, 0.5) !important;
             backdrop-filter: blur(8px) !important;
             -webkit-backdrop-filter: blur(8px) !important;
+            transform: translateZ(0) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 10px !important;
             color: #e2e8f0 !important;
-            transition: border-color 0.15s, background 0.15s !important;
+            transition: border-color 0.15s, background-color 0.15s, transform 0.15s !important;
         }
 
         .todo-root .task-card:hover,
         .todo-root .task-list-item:hover {
             border-color: rgba(0, 127, 255, 0.4) !important;
-            background: rgba(15, 25, 35, 0.7) !important;
-            transform: none !important;
-            box-shadow: none !important;
+            background-color: rgba(15, 25, 35, 0.7) !important;
+            transform: translateZ(0) translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
         }
 
         .todo-root .task-card.done,
@@ -539,6 +541,7 @@
             background: rgba(15, 25, 35, 0.4) !important;
             backdrop-filter: blur(12px) !important;
             -webkit-backdrop-filter: blur(12px) !important;
+            transform: translateZ(0) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
         }
 
@@ -554,10 +557,11 @@
 
         .todo-root .cal-cell {
             border-color: rgba(255, 255, 255, 0.05) !important;
+            transition: background-color 0.2s !important;
         }
 
         .todo-root .cal-cell:hover {
-            background: rgba(15, 25, 35, 0.6) !important;
+            background-color: rgba(15, 25, 35, 0.6) !important;
         }
 
         .todo-root .cal-cell-date {
@@ -685,22 +689,12 @@
                     </div>
                     <div id="bgPickerPanel"
                         style="display:none; padding: 8px 12px; gap:8px; flex-wrap:wrap; flex-direction:row;">
-                        <div title="Hoa neon" onclick="setBg('flower')"
-                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background:url('../assets/bg-flower.webp') center/cover;border:2px solid transparent; transition: border 0.15s;"
-                            onmouseover="this.style.borderColor='#007fff'"
-                            onmouseout="this.style.borderColor='transparent'"></div>
-                        <div title="Dark plain" onclick="setBg('plain')"
-                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background:#0f1923;border:2px solid rgba(255,255,255,0.15); transition: border 0.15s;"
-                            onmouseover="this.style.borderColor='#007fff'"
-                            onmouseout="this.style.borderColor='rgba(255,255,255,0.15)'"></div>
+
                         <div title="Blue wave" onclick="setBg('blue')"
                             style="width:40px;height:40px;border-radius:8px;cursor:pointer;background:linear-gradient(135deg,#0d1b4b,#0a2a6e 60%,#0f3580);border:2px solid transparent; transition: border 0.15s;"
                             onmouseover="this.style.borderColor='#007fff'"
                             onmouseout="this.style.borderColor='transparent'"></div>
-                        <div title="Purple night" onclick="setBg('purple')"
-                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background:linear-gradient(135deg,#1a0d2e,#2d1b55 60%,#1f0f3d);border:2px solid transparent; transition: border 0.15s;"
-                            onmouseover="this.style.borderColor='#007fff'"
-                            onmouseout="this.style.borderColor='transparent'"></div>
+
                         <div title="Cảnh quan 1" onclick="setBg('img1')"
                             style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_1.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
                             onmouseover="this.style.borderColor='#007fff'"
@@ -711,6 +705,14 @@
                             onmouseout="this.style.borderColor='transparent'"></div>
                         <div title="Cảnh quan 3" onclick="setBg('img3')"
                             style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_3.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
+                            onmouseover="this.style.borderColor='#007fff'"
+                            onmouseout="this.style.borderColor='transparent'"></div>
+                        <div title="Cảnh quan 4" onclick="setBg('img4')"
+                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_4.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
+                            onmouseover="this.style.borderColor='#007fff'"
+                            onmouseout="this.style.borderColor='transparent'"></div>
+                        <div title="Cảnh quan 5" onclick="setBg('img5')"
+                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_5.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
                             onmouseover="this.style.borderColor='#007fff'"
                             onmouseout="this.style.borderColor='transparent'"></div>
                     </div>
@@ -811,6 +813,18 @@
             img3: {
                 body: '#0f1923',
                 imgUrl: "url('../../assets/img_3.jpg')",
+                imgOpacity: 1,
+                cover: true
+            },
+            img4: {
+                body: '#0f1923',
+                imgUrl: "url('../../assets/img_4.jpg')",
+                imgOpacity: 1,
+                cover: true
+            },
+            img5: {
+                body: '#0f1923',
+                imgUrl: "url('../../assets/img_5.jpg')",
                 imgOpacity: 1,
                 cover: true
             }
