@@ -548,14 +548,21 @@ async function todoClearCompleted() {
 }
 
 async function todoDelete(id) {
+    // When called from the modal footer delete button, read ID from the hidden field
+    if (!id) {
+        id = document.getElementById('todoEditId')?.value;
+    }
+    if (!id) return;
     const cf = await Swal.fire({
         icon: 'warning', title: 'Xóa task này?', text: 'Thao tác không thể hoàn tác.',
         showCancelButton: true, confirmButtonText: 'Xóa ngay',
-        confirmButtonColor: '#dc2626', cancelButtonText: 'Hủy'
+        confirmButtonColor: '#dc2626', cancelButtonText: 'Hủy',
+        background: '#1a2535', color: '#e2e8f0'
     });
     if (!cf.isConfirmed) return;
     const res = await window.api.deleteTodo(id);
     if (res && res.success) {
+        todoCloseModal();
         Swal.fire({ icon: 'success', title: 'Đã xóa!', timer: 1000, showConfirmButton: false });
         await todoLoadTasks();
     }
@@ -589,10 +596,12 @@ async function todoOpenModal(id, defaultDate = null) {
         todoToggleReminderInputs(reminderCheck);
     }
 
-    document.getElementById('todoModalTitle').textContent = 'Thêm task mới';
-    document.getElementById('todoSaveBtn').style.display = '';
     document.getElementById('todoSaveBtn').innerHTML = '<i class="fas fa-save"></i> Lưu task';
     overlay.querySelectorAll('input,select,textarea').forEach(e => e.disabled = false);
+
+    // Show/hide delete button in footer
+    const deleteBtn = document.getElementById('todoDeleteBtn');
+    if (deleteBtn) deleteBtn.style.display = 'none';
 
     // Pre-fill Date
     if (!id) {
@@ -617,7 +626,6 @@ async function todoOpenModal(id, defaultDate = null) {
         if (res && res.success && res.data) {
             const t = res.data;
 
-            document.getElementById('todoModalTitle').textContent = 'Chỉnh sửa task';
             document.getElementById('todoEditId').value = t.id;
             document.getElementById('todoTitle').value = t.title;
             const descArea = document.getElementById('todoDescArea');
@@ -634,11 +642,15 @@ async function todoOpenModal(id, defaultDate = null) {
                 reminderCheck.checked = hasReminder;
                 todoToggleReminderInputs(reminderCheck);
             }
+
+            // Show delete button when editing
+            if (deleteBtn) deleteBtn.style.display = '';
         }
     }
 
     overlay.classList.add('active');
     if (!id) setTimeout(() => { const e = document.getElementById('todoTitle'); if (e) e.focus(); }, 80);
+    else setTimeout(() => { const e = document.getElementById('todoTitle'); if (e && e.value) { e.focus(); e.setSelectionRange(e.value.length, e.value.length); } }, 80);
 }
 
 function todoCloseModal() {

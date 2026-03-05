@@ -669,13 +669,14 @@
             opacity: 0.6;
         }
 
-        /* ===== MODAL (Standard Theme) ===== */
+        /* ===== MODAL — Dark Glassmorphism (matches Notes modal) ===== */
         .todo-modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            z-index: 2000;
             display: none;
             align-items: center;
             justify-content: center;
@@ -687,78 +688,107 @@
         }
 
         .todo-modal {
-            background: #ffffff;
-            border: 1px solid var(--td-border);
-            border-radius: 16px;
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
             width: 100%;
-            max-width: 720px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+            max-width: 760px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
             display: flex;
             flex-direction: column;
             max-height: 90vh;
-            animation: todoModalIn .2s cubic-bezier(0.16, 1, 0.3, 1);
-            color: var(--td-text-main);
+            animation: todoModalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+            position: relative;
         }
 
         @keyframes todoModalIn {
             from {
-                transform: scale(.96);
+                transform: scale(.96) translateY(20px);
                 opacity: 0;
             }
 
             to {
-                transform: scale(1);
+                transform: scale(1) translateY(0);
                 opacity: 1;
             }
         }
 
+        /* Title-as-input header (like Notes) */
         .todo-modal-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid var(--td-border);
+            padding: 28px 32px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.02);
         }
 
-        .todo-modal-header h3 {
+        .todo-modal-header-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(0, 118, 254, 0.15);
+            border: 1px solid rgba(0, 118, 254, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 18px;
+            color: #60a5fa;
+            flex-shrink: 0;
+        }
+
+        .todo-modal-title-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 22px;
             font-weight: 700;
-            margin: 0;
+            color: #ffffff;
+            background: transparent;
+            font-family: inherit;
+            letter-spacing: -0.5px;
+        }
+
+        .todo-modal-title-input::placeholder {
+            color: rgba(148, 163, 184, 0.5);
         }
 
         .todo-modal-close {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
             border: none;
-            background: var(--td-bg-hover);
+            background: rgba(255, 255, 255, 0.06);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--td-text-muted);
+            font-size: 16px;
+            color: #94a3b8;
             transition: all 0.2s;
+            flex-shrink: 0;
         }
 
         .todo-modal-close:hover {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--td-danger);
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            transform: rotate(90deg);
         }
 
         .todo-modal-body {
-            padding: 24px;
+            padding: 24px 32px;
             overflow-y: auto;
             flex: 1;
         }
 
         .todo-modal-footer {
-            padding: 16px 24px;
-            border-top: 1px solid var(--td-border);
+            padding: 16px 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
             display: flex;
             justify-content: flex-end;
-            gap: 12px;
-            background: #fdfdfd;
-            border-radius: 0 0 16px 16px;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.01);
         }
 
         .todo-form-row {
@@ -768,105 +798,149 @@
         }
 
         .todo-form-group {
-            margin-bottom: 16px;
+            margin-bottom: 18px;
         }
 
         .todo-form-group label {
             display: block;
-            font-size: 13px;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 700;
             margin-bottom: 8px;
-            color: var(--td-text-muted);
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
         }
 
         .todo-form-group input,
         .todo-form-group select,
         .todo-form-group textarea {
             width: 100%;
-            background: var(--td-bg-input);
-            border: 1px solid var(--td-border);
-            color: var(--td-text-main);
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            border-radius: 10px;
             padding: 10px 14px;
             font-size: 14px;
             outline: none;
-            transition: border 0.2s, box-shadow 0.2s;
+            transition: border 0.2s, box-shadow 0.2s, background 0.2s;
             box-sizing: border-box;
             font-family: inherit;
+        }
+
+        .todo-form-group select option {
+            background: #1e293b;
+            color: #e2e8f0;
         }
 
         .todo-form-group input:focus,
         .todo-form-group select:focus,
         .todo-form-group textarea:focus {
-            border-color: var(--td-primary);
-            box-shadow: 0 0 0 3px rgba(0, 120, 212, .15);
-            background: #fff;
+            border-color: rgba(96, 165, 250, 0.5);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.12);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .todo-form-group input[type="date"]::-webkit-calendar-picker-indicator,
+        .todo-form-group input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7);
+            cursor: pointer;
+        }
+
+        .todo-form-group input[disabled] {
+            opacity: 0.35;
+            pointer-events: none;
         }
 
         .todo-btn-primary {
-            padding: 10px 20px;
-            background: var(--td-primary);
+            padding: 10px 22px;
+            background: #0076fe;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .todo-btn-primary:hover {
-            background: var(--td-primary-hover);
+            background: #0062dd;
             transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0, 118, 254, 0.4);
         }
 
         .todo-btn-secondary {
-            padding: 10px 20px;
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--td-text-main);
-            border: 1px solid var(--td-border);
-            border-radius: 8px;
+            padding: 10px 22px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
             font-weight: 600;
+            font-size: 14px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s;
         }
 
         .todo-btn-secondary:hover {
-            background: rgba(0, 0, 0, 0.1);
-            border-color: rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
         }
 
-        /* ===== TODO RICH TEXT EDITOR ===== */
+        .todo-btn-danger {
+            padding: 10px 16px;
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-right: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .todo-btn-danger:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fee2e2;
+        }
+
+        /* ===== TODO RICH TEXT EDITOR (dark) ===== */
         .todo-editor-wrapper {
-            border: 1px solid var(--td-border);
-            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
             overflow: visible;
-            /* Changed from hidden to visible so emoji picker isn't clipped */
-            background: var(--td-bg-input);
+            background: rgba(255, 255, 255, 0.04);
             display: flex;
             flex-direction: column;
             transition: border 0.2s, box-shadow 0.2s;
         }
 
         .todo-editor-wrapper:focus-within {
-            border-color: var(--td-primary);
-            box-shadow: 0 0 0 3px rgba(0, 120, 212, .15);
-            background: #fff;
+            border-color: rgba(96, 165, 250, 0.5);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.12);
         }
 
         .todo-editor-toolbar {
             display: flex;
             align-items: center;
             gap: 2px;
-            padding: 6px 12px;
-            border-bottom: 1px solid var(--td-border);
-            background: #fafafa;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px 12px 0 0;
             flex-wrap: wrap;
         }
 
         .todo-editor-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
+            width: 30px;
+            height: 30px;
+            border-radius: 7px;
             border: none;
             background: transparent;
             cursor: pointer;
@@ -874,13 +948,13 @@
             align-items: center;
             justify-content: center;
             font-size: 13px;
-            color: #6b7280;
+            color: #64748b;
             transition: background .15s, color .15s;
         }
 
         .todo-editor-btn:hover {
-            background: #e2e8f0;
-            color: var(--td-text-main);
+            background: rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
         }
 
         .todo-emoji-wrapper {
@@ -893,10 +967,10 @@
             top: 100%;
             left: 0;
             margin-top: 4px;
-            z-index: 1000;
+            z-index: 3000;
             display: none;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
         }
 
         #todoEmojiContainer.active {
@@ -906,25 +980,25 @@
         .todo-editor-separator {
             width: 1px;
             height: 18px;
-            background: var(--td-border);
+            background: rgba(255, 255, 255, 0.1);
             margin: 0 4px;
         }
 
         .todo-editor-area {
-            padding: 12px 14px;
-            min-height: 200px;
-            /* Increased min-height to give more room for the popup naturally */
-            max-height: 400px;
+            padding: 14px 16px;
+            min-height: 160px;
+            max-height: 300px;
             overflow-y: auto;
             font-size: 14px;
-            line-height: 1.6;
-            color: var(--td-text-main);
+            line-height: 1.7;
+            color: #cbd5e1;
             outline: none;
+            border-radius: 0 0 12px 12px;
         }
 
         .todo-editor-area:empty::before {
             content: attr(data-placeholder);
-            color: #94a3b8;
+            color: rgba(148, 163, 184, 0.4);
             pointer-events: none;
         }
 
@@ -932,6 +1006,81 @@
         .todo-editor-area ol {
             padding-left: 20px;
             margin: 6px 0;
+        }
+
+        /* Divider inside modal body */
+        .todo-modal-section-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.07);
+            margin: 4px 0 20px;
+        }
+
+        /* Reminder row inside modal */
+        .todo-reminder-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            margin-top: -4px;
+        }
+
+        .todo-reminder-row label {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: none;
+            letter-spacing: 0;
+            margin: 0;
+        }
+
+        .todo-reminder-row input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            accent-color: #60a5fa;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        .todo-reminder-inputs {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .todo-reminder-inputs input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 13px;
+            outline: none;
+            transition: border 0.2s;
+            font-family: inherit;
+        }
+
+        .todo-reminder-inputs input:focus {
+            border-color: rgba(96, 165, 250, 0.5);
+        }
+
+        .todo-reminder-inputs input[disabled] {
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
+        .todo-reminder-inputs input[type="date"]::-webkit-calendar-picker-indicator,
+        .todo-reminder-inputs input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.6);
+            cursor: pointer;
         }
 
         .task-card-title {
@@ -1212,21 +1361,25 @@
     <!-- MODAL FORM -->
     <div class="todo-modal-overlay" id="todoModalOverlay" onclick="if(event.target===this) todoCloseModal()">
         <div class="todo-modal">
+
+            <!-- Header: icon + title input + close -->
             <div class="todo-modal-header">
-                <h3 id="todoModalTitle">Thêm task mới</h3>
-                <button class="todo-modal-close" onclick="todoCloseModal()"><i class="fas fa-times"></i></button>
+                <div class="todo-modal-header-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <input class="todo-modal-title-input" type="text" id="todoTitle" placeholder="Tiêu đề công việc..."
+                    spellcheck="false" autocomplete="off">
+                <button class="todo-modal-close" onclick="todoCloseModal()" title="Đóng">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
+
             <div class="todo-modal-body">
                 <input type="hidden" id="todoEditId">
 
+                <!-- Rich text description -->
                 <div class="todo-form-group">
-                    <label>Tiêu đề việc cần làm <span style="color:var(--td-danger)">*</span></label>
-                    <input type="text" id="todoTitle" placeholder="Ví dụ: Lên kế hoạch marketing quý 1..."
-                        spellcheck="false">
-                </div>
-
-                <div class="todo-form-group">
-                    <label>Mô tả chi tiết</label>
+                    <label><i class="fas fa-align-left" style="margin-right:6px; opacity:.5;"></i>Mô tả chi tiết</label>
                     <div class="todo-editor-wrapper">
                         <div class="todo-editor-toolbar">
                             <button class="todo-editor-btn" type="button" title="In đậm (Ctrl+B)"
@@ -1243,28 +1396,29 @@
                             <button class="todo-editor-btn" type="button" title="Danh sách số"
                                 onclick="todoExecCmd('insertOrderedList')"><i class="fas fa-list-ol"></i></button>
                             <div class="todo-editor-separator"></div>
-
                             <div class="todo-emoji-wrapper">
-                                <button class="todo-editor-btn" type="button" title="Chèn biểu tượng" id="btnTodoEmoji"
+                                <button class="todo-editor-btn" type="button" title="Emoji" id="btnTodoEmoji"
                                     onclick="todoToggleEmojiPicker(event)"><i class="far fa-smile"></i></button>
                                 <div id="todoEmojiContainer"></div>
                             </div>
-
                             <div class="todo-editor-separator"></div>
                             <button class="todo-editor-btn" type="button" title="Xóa định dạng"
                                 onclick="todoExecCmd('removeFormat')"><i class="fas fa-eraser"></i></button>
-                            <button class="todo-editor-btn" type="button" title="Xóa trắng"
+                            <button class="todo-editor-btn" type="button" title="Xóa nội dung"
                                 onclick="document.getElementById('todoDescArea').innerHTML=''"><i
                                     class="fas fa-trash-alt" style="font-size:12px;"></i></button>
                         </div>
                         <div class="todo-editor-area" id="todoDescArea" contenteditable="true" spellcheck="false"
-                            data-placeholder="Nhập chi tiết công việc cần làm, ghi chú, checklist..."></div>
+                            data-placeholder="Nhập chi tiết, ghi chú, checklist công việc..."></div>
                     </div>
                 </div>
 
+                <div class="todo-modal-section-divider"></div>
+
+                <!-- Priority + Status row -->
                 <div class="todo-form-row">
                     <div class="todo-form-group">
-                        <label>Độ ưu tiên</label>
+                        <label><i class="fas fa-flag" style="margin-right:6px; opacity:.5;"></i>Độ ưu tiên</label>
                         <select id="todoPriority">
                             <option value="high">🔴 Cao</option>
                             <option value="medium" selected>🟠 Trung bình</option>
@@ -1272,42 +1426,48 @@
                         </select>
                     </div>
                     <div class="todo-form-group">
-                        <label>Trạng thái</label>
+                        <label><i class="fas fa-circle" style="margin-right:6px; opacity:.5;"></i>Trạng thái</label>
                         <select id="todoStatus">
-                            <option value="todo">Cần làm</option>
-                            <option value="doing">Đang làm</option>
-                            <option value="done">Hoàn thành</option>
+                            <option value="todo">📋 Cần làm</option>
+                            <option value="doing">⚡ Đang làm</option>
+                            <option value="done">✅ Hoàn thành</option>
                         </select>
                     </div>
                 </div>
 
+                <!-- Due date + Reminder row -->
                 <div class="todo-form-row" style="margin-bottom: 0;">
-                    <div class="todo-form-group" style="margin-bottom: 0;">
-                        <label>Ngày hết hạn</label>
+                    <div class="todo-form-group" style="margin-bottom:0;">
+                        <label><i class="fas fa-calendar-alt" style="margin-right:6px; opacity:.5;"></i>Ngày hết
+                            hạn</label>
                         <input type="date" id="todoDueDate">
                     </div>
-                    <div class="todo-form-group" style="margin-bottom: 0; min-width: 250px;">
-                        <label style="cursor:pointer; display:flex; align-items:center; gap:6px; margin-bottom: 6px;">
-                            <input type="checkbox" id="todoReminderCheck" onchange="todoToggleReminderInputs(this)"
-                                style="width:14px;height:14px;cursor:pointer;accent-color:var(--td-primary);">
-                            Nhắc nhở <i class="far fa-bell" style="color: #94a3b8;"></i>
-                        </label>
-                        <div style="display:flex;gap:8px;">
-                            <input type="date" id="todoReminderDate" style="flex:2; opacity:.45; pointer-events:none;"
-                                disabled>
-                            <input type="time" id="todoReminderTime" style="flex:1; opacity:.45; pointer-events:none;"
-                                disabled>
+                    <div class="todo-form-group" style="margin-bottom:0;">
+                        <label><i class="far fa-bell" style="margin-right:6px; opacity:.5;"></i>Nhắc nhở</label>
+                        <div class="todo-reminder-row">
+                            <label
+                                style="margin:0; text-transform:none; letter-spacing:0; font-size:13px; color:#94a3b8; font-weight:500; cursor:pointer;">
+                                <input type="checkbox" id="todoReminderCheck" onchange="todoToggleReminderInputs(this)"
+                                    style="width:14px;height:14px;accent-color:#60a5fa;">
+                                Bật nhắc
+                            </label>
+                            <div class="todo-reminder-inputs" style="flex:1;">
+                                <input type="date" id="todoReminderDate" style="flex:2;" disabled>
+                                <input type="time" id="todoReminderTime" style="flex:1;" value="08:00" disabled>
+                            </div>
                         </div>
                     </div>
                     <div class="todo-form-group" id="assigneeGroup" style="display:none; margin-bottom: 0;">
                         <label>Giao cho</label>
-                        <select id="todoAssignee">
-                            <!-- Populated dynamically -->
-                        </select>
+                        <select id="todoAssignee"></select>
                     </div>
                 </div>
             </div>
+
             <div class="todo-modal-footer">
+                <button class="todo-btn-danger" id="todoDeleteBtn" onclick="todoDelete()" style="display:none;">
+                    <i class="fas fa-trash-alt"></i> Xóa
+                </button>
                 <button class="todo-btn-secondary" onclick="todoCloseModal()">Hủy bỏ</button>
                 <button class="todo-btn-primary" id="todoSaveBtn" onclick="todoSave()">
                     <i class="fas fa-save"></i> Lưu task
