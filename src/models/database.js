@@ -95,8 +95,70 @@ function initDB() {
                 await migrateCol('todos', 'reminder_time', 'TEXT DEFAULT \'08:00\'');
                 await migrateCol('todos', 'reminder_fired', 'INTEGER DEFAULT 0');
 
+                // ── Migration: remove owner_id / assignee_id / department from old tables ──
+                // SQLite doesn't support DROP COLUMN directly, so we use the rename-recreate-copy pattern.
+                // We detect the old schema by checking if owner_id exists in the table.
+                const hasCol = (tableInfo, col) => tableInfo.some(r => r.name === col);
+
+                // Fix NOTES table
+                const notesInfo = await new Promise((res, rej) =>
+                    db.all(`PRAGMA table_info(notes)`, [], (e, rows) => e ? rej(e) : res(rows)));
+                if (hasCol(notesInfo, 'owner_id')) {
+                    console.log('[DB] Migrating notes table — removing owner_id...');
+                    await runQuery(`ALTER TABLE notes RENAME TO notes_old`);
+                    await runQuery(`CREATE TABLE notes (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        title TEXT NOT NULL DEFAULT '',
+                        content TEXT DEFAULT '',
+                        color TEXT DEFAULT 'default',
+                        is_pinned INTEGER DEFAULT 0,
+                        is_locked INTEGER DEFAULT 0,
+                        order_index INTEGER DEFAULT 0,
+                        reminder_date TEXT,
+                        reminder_time TEXT DEFAULT '08:00',
+                        reminder_fired INTEGER DEFAULT 0,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )`);
+                    await runQuery(`INSERT INTO notes (id,title,content,color,is_pinned,is_locked,order_index,reminder_date,reminder_time,reminder_fired,created_at,updated_at)
+                        SELECT id,title,content,color,is_pinned,is_locked,COALESCE(order_index,0),reminder_date,COALESCE(reminder_time,'08:00'),COALESCE(reminder_fired,0),created_at,updated_at FROM notes_old`);
+                    await runQuery(`DROP TABLE notes_old`);
+                    console.log('[DB] notes migration done.');
+                }
+
+                // Fix TODOS table
+                const todosInfo = await new Promise((res, rej) =>
+                    db.all(`PRAGMA table_info(todos)`, [], (e, rows) => e ? rej(e) : res(rows)));
+                if (hasCol(todosInfo, 'owner_id')) {
+                    console.log('[DB] Migrating todos table — removing owner_id/assignee_id/department...');
+                    await runQuery(`ALTER TABLE todos RENAME TO todos_old`);
+                    await runQuery(`CREATE TABLE todos (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        title TEXT NOT NULL,
+                        description TEXT,
+                        status TEXT DEFAULT 'todo',
+                        priority TEXT DEFAULT 'medium',
+                        due_date TEXT,
+                        note TEXT,
+                        order_index INTEGER DEFAULT 0,
+                        reminder_date TEXT,
+                        reminder_time TEXT DEFAULT '08:00',
+                        reminder_fired INTEGER DEFAULT 0,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    )`);
+                    await runQuery(`INSERT INTO todos (id,title,description,status,priority,due_date,note,order_index,reminder_date,reminder_time,reminder_fired,created_at,updated_at)
+                        SELECT id,title,description,status,priority,due_date,note,COALESCE(order_index,0),reminder_date,COALESCE(reminder_time,'08:00'),COALESCE(reminder_fired,0),created_at,updated_at FROM todos_old`);
+                    await runQuery(`DROP TABLE todos_old`);
+                    console.log('[DB] todos migration done.');
+                }
+
+                // Fix NOTE_TAGS foreign key references (recreate after notes was recreated)
+                // note_tags already uses note_id which is preserved — FK still valid.
+
                 // Enable FK
                 await runQuery(`PRAGMA foreign_keys = ON`);
+
 
                 resolve(db);
             } catch (initErr) {
