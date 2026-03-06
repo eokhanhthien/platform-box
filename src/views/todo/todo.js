@@ -325,7 +325,7 @@ function _renderKanban() {
             const icon = { todo: 'fa-clipboard-list', doing: 'fa-spinner', done: 'fa-check-circle' }[s];
             body.innerHTML = `
                 <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#cbd5e1; text-align:center; padding: 20px; z-index:0; pointer-events:none;">
-                    <div style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                    <div style="width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
                         <i class="fas ${icon}" style="font-size:20px;"></i>
                     </div>
                     <span style="font-size:13px; font-weight:600; color:#e2e8f0;">${msg}</span>

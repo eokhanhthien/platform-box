@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Personal Workspace</title>
+    <title>Personal Workspace - Thiendk CN860</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -232,15 +232,29 @@
         /* Modules */
         .module-section {
             flex: 1;
-            display: none;
-            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            display: flex;
             flex-direction: column;
-            position: relative;
-            z-index: 1;
+
+            /* Warm Blur Optimization: Avoid display: none */
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+
+            transition: opacity 0.2s ease-in-out;
+            will-change: opacity, transform;
         }
 
         .module-section.visible {
-            display: flex;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            position: relative;
+            z-index: 10;
         }
 
         /* ══════════════ TODO MODULE DARK THEME ══════════════ */
@@ -255,10 +269,10 @@
             --td-primary-hover: #0062dd;
             --td-bg-sidebar: #0f1923;
             --td-bg-main: transparent;
-            --td-bg-card: rgba(255, 255, 255, 0.03);
-            --td-bg-card-hover: rgba(255, 255, 255, 0.06);
-            --td-bg-hover: rgba(255, 255, 255, 0.05);
-            --td-bg-input: rgba(15, 25, 35, 0.8);
+            --td-bg-card: rgba(15, 25, 35, 0.7);
+            --td-bg-card-hover: rgba(15, 25, 35, 0.8);
+            --td-bg-hover: rgba(255, 255, 255, 0.08);
+            --td-bg-input: rgba(15, 25, 35, 0.85);
             --td-danger: #ef4444;
 
             flex: 1 !important;
@@ -267,6 +281,9 @@
             border: none !important;
             box-shadow: none !important;
             background: transparent !important;
+            contain: paint !important;
+            transform: translateZ(0) !important;
+            will-change: transform !important;
         }
 
         /* Hide todo's own sidebar */
@@ -293,13 +310,17 @@
 
         /* ── NEXT7 COLUMNS: Any.do glassmorphism ── */
         .todo-root .next7-col {
-            background: rgba(255, 255, 255, 0.03) !important;
-            backdrop-filter: blur(12px) !important;
+            background: rgba(15, 25, 35, 0.7) !important;
+            backdrop-filter: blur(40px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
             border-radius: 12px !important;
             border: 1px solid rgba(255, 255, 255, 0.05) !important;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
+            transform: translateZ(0) !important;
+            backface-visibility: hidden !important;
+            will-change: backdrop-filter !important;
         }
 
         .todo-root .next7-col-header {
@@ -331,10 +352,12 @@
 
         /* ── KANBAN COLUMNS ── */
         .todo-root .kanban-col-body {
-            background: rgba(15, 25, 35, 0.4) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
+            background: rgba(15, 25, 35, 0.7) !important;
+            backdrop-filter: blur(40px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
             transform: translateZ(0) !important;
+            backface-visibility: hidden !important;
+            will-change: backdrop-filter !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 12px !important;
         }
@@ -342,14 +365,27 @@
         /* ── TASK CARDS ── */
         .todo-root .task-card,
         .todo-root .task-list-item {
-            background: rgba(15, 25, 35, 0.5) !important;
-            backdrop-filter: blur(8px) !important;
-            -webkit-backdrop-filter: blur(8px) !important;
+            background: rgba(15, 25, 35, 0.65) !important;
             transform: translateZ(0) !important;
+            backface-visibility: hidden !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
             border-radius: 10px !important;
             color: #e2e8f0 !important;
             transition: border-color 0.15s, background-color 0.15s, transform 0.15s !important;
+        }
+
+        /* Only apply blur to cards in My Day view (which has no column blur) */
+        .todo-root #list-today .task-list-item {
+            backdrop-filter: blur(15px) !important;
+            -webkit-backdrop-filter: blur(15px) !important;
+            will-change: backdrop-filter !important;
+        }
+
+        /* Kanban & Next 7 columns already have blur, so cards inside don't need it */
+        .todo-root .kanban-col-body .task-card,
+        .todo-root .next7-col-body .task-card {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
         }
 
         .todo-root .task-card:hover,
@@ -374,6 +410,7 @@
         .todo-root .task-card-desc,
         .todo-root .task-list-meta {
             color: rgba(255, 255, 255, 0.7) !important;
+            will-change: color !important;
         }
 
         /* Checkbox */
@@ -462,7 +499,7 @@
         /* ── MODAL (bright for readability) ── */
         .todo-root .todo-modal-overlay {
             background: rgba(0, 0, 0, 0.55) !important;
-            backdrop-filter: blur(8px) !important;
+            backdrop-filter: blur(15px) !important;
         }
 
         .todo-root .todo-modal {
@@ -538,11 +575,15 @@
 
         /* ── CALENDAR ── */
         .todo-root .todo-calendar-wrapper {
-            background: rgba(15, 25, 35, 0.4) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
+            background: rgba(15, 25, 35, 0.7) !important;
+            backdrop-filter: blur(40px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(40px) saturate(180%) !important;
             transform: translateZ(0) !important;
+            backface-visibility: hidden !important;
+            will-change: backdrop-filter !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+            overflow: hidden !important;
         }
 
         .todo-root .cal-header-bar {
@@ -714,11 +755,11 @@
                             onmouseout="this.style.borderColor='transparent'"></div>
                     </div>
                 </div>
-                <div class="nav-item" onclick="window.noteTestNotification && window.noteTestNotification()"
+                <!-- <div class="nav-item" onclick="window.noteTestNotification && window.noteTestNotification()"
                     style="margin-bottom:0;">
                     <i class="fas fa-bell"></i>
                     Test Thông báo
-                </div>
+                </div> -->
             </div>
         </aside>
 
@@ -855,9 +896,9 @@
             const sidebar = document.getElementById('sidebar');
             if (sidebar) {
                 if (p.cover) {
-                    sidebar.style.background = 'rgba(15, 25, 35, 0.5)';
-                    sidebar.style.backdropFilter = 'blur(16px)';
-                    sidebar.style.webkitBackdropFilter = 'blur(16px)';
+                    sidebar.style.background = 'rgba(15, 25, 35, 0.7)';
+                    sidebar.style.backdropFilter = 'blur(40px) saturate(180%)';
+                    sidebar.style.webkitBackdropFilter = 'blur(40px) saturate(180%)';
                 } else {
                     sidebar.style.background = p.body.startsWith('#') ? p.body : '#0f1923';
                     sidebar.style.backdropFilter = 'none';

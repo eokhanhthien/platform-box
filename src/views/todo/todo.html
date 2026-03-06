@@ -224,15 +224,35 @@
         }
 
         .todo-view {
-            display: none;
             padding: 24px 32px;
             height: 100%;
-            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
+            /* Warm Blur Optimization: Avoid display: none */
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+
+            display: flex;
+            /* Always display:flex, but hidden via visibility */
+            flex-direction: column;
+
+            transition: opacity 0.2s ease-in-out;
+            will-change: opacity, transform;
+
+            /* Animation for active entry */
+            animation: none;
         }
 
         .todo-view.active {
-            display: flex;
-            flex-direction: column;
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            position: relative;
+            z-index: 10;
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes fadeIn {
@@ -669,13 +689,15 @@
             opacity: 0.6;
         }
 
+
+
         /* ===== MODAL — Dark Glassmorphism (matches Notes modal) ===== */
         .todo-modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
             z-index: 2000;
             display: none;
             align-items: center;
@@ -1257,10 +1279,10 @@
                 <div id="empty-today"
                     style="display:none; padding-top: 100px; text-align: center; flex-direction: column; align-items: center; justify-content: center;">
                     <div
-                        style="width: 80px; height: 80px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
+                        style="width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
                         <i class="fas fa-mug-hot" style="font-size: 32px; color: #e2e8f0;"></i>
                     </div>
-                    <p style="font-size: 18px; font-weight: 700; color: #334155; margin-bottom: 8px;">Đã xong mọi việc
+                    <p style="font-size: 18px; font-weight: 700; color: #ffffff; margin-bottom: 8px;">Đã xong mọi việc
                         cho hôm nay!</p>
                     <p style="color: #e2e8f0; font-size: 14px; max-width: 250px; line-height: 1.5;">Thư giãn với một
                         tách cà phê hoặc lên kế hoạch cho những ngày tiếp theo.</p>

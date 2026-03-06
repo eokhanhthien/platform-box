@@ -29,6 +29,7 @@
             padding: 24px 32px;
             display: flex;
             flex-direction: column;
+            contain: paint !important;
         }
 
         /* ===== HEADER ===== */
@@ -97,8 +98,8 @@
             font-size: 14px;
             outline: none;
             background: var(--td-bg-input);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(100px);
+            -webkit-backdrop-filter: blur(100px);
             color: var(--td-text-main);
             transition: all 0.2s;
             box-sizing: border-box;
@@ -117,8 +118,8 @@
             font-size: 14px;
             outline: none;
             background: var(--td-bg-input);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(100px);
+            -webkit-backdrop-filter: blur(100px);
             color: var(--td-text-main);
             cursor: pointer;
             transition: all 0.2s;
@@ -134,9 +135,9 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            background: var(--td-bg-input);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(15, 25, 35, 0.8);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
             border: 1px solid var(--td-border);
             border-radius: 12px;
             padding: 8px 16px;
@@ -187,9 +188,12 @@
             padding: 20px;
             border: 1px solid var(--td-border-light);
             border-radius: 16px;
-            background: rgba(15, 25, 35, 0.5);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(15, 25, 35, 0.7);
+            backdrop-filter: blur(40px) saturate(180%);
+            -webkit-backdrop-filter: blur(40px) saturate(180%);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: backdrop-filter;
             align-self: stretch;
             display: flex;
             flex-direction: column;
@@ -275,8 +279,8 @@
 
         .notes-mini-stat {
             background: var(--td-bg-card);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(100px);
+            -webkit-backdrop-filter: blur(100px);
             border: 1px solid var(--td-border);
             border-radius: 12px;
             padding: 12px 8px;
@@ -356,9 +360,12 @@
 
         /* ===== NOTE CARD ===== */
         .note-card {
-            background: rgba(15, 25, 35, 0.5);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: rgba(15, 25, 35, 0.7);
+            backdrop-filter: blur(25px) saturate(150%);
+            -webkit-backdrop-filter: blur(25px) saturate(150%);
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: backdrop-filter;
             border: 1px solid var(--td-border-light);
             border-radius: 16px;
             cursor: pointer;
@@ -549,7 +556,7 @@
             position: fixed;
             inset: 0;
             background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(100px);
             z-index: 2000;
             display: none;
             align-items: center;
