@@ -77,7 +77,7 @@ async function _ensureTodoLoaded() {
         if (res.success) {
             el.innerHTML = res.html;
         } else {
-            el.innerHTML = `<div style="padding:64px;text-align:center;color:#8b949e;">Không thể tải module Todo: ${res.error}</div>`;
+            el.innerHTML = `<div style="padding:64px;text-align:center;color:#cbd5e1;">Không thể tải module Todo: ${res.error}</div>`;
             return;
         }
     }
@@ -99,7 +99,7 @@ async function _ensureNotesLoaded() {
         if (res.success) {
             el.innerHTML = res.html;
         } else {
-            el.innerHTML = `<div style="padding:64px;text-align:center;color:#8b949e;">Không thể tải module Ghi Chú: ${res.error}</div>`;
+            el.innerHTML = `<div style="padding:64px;text-align:center;color:#cbd5e1;">Không thể tải module Ghi Chú: ${res.error}</div>`;
             return;
         }
     }

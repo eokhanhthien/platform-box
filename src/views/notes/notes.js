@@ -313,7 +313,7 @@
             <div class="note-card-inner">
                 <div class="note-card-top">
                     <div class="note-card-title">
-                        ${_escHtml(n.title) || '<span style="color:#9ca3af;font-style:italic;font-weight:400;">Không có tiêu đề</span>'}
+                        ${_escHtml(n.title) || '<span style="color:#cbd5e1;font-style:italic;font-weight:400;">Không có tiêu đề</span>'}
                         ${n.reminder_date ? '<i class="fas fa-bell" style="color:#ef4444; font-size:11px; margin-left:6px;" title="Có hẹn giờ nhắc nhở"></i>' : ''}
                     </div>
                     <div class="note-card-badges">
@@ -329,7 +329,7 @@
                 <div class="note-card-footer">
                     ${tags}
                     ${reminder}
-                    <span style="margin-left:auto;font-size:11px;color:#9ca3af;">${updatedTime}</span>
+                    <span style="margin-left:auto;font-size:11px;color:#cbd5e1;">${updatedTime}</span>
                 </div>
             </div>
         </div>`;

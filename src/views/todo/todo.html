@@ -5,7 +5,7 @@
         /* ===== STANDARD THEME VARIABLES ===== */
         .standard-theme {
             --td-text-main: #111827;
-            --td-text-muted: #6b7280;
+            --td-text-muted: #cbd5e1;
             --td-border: #e5e7eb;
             --td-border-light: #f3f4f6;
             --td-primary: #0076fe;
@@ -378,7 +378,7 @@
 
         .col-count {
             background: #e2e8f0;
-            color: #64748b;
+            color: #e2e8f0;
             padding: 2px 8px;
             border-radius: 12px;
             font-size: 11px;
@@ -507,7 +507,7 @@
 
         .next7-date {
             font-size: 12px;
-            color: #94a3b8;
+            color: #e2e8f0;
             font-weight: 600;
         }
 
@@ -540,7 +540,7 @@
             padding: 12px;
             background: transparent;
             border: none;
-            color: #94a3b8;
+            color: #e2e8f0;
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
@@ -765,7 +765,7 @@
             align-items: center;
             justify-content: center;
             font-size: 16px;
-            color: #94a3b8;
+            color: #e2e8f0;
             transition: all 0.2s;
             flex-shrink: 0;
         }
@@ -806,7 +806,7 @@
             font-size: 11px;
             font-weight: 700;
             margin-bottom: 8px;
-            color: #64748b;
+            color: #e2e8f0;
             text-transform: uppercase;
             letter-spacing: 0.8px;
         }
@@ -875,7 +875,7 @@
         .todo-btn-secondary {
             padding: 10px 22px;
             background: rgba(255, 255, 255, 0.06);
-            color: #94a3b8;
+            color: #e2e8f0;
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             font-weight: 600;
@@ -948,7 +948,7 @@
             align-items: center;
             justify-content: center;
             font-size: 13px;
-            color: #64748b;
+            color: #e2e8f0;
             transition: background .15s, color .15s;
         }
 
@@ -991,7 +991,7 @@
             overflow-y: auto;
             font-size: 14px;
             line-height: 1.7;
-            color: #cbd5e1;
+            color: #ffffff;
             outline: none;
             border-radius: 0 0 12px 12px;
         }
@@ -1034,7 +1034,7 @@
             gap: 8px;
             font-size: 13px;
             font-weight: 600;
-            color: #94a3b8;
+            color: #e2e8f0;
             text-transform: none;
             letter-spacing: 0;
             margin: 0;
@@ -1220,7 +1220,7 @@
                 <div style="display:flex; gap:16px; align-items:center;">
                     <span class="todo-date-subtitle" id="todo-view-subtitle"></span>
                     <select class="todo-filter-select" id="todoPriorityFilter" onchange="todoApplyFilter()"
-                        style="background:rgba(255,255,255,0.06); border:none; border-radius:6px; color:#94a3b8; font-size:12px; padding:4px 8px; cursor:pointer;">
+                        style="background:rgba(255,255,255,0.06); border:none; border-radius:6px; color:#e2e8f0; font-size:12px; padding:4px 8px; cursor:pointer;">
                         <option value="">Tất cả độ ưu tiên</option>
                         <option value="high">🔴 Cao</option>
                         <option value="medium">🟠 Trung bình</option>
@@ -1237,9 +1237,9 @@
                     oninput="todoApplyFilter()"
                     style="width:160px; font-size:13px; padding:8px 12px; border-radius:8px;">
                 <button onclick="todoClearCompleted()"
-                    style="background:rgba(255,255,255,0.06); border:none; border-radius:8px; padding:8px 16px; font-size:13px; font-weight:500; color:#94a3b8; cursor:pointer; font-family:inherit; white-space:nowrap; transition: background 0.15s;"
+                    style="background:rgba(255,255,255,0.06); border:none; border-radius:8px; padding:8px 16px; font-size:13px; font-weight:500; color:#e2e8f0; cursor:pointer; font-family:inherit; white-space:nowrap; transition: background 0.15s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#e2e8f0'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.color='#94a3b8'">
+                    onmouseout="this.style.background='rgba(255,255,255,0.06)';this.style.color='#e2e8f0'">
                     Clear completed
                 </button>
                 <button class="todo-btn-primary" id="btnAddTodo" onclick="todoOpenModal()"
@@ -1258,11 +1258,11 @@
                     style="display:none; padding-top: 100px; text-align: center; flex-direction: column; align-items: center; justify-content: center;">
                     <div
                         style="width: 80px; height: 80px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; margin-bottom: 24px;">
-                        <i class="fas fa-mug-hot" style="font-size: 32px; color: #94a3b8;"></i>
+                        <i class="fas fa-mug-hot" style="font-size: 32px; color: #e2e8f0;"></i>
                     </div>
                     <p style="font-size: 18px; font-weight: 700; color: #334155; margin-bottom: 8px;">Đã xong mọi việc
                         cho hôm nay!</p>
-                    <p style="color: #64748b; font-size: 14px; max-width: 250px; line-height: 1.5;">Thư giãn với một
+                    <p style="color: #e2e8f0; font-size: 14px; max-width: 250px; line-height: 1.5;">Thư giãn với một
                         tách cà phê hoặc lên kế hoạch cho những ngày tiếp theo.</p>
                 </div>
             </div>
@@ -1291,7 +1291,7 @@
                                 <div style="display:flex; align-items:center; gap:8px;">
                                     <span
                                         style="font-size:16px; font-weight:700; color:var(--td-text-main); display:flex; align-items:center; gap:8px;">
-                                        <div style="width:8px;height:8px;border-radius:50%;background:#6b7280;"></div>
+                                        <div style="width:8px;height:8px;border-radius:50%;background:#cbd5e1;"></div>
                                         Todo
                                     </span>
                                     <span class="col-count" id="count-todo"
@@ -1446,7 +1446,7 @@
                         <label><i class="far fa-bell" style="margin-right:6px; opacity:.5;"></i>Nhắc nhở</label>
                         <div class="todo-reminder-row">
                             <label
-                                style="margin:0; text-transform:none; letter-spacing:0; font-size:13px; color:#94a3b8; font-weight:500; cursor:pointer;">
+                                style="margin:0; text-transform:none; letter-spacing:0; font-size:13px; color:#e2e8f0; font-weight:500; cursor:pointer;">
                                 <input type="checkbox" id="todoReminderCheck" onchange="todoToggleReminderInputs(this)"
                                     style="width:14px;height:14px;accent-color:#60a5fa;">
                                 Bật nhắc

@@ -240,7 +240,7 @@ function _renderNext7Days() {
                 </div>
                 <div class="next7-col-body" id="next7-col-${ds}" data-date="${ds}" style="position:relative; flex:1; overflow-y:auto; padding:8px;">
                     ${tasks.length === 0 ? `
-                        <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:rgba(148,163,184,0.25); font-size:12px; font-weight:600; pointer-events:none; text-align:center; gap:8px; z-index:0;">
+                        <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:rgba(255,255,255,0.4); font-size:12px; font-weight:600; pointer-events:none; text-align:center; gap:8px; z-index:0;">
                             <i class="fas fa-calendar-check" style="font-size:28px;"></i>
                             <span>No tasks scheduled</span>
                         </div>` : ''}
@@ -248,7 +248,7 @@ function _renderNext7Days() {
                 </div>
                 <div style="padding: 12px; border-top: 1px solid rgba(255,255,255,0.06);">
                     <div style="position:relative;">
-                        <i class="fas fa-plus" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color: ${isToday ? '#007fff' : '#475569'}; font-size:13px; pointer-events:none;"></i>
+                        <i class="fas fa-plus" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color: ${isToday ? '#007fff' : '#cbd5e1'}; font-size:13px; pointer-events:none;"></i>
                         <input
                             type="text"
                             placeholder="Add Task"
@@ -324,11 +324,11 @@ function _renderKanban() {
             const msg = { todo: 'Chưa có việc cần làm', doing: 'Chưa có việc đang làm', done: 'Chưa hoàn thành task nào' }[s];
             const icon = { todo: 'fa-clipboard-list', doing: 'fa-spinner', done: 'fa-check-circle' }[s];
             body.innerHTML = `
-                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; text-align:center; padding: 20px; z-index:0; pointer-events:none;">
+                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#cbd5e1; text-align:center; padding: 20px; z-index:0; pointer-events:none;">
                     <div style="width:48px; height:48px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
                         <i class="fas ${icon}" style="font-size:20px;"></i>
                     </div>
-                    <span style="font-size:13px; font-weight:600; color:#64748b;">${msg}</span>
+                    <span style="font-size:13px; font-weight:600; color:#e2e8f0;">${msg}</span>
                 </div>
             `;
         } else {
@@ -381,7 +381,7 @@ function _buildKanbanCardHTML(t) {
 
     const checkIcon = isDone
         ? `<i class="fas fa-check-circle" style="color:var(--td-primary);font-size:15px;"></i>`
-        : `<i class="far fa-circle" style="color:#cbd5e1;font-size:15px;"></i>`;
+        : `<i class="far fa-circle" style="color:#ffffff;font-size:15px;"></i>`;
 
     const checkBtn = `<div onclick="event.stopPropagation(); todoToggleCheck(${t.id}, '${t.status}')" style="cursor:pointer; display:flex; align-items:center; justify-content:center; width:24px; height:24px;" title="${isDone ? 'Bỏ tick hoàn thành' : 'Đánh dấu hoàn thành'}">${checkIcon}</div>`;
 
