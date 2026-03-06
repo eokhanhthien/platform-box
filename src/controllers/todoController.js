@@ -1,4 +1,5 @@
 const { ipcMain, Notification, app } = require('electron');
+const path = require('path');
 const todoModel = require('../models/todoModel');
 
 // ── Todo Reminder Scheduler ────────────────────────────────────────────────────────
@@ -44,7 +45,20 @@ async function _checkTodoReminders() {
 
             if (shouldFire) {
                 await _sendTodoNotification(todo);
-                await todoModel.markTodoReminderFired(todo.id);
+
+                if (todo.reminder_repeat) {
+                    const nextDate = _getNextReminderDate(todo.reminder_repeat, tDate);
+                    const fullTodoRes = await todoModel.getTodoById(todo.id);
+                    if (fullTodoRes.success) {
+                        await todoModel.updateTodo(todo.id, {
+                            ...fullTodoRes.data,
+                            reminder_date: nextDate
+                        });
+                        console.log(`[Todo Reminder] Recurring task id=${todo.id} scheduled for next date: ${nextDate}`);
+                    }
+                } else {
+                    await todoModel.markTodoReminderFired(todo.id);
+                }
             }
         }
     } catch (e) {
@@ -52,16 +66,42 @@ async function _checkTodoReminders() {
     }
 }
 
+function _getNextReminderDate(repeatStr, startDateStr) {
+    const days = repeatStr.split(',').map(Number); // 0=Sun, 1=Mon, ...
+    if (!days.length) return null;
+
+    let current = new Date(startDateStr);
+    // Move to next day to start searching
+    current.setDate(current.getDate() + 1);
+
+    // Search up to 14 days ahead just in case
+    for (let i = 0; i < 14; i++) {
+        if (days.includes(current.getDay())) {
+            const y = current.getFullYear();
+            const m = String(current.getMonth() + 1).padStart(2, '0');
+            const d = String(current.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+        current.setDate(current.getDate() + 1);
+    }
+    return null;
+}
+
 async function _sendTodoNotification(todo) {
     try {
         if (!Notification.isSupported()) return;
 
+        const iconPath = path.join(__dirname, '../../images/icon.png');
         const notif = new Notification({
-            title: '🔔 Việc cần làm: ' + (todo.title || 'Task'),
-            body: `Đã đến hạn chót nhắc nhở (${todo.reminder_time || '08:00'} ngày ${todo.reminder_date})`,
+            title: '🔔 Noteflow - Việc cần làm',
+            body: `${todo.title || 'Task'}\nĐến hạn lúc ${todo.reminder_time || '08:00'} ngày ${todo.reminder_date}`,
+            icon: iconPath,
             urgency: 'critical'
         });
         notif.show();
+
+        // Auto-close after 4 seconds
+        setTimeout(() => notif.close(), 4000);
         console.log(`[Todo Reminder] Sent notification for task id=${todo.id} "${todo.title}"`);
     } catch (e) {
         console.error('[Todo Reminder] Failed to send notification:', e.message);

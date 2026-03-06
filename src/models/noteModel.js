@@ -106,12 +106,12 @@ async function getNoteById(id) {
 async function addNote(data) {
     try {
         const { title = '', content = '', color = 'default', is_pinned = 0, is_locked = 0,
-            reminder_date = null, reminder_time = '08:00', tags = [] } = data;
+            reminder_date = null, reminder_time = '08:00', reminder_repeat = null, tags = [] } = data;
         const now = new Date().toISOString();
         const result = await runQ(
-            `INSERT INTO notes (title, content, color, is_pinned, is_locked, reminder_date, reminder_time, reminder_fired, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
-            [title, content, color, is_pinned ? 1 : 0, is_locked ? 1 : 0, reminder_date, reminder_time || '08:00', now, now]
+            `INSERT INTO notes (title, content, color, is_pinned, is_locked, reminder_date, reminder_time, reminder_repeat, reminder_fired, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
+            [title, content, color, is_pinned ? 1 : 0, is_locked ? 1 : 0, reminder_date, reminder_time || '08:00', reminder_repeat, now, now]
         );
         await setNoteTags(result.lastID, tags);
         return { success: true, data: { id: result.lastID } };
@@ -122,13 +122,13 @@ async function addNote(data) {
 
 async function updateNote(id, data) {
     try {
-        const { title, content, color, is_pinned, is_locked, reminder_date, reminder_time, tags } = data;
+        const { title, content, color, is_pinned, is_locked, reminder_date, reminder_time, reminder_repeat, tags } = data;
         const now = new Date().toISOString();
         // Reset reminder_fired when reminder date/time changes
         await runQ(
-            `UPDATE notes SET title=?, content=?, color=?, is_pinned=?, is_locked=?, reminder_date=?, reminder_time=?, reminder_fired=0, updated_at=? WHERE id=?`,
+            `UPDATE notes SET title=?, content=?, color=?, is_pinned=?, is_locked=?, reminder_date=?, reminder_time=?, reminder_repeat=?, reminder_fired=0, updated_at=? WHERE id=?`,
             [title ?? '', content ?? '', color ?? 'default', is_pinned ? 1 : 0, is_locked ? 1 : 0,
-            reminder_date ?? null, reminder_time ?? '08:00', now, id]
+            reminder_date ?? null, reminder_time ?? '08:00', reminder_repeat ?? null, now, id]
         );
         if (tags !== undefined) await setNoteTags(id, tags);
         return { success: true };
@@ -157,7 +157,7 @@ async function updateNoteOrders(updates) {
 async function getPendingReminders() {
     try {
         const rows = await allQ(
-            `SELECT id, title, reminder_date, reminder_time FROM notes
+            `SELECT id, title, reminder_date, reminder_time, reminder_repeat FROM notes
              WHERE reminder_date IS NOT NULL AND reminder_date != ''
              AND reminder_fired = 0`,
             []

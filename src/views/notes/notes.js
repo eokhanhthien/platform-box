@@ -314,7 +314,7 @@
                 <div class="note-card-top">
                     <div class="note-card-title">
                         ${_escHtml(n.title) || '<span style="color:#cbd5e1;font-style:italic;font-weight:400;">Không có tiêu đề</span>'}
-                        ${n.reminder_date ? '<i class="fas fa-bell" style="color:#ef4444; font-size:11px; margin-left:6px;" title="Có hẹn giờ nhắc nhở"></i>' : ''}
+                        ${n.reminder_date ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:600; color:#ef4444; background:rgba(239, 68, 68, 0.1); padding:1px 6px; border-radius:8px; margin-left:6px; border:1px solid rgba(239, 68, 68, 0.2);" title="Nhắc nhở lúc ${n.reminder_time || '08:00'} ngày ${n.reminder_date}"><i class="fas fa-bell"></i> ${n.reminder_time || '08:00'}</span>` : ''}
                     </div>
                     <div class="note-card-badges">
                         ${pinBadge}${lockBadge}
@@ -410,16 +410,33 @@
             editorEl.style.opacity = (noteData && noteData.is_locked) ? '0.65' : '1';
         }
         if (reminderEl) reminderEl.value = noteData ? (noteData.reminder_date || '') : '';
-        if (reminderTimeEl) reminderTimeEl.value = noteData ? (noteData.reminder_time || '08:00') : '08:00';
+
+        // Default time to current HH:mm if new note
+        let defaultTime = '08:00';
+        if (!noteData) {
+            const now = new Date();
+            defaultTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+        if (reminderTimeEl) reminderTimeEl.value = noteData ? (noteData.reminder_time || defaultTime) : defaultTime;
+
+        // Load repeat
+        const repeatDays = (noteData && noteData.reminder_repeat) ? noteData.reminder_repeat.split(',') : [];
+        document.querySelectorAll('#noteModalRepeat .notes-repeat-day').forEach(el => {
+            if (repeatDays.includes(el.getAttribute('data-day'))) el.classList.add('active');
+            else el.classList.remove('active');
+        });
         if (deleteBtn) deleteBtn.style.display = noteData ? 'inline-flex' : 'none';
 
-        // Checkbox: checked if note has a reminder date
         const reminderCheck = document.getElementById('noteReminderCheck');
         const hasReminder = !!(noteData && noteData.reminder_date);
         if (reminderCheck) {
             reminderCheck.checked = hasReminder;
-            _setReminderInputsEnabled(hasReminder);
+            window.noteToggleReminderInputs(reminderCheck, true);
         }
+
+        // Set button active states
+        if (pinBtn) pinBtn.classList.toggle('on', _isPinned);
+        if (lockBtn) lockBtn.classList.toggle('on', _isLocked);
 
         // Color swatch
         document.querySelectorAll('.color-swatch').forEach(s => {
@@ -481,6 +498,7 @@
             is_locked: _isLocked ? 1 : 0,
             reminder_date: reminder,
             reminder_time: reminderTime,
+            reminder_repeat: _getNoteRepeatString(),
             tags: _currentTags
         };
 
@@ -550,13 +568,12 @@
     };
 
     window.noteTogglePinById = async function (id, e) {
-        e.stopPropagation();
+        if (e) e.stopPropagation();
         const note = _allNotes.find(n => n.id === id);
         if (!note) return;
         const res = await window.api.updateNote(id, {
-            title: note.title, content: note.content, color: note.color,
-            is_pinned: note.is_pinned ? 0 : 1,
-            is_locked: note.is_locked, reminder_date: note.reminder_date, tags: note.tags
+            ...note,
+            is_pinned: note.is_pinned ? 0 : 1
         });
         if (res.success) await _loadNotes();
     };
@@ -587,24 +604,48 @@
         });
     }
 
-    window.noteToggleReminderInputs = function (checkbox) {
+    window.noteToggleReminderInputs = function (checkbox, isInit = false) {
         _setReminderInputsEnabled(checkbox.checked);
+        const repeatWrap = document.getElementById('noteModalRepeat');
+        if (repeatWrap) {
+            repeatWrap.style.opacity = checkbox.checked ? '1' : '.45';
+            repeatWrap.style.pointerEvents = checkbox.checked ? 'auto' : 'none';
+        }
         if (checkbox.checked) {
-            // Auto-fill today's date if empty
-            const dateEl = document.getElementById('noteModalReminder');
-            if (dateEl && !dateEl.value) {
-                const today = new Date();
-                dateEl.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-                dateEl.focus();
+            if (!isInit) {
+                const dateEl = document.getElementById('noteModalReminder');
+                const timeEl = document.getElementById('noteModalReminderTime');
+                const now = new Date();
+                const curTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                if (dateEl && !dateEl.value) {
+                    dateEl.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    dateEl.focus();
+                }
+                if (timeEl) {
+                    timeEl.value = curTime;
+                }
             }
         } else {
-            // Clear values when unchecked
-            const dateEl = document.getElementById('noteModalReminder');
-            const timeEl = document.getElementById('noteModalReminderTime');
-            if (dateEl) dateEl.value = '';
-            if (timeEl) timeEl.value = '08:00';
+            // Clear values when unchecked manually
+            if (!isInit) {
+                const dateEl = document.getElementById('noteModalReminder');
+                if (dateEl) dateEl.value = '';
+            }
         }
     };
+
+    window.noteToggleRepeatDay = function (el) {
+        el.classList.toggle('active');
+    };
+
+    function _getNoteRepeatString() {
+        const selected = [];
+        document.querySelectorAll('#noteModalRepeat .notes-repeat-day.active').forEach(el => {
+            selected.push(el.getAttribute('data-day'));
+        });
+        return selected.length ? selected.join(',') : null;
+    }
 
     window.noteRemoveTag = function (idx) {
         _currentTags.splice(idx, 1);

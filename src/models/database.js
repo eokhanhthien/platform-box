@@ -65,6 +65,7 @@ function initDB() {
                     reminder_date TEXT,
                     reminder_time TEXT DEFAULT '08:00',
                     reminder_fired INTEGER DEFAULT 0,
+                    reminder_repeat TEXT, -- Comma separated days: 0,1,2,3,4,5,6
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )`);
@@ -81,6 +82,7 @@ function initDB() {
                     reminder_date TEXT,
                     reminder_time TEXT DEFAULT '08:00',
                     reminder_fired INTEGER DEFAULT 0,
+                    reminder_repeat TEXT,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )`);
@@ -138,13 +140,13 @@ function initDB() {
                             reminder_date TEXT,
                             reminder_time TEXT DEFAULT '08:00',
                             reminder_fired INTEGER DEFAULT 0,
+                            reminder_repeat TEXT,
                             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                         )`);
                         // Use the temporary backup to restore data
-                        await runQuery(`INSERT INTO notes (id,title,content,color,is_pinned,is_locked,order_index,reminder_date,reminder_time,reminder_fired,created_at,updated_at)
-                            SELECT id,title,content,color,is_pinned,is_locked,0,reminder_date,'08:00',0,created_at,updated_at FROM notes_temp_backup`);
-                        await runQuery(`DROP TABLE notes_temp_backup`);
+                        await runQuery(`INSERT INTO notes (id,title,content,color,is_pinned,is_locked,order_index,reminder_date,reminder_time,reminder_fired,reminder_repeat,created_at,updated_at)
+                            SELECT id,title,content,color,is_pinned,is_locked,0,reminder_date,'08:00',0,NULL,created_at,updated_at FROM notes_temp_backup`); await runQuery(`DROP TABLE notes_temp_backup`);
                         await runQuery('COMMIT');
                         console.log('[DB] notes migration successful');
                     } catch (err) {
@@ -158,6 +160,7 @@ function initDB() {
                     };
                     await migrateNotesCol('reminder_time', 'TEXT DEFAULT \'08:00\'');
                     await migrateNotesCol('reminder_fired', 'INTEGER DEFAULT 0');
+                    await migrateNotesCol('reminder_repeat', 'TEXT');
                     await migrateNotesCol('order_index', 'INTEGER DEFAULT 0');
                     await migrateNotesCol('reminder_date', 'TEXT');
                 }
@@ -182,12 +185,12 @@ function initDB() {
                             reminder_date TEXT,
                             reminder_time TEXT DEFAULT '08:00',
                             reminder_fired INTEGER DEFAULT 0,
+                            reminder_repeat TEXT,
                             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                         )`);
-                        await runQuery(`INSERT INTO todos (id,title,description,status,priority,due_date,note,order_index,reminder_date,reminder_time,reminder_fired,created_at,updated_at)
-                            SELECT id,title,description,status,priority,due_date,note,0,reminder_date,'08:00',0,created_at,updated_at FROM todos_temp_backup`);
-                        await runQuery(`DROP TABLE todos_temp_backup`);
+                        await runQuery(`INSERT INTO todos (id,title,description,status,priority,due_date,note,order_index,reminder_date,reminder_time,reminder_fired,reminder_repeat,created_at,updated_at)
+                            SELECT id,title,description,status,priority,due_date,note,0,reminder_date,'08:00',0,NULL,created_at,updated_at FROM todos_temp_backup`); await runQuery(`DROP TABLE todos_temp_backup`);
                         await runQuery('COMMIT');
                         console.log('[DB] todos migration successful');
                     } catch (err) {
@@ -202,6 +205,7 @@ function initDB() {
                     await migrateTodosCol('reminder_date', 'TEXT');
                     await migrateTodosCol('reminder_time', 'TEXT DEFAULT \'08:00\'');
                     await migrateTodosCol('reminder_fired', 'INTEGER DEFAULT 0');
+                    await migrateTodosCol('reminder_repeat', 'TEXT');
                 }
 
                 // Enable FK

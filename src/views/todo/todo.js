@@ -521,6 +521,9 @@ async function todoChangeDueDate(id, newDate, skipReload = false) {
         status: t.status,
         priority: t.priority,
         due_date: newDate,
+        reminder_date: t.reminder_date,
+        reminder_time: t.reminder_time,
+        reminder_repeat: t.reminder_repeat,
         note: t.note
     };
 
@@ -587,13 +590,16 @@ async function todoOpenModal(id, defaultDate = null) {
     const assignEl = document.getElementById('todoAssignee');
     if (assignEl) assignEl.value = '';
 
+    const now = new Date();
+    const curTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
     const reminderTimeEl = document.getElementById('todoReminderTime');
-    if (reminderTimeEl) reminderTimeEl.value = '08:00'; // Set default reminder time
+    if (reminderTimeEl) reminderTimeEl.value = curTime; // Default to current time
 
     const reminderCheck = document.getElementById('todoReminderCheck');
     if (reminderCheck) {
         reminderCheck.checked = false;
-        todoToggleReminderInputs(reminderCheck);
+        todoToggleReminderInputs(reminderCheck, true);
     }
 
     document.getElementById('todoSaveBtn').innerHTML = '<i class="fas fa-save"></i> Lưu task';
@@ -634,8 +640,15 @@ async function todoOpenModal(id, defaultDate = null) {
 
             if (reminderCheck) {
                 reminderCheck.checked = hasReminder;
-                todoToggleReminderInputs(reminderCheck);
+                todoToggleReminderInputs(reminderCheck, true);
             }
+
+            // Load repeat
+            const repeatDays = t.reminder_repeat ? t.reminder_repeat.split(',') : [];
+            document.querySelectorAll('#todoModalRepeat .todo-repeat-day').forEach(el => {
+                if (repeatDays.includes(el.getAttribute('data-day'))) el.classList.add('active');
+                else el.classList.remove('active');
+            });
 
             // Sync Custom Dropdowns
             const priorityText = { high: '🔴 Cao', medium: '🟠 Trung bình', low: '🟢 Thấp' }[t.priority] || '🟠 Trung bình';
@@ -683,6 +696,7 @@ async function todoSave() {
         due_date: document.getElementById('todoDueDate')?.value || null,
         reminder_date: reminderChecked ? (document.getElementById('todoReminderDate')?.value || null) : null,
         reminder_time: reminderChecked ? (document.getElementById('todoReminderTime')?.value || '08:00') : '08:00',
+        reminder_repeat: _getTodoRepeatString(),
         note: null
     };
 
@@ -744,32 +758,53 @@ window.todoExecCmd = function (cmd) {
 
 let _todoEmojiPickerLoaded = false;
 
-window.todoToggleReminderInputs = function (checkbox) {
+window.todoToggleReminderInputs = function (checkbox, isInit = false) {
     const dInput = document.getElementById('todoReminderDate');
     const tInput = document.getElementById('todoReminderTime');
+    const repeatWrap = document.getElementById('todoModalRepeat');
     if (!dInput || !tInput) return;
 
     if (checkbox.checked) {
         dInput.disabled = false;
-        dInput.style.opacity = '1';
-        dInput.style.pointerEvents = 'auto';
+        dInput.parentElement.style.opacity = '1';
+        dInput.parentElement.style.pointerEvents = 'auto';
 
         tInput.disabled = false;
         tInput.style.opacity = '1';
         tInput.style.pointerEvents = 'auto';
 
-        if (!dInput.value) {
-            dInput.value = _fmtDateObj(new Date());
+        if (!isInit) {
+            if (!dInput.value) {
+                dInput.value = _fmtDateObj(new Date());
+            }
+
+            if (!tInput.value || tInput.value === '08:00') {
+                const now = new Date();
+                tInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            }
+        }
+
+        if (repeatWrap) {
+            repeatWrap.style.opacity = '1';
+            repeatWrap.style.pointerEvents = 'auto';
         }
     } else {
         dInput.disabled = true;
-        dInput.style.opacity = '0.45';
-        dInput.style.pointerEvents = 'none';
+        dInput.parentElement.style.opacity = '0.45';
+        dInput.parentElement.style.pointerEvents = 'none';
 
         tInput.disabled = true;
         tInput.style.opacity = '0.45';
         tInput.style.pointerEvents = 'none';
-        dInput.value = '';
+
+        if (!isInit) {
+            dInput.value = '';
+        }
+
+        if (repeatWrap) {
+            repeatWrap.style.opacity = '.45';
+            repeatWrap.style.pointerEvents = 'none';
+        }
     }
 };
 
@@ -875,6 +910,18 @@ window.todoSelectOption = function (id, value, text) {
     // Close
     el.classList.remove('active');
 };
+
+window.todoToggleRepeatDay = function (el) {
+    el.classList.toggle('active');
+};
+
+function _getTodoRepeatString() {
+    const selected = [];
+    document.querySelectorAll('#todoModalRepeat .todo-repeat-day.active').forEach(el => {
+        selected.push(el.getAttribute('data-day'));
+    });
+    return selected.length ? selected.join(',') : null;
+}
 
 function _todoSyncCustomDropdown(id, value, text) {
     const el = document.getElementById(`dropdown-${id}`);

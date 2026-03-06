@@ -121,9 +121,41 @@
             width: 100%;
         }
 
-        /* Hide original selects */
         .hidden-select {
             display: none !important;
+        }
+
+        /* Repeating days UI */
+        .todo-repeat-wrap {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .todo-repeat-day {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .todo-repeat-day:hover {
+            border-color: #60a5fa;
+        }
+
+        .todo-repeat-day.active {
+            background: #60a5fa;
+            border-color: #60a5fa;
+            color: #fff;
         }
 
         /* ===== TODO ROOT ===== */
@@ -854,6 +886,8 @@
             align-items: center;
             gap: 16px;
             background: rgba(255, 255, 255, 0.02);
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
         }
 
         .todo-modal-header-icon {
@@ -922,6 +956,8 @@
             justify-content: flex-end;
             gap: 10px;
             background: rgba(255, 255, 255, 0.01);
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
         }
 
         .todo-form-row {
@@ -1637,6 +1673,16 @@
                                 <input type="time" id="todoReminderTime" style="flex:1;" value="08:00" disabled>
                             </div>
                         </div>
+                        <div class="todo-repeat-wrap" id="todoModalRepeat" style="opacity:.45; pointer-events:none;">
+                            <div class="todo-repeat-day" data-day="1" onclick="todoToggleRepeatDay(this)">T2</div>
+                            <div class="todo-repeat-day" data-day="2" onclick="todoToggleRepeatDay(this)">T3</div>
+                            <div class="todo-repeat-day" data-day="3" onclick="todoToggleRepeatDay(this)">T4</div>
+                            <div class="todo-repeat-day" data-day="4" onclick="todoToggleRepeatDay(this)">T5</div>
+                            <div class="todo-repeat-day" data-day="5" onclick="todoToggleRepeatDay(this)">T6</div>
+                            <div class="todo-repeat-day" data-day="6" onclick="todoToggleRepeatDay(this)">T7</div>
+                            <div class="todo-repeat-day" data-day="0" onclick="todoToggleRepeatDay(this)">CN</div>
+                        </div>
+                        <div style="font-size:10px;color:#9ca3af;margin-top:3px;">Lặp lại vào các thứ đã chọn</div>
                     </div>
                     <div class="todo-form-group" id="assigneeGroup" style="display:none; margin-bottom: 0;">
                         <label>Giao cho</label>

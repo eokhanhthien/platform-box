@@ -919,6 +919,42 @@
             color: var(--td-primary);
         }
 
+        /* Recurring Reminders */
+        .notes-repeat-wrap {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            transition: opacity 0.2s;
+        }
+
+        .notes-repeat-day {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--td-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--td-text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .notes-repeat-day:hover {
+            border-color: var(--td-primary);
+            color: #fff;
+        }
+
+        .notes-repeat-day.active {
+            background: var(--td-primary);
+            border-color: var(--td-primary);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(0, 118, 254, 0.3);
+        }
+
         /* Template Picker */
         .notes-template-btn {
             padding: 8px 16px;
@@ -1274,7 +1310,16 @@
                         <input type="time" class="notes-reminder-input" id="noteModalReminderTime" value="08:00"
                             style="width:90px;opacity:.45;pointer-events:none;" title="Giờ nhắc nhở" disabled>
                     </div>
-                    <div style="font-size:10px;color:#9ca3af;margin-top:3px;">Thông báo Windows lúc đúng giờ</div>
+                    <div class="notes-repeat-wrap" id="noteModalRepeat">
+                        <div class="notes-repeat-day" data-day="1" onclick="noteToggleRepeatDay(this)">T2</div>
+                        <div class="notes-repeat-day" data-day="2" onclick="noteToggleRepeatDay(this)">T3</div>
+                        <div class="notes-repeat-day" data-day="3" onclick="noteToggleRepeatDay(this)">T4</div>
+                        <div class="notes-repeat-day" data-day="4" onclick="noteToggleRepeatDay(this)">T5</div>
+                        <div class="notes-repeat-day" data-day="5" onclick="noteToggleRepeatDay(this)">T6</div>
+                        <div class="notes-repeat-day" data-day="6" onclick="noteToggleRepeatDay(this)">T7</div>
+                        <div class="notes-repeat-day" data-day="0" onclick="noteToggleRepeatDay(this)">CN</div>
+                    </div>
+                    <div style="font-size:10px;color:#9ca3af;margin-top:3px;">Lặp lại vào các thứ đã chọn</div>
                 </div>
                 <!-- Pin -->
                 <div>

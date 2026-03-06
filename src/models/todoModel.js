@@ -64,12 +64,12 @@ function addTodo(data) {
     return new Promise((resolve, reject) => {
         try {
             const db = getDB();
-            const { title, description, status, priority, due_date, note, reminder_date, reminder_time } = data;
+            const { title, description, status, priority, due_date, note, reminder_date, reminder_time, reminder_repeat } = data;
             db.run(
-                `INSERT INTO todos (title, description, status, priority, due_date, note, reminder_date, reminder_time, reminder_fired)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+                `INSERT INTO todos (title, description, status, priority, due_date, note, reminder_date, reminder_time, reminder_fired, reminder_repeat)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)`,
                 [title, description || null, status || 'todo', priority || 'medium',
-                    due_date || null, note || null, reminder_date || null, reminder_time || '08:00'],
+                    due_date || null, note || null, reminder_date || null, reminder_time || '08:00', reminder_repeat || null],
                 function (err) {
                     if (err) {
                         reject({ success: false, error: err.message });
@@ -88,12 +88,12 @@ function updateTodo(id, data) {
     return new Promise((resolve, reject) => {
         try {
             const db = getDB();
-            const { title, description, status, priority, due_date, note, reminder_date, reminder_time } = data;
+            const { title, description, status, priority, due_date, note, reminder_date, reminder_time, reminder_repeat } = data;
             db.run(
                 `UPDATE todos SET title=?, description=?, status=?, priority=?, due_date=?,
-                 note=?, reminder_date=?, reminder_time=?, reminder_fired=0, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
+                 note=?, reminder_date=?, reminder_time=?, reminder_fired=0, reminder_repeat=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
                 [title, description || null, status, priority, due_date || null,
-                    note || null, reminder_date || null, reminder_time || '08:00', id],
+                    note || null, reminder_date || null, reminder_time || '08:00', reminder_repeat || null, id],
                 function (err) {
                     if (err) {
                         reject({ success: false, error: err.message });
@@ -176,7 +176,7 @@ function getPendingTodoReminders() {
         try {
             const db = getDB();
             db.all(
-                `SELECT * FROM todos WHERE COALESCE(reminder_fired, 0) = 0 AND reminder_date IS NOT NULL AND status != 'done'`,
+                `SELECT id, title, reminder_date, reminder_time, reminder_repeat FROM todos WHERE COALESCE(reminder_fired, 0) = 0 AND reminder_date IS NOT NULL AND status != 'done'`,
                 [],
                 (err, rows) => {
                     if (err) reject({ success: false, error: err.message });

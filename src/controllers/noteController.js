@@ -55,12 +55,42 @@ async function _checkReminders() {
 
             if (shouldFire) {
                 await _sendNotification(note);
-                await markReminderFired(note.id);
+
+                if (note.reminder_repeat) {
+                    const nextDate = _getNextReminderDate(note.reminder_repeat, noteDate);
+                    const { getNoteById, updateNote } = require('../models/noteModel');
+                    const fullNote = await getNoteById(note.id);
+                    if (fullNote.success) {
+                        await updateNote(note.id, {
+                            ...fullNote.data,
+                            reminder_date: nextDate
+                        });
+                        console.log(`[Reminder] Recurring note id=${note.id} scheduled for next date: ${nextDate}`);
+                    }
+                } else {
+                    await markReminderFired(note.id);
+                }
             }
         }
     } catch (e) {
         console.error('[Reminder] Error in _checkReminders:', e.message);
     }
+}
+
+function _getNextReminderDate(repeatStr, startDateStr) {
+    const days = repeatStr.split(',').map(Number);
+    if (!days.length) return null;
+
+    let current = new Date(startDateStr);
+    current.setDate(current.getDate() + 1);
+
+    for (let i = 0; i < 14; i++) {
+        if (days.includes(current.getDay())) {
+            return `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+        }
+        current.setDate(current.getDate() + 1);
+    }
+    return null;
 }
 
 function _padDate(y, m, d) {
@@ -75,12 +105,17 @@ async function _sendNotification(note) {
             return;
         }
 
+        const iconPath = path.join(__dirname, '../../images/icon.png');
         const notif = new Notification({
-            title: '🔔 Nhắc nhở - ' + (note.title || 'Ghi chú'),
-            body: `Đã đến giờ nhắc nhở: ${note.reminder_time || '08:00'} ngày ${note.reminder_date}`,
+            title: '🔔 Noteflow - Ghi chú',
+            body: `${note.title || 'Ghi chú'}\nĐến giờ nhắc nhở lúc ${note.reminder_time || '08:00'} ngày ${note.reminder_date}`,
+            icon: iconPath,
             urgency: 'normal'
         });
         notif.show();
+
+        // Auto-close after 4 seconds
+        setTimeout(() => notif.close(), 4000);
         console.log(`[Reminder] Sent notification for note id=${note.id} "${note.title}"`);
     } catch (e) {
         console.error('[Reminder] Failed to send notification:', e.message);
@@ -135,11 +170,17 @@ function initNoteController() {
             if (!Notification.isSupported()) {
                 return { success: false, error: 'Notifications not supported' };
             }
+            const iconPath = path.join(__dirname, '../../images/icon.png');
             const notif = new Notification({
-                title: '🔔 Test Nhắc Nhở',
-                body: 'Notification từ SkyAdmin hoạt động bình thường!'
+                title: '🔔 Noteflow - Kiểm tra',
+                body: 'Hệ thống thông báo của Noteflow hoạt động bình thường!',
+                icon: iconPath,
+                urgency: 'normal'
             });
             notif.show();
+
+            // Auto-close after 4 seconds
+            setTimeout(() => notif.close(), 4000);
             return { success: true };
         } catch (e) {
             return { success: false, error: e.message };

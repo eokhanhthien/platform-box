@@ -10,7 +10,7 @@ app.setName('Noteflow');
 app.setAppUserModelId('com.noteflow.app');
 
 let mainWindow;
-const iconPath = path.join(__dirname, 'build/icon.png');
+const iconPath = path.join(__dirname, '../../build/icon.png');
 
 // Set Dock icon for macOS (especially needed during dev mode)
 if (process.platform === 'darwin') {
