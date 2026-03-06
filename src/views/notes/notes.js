@@ -635,7 +635,7 @@
                     } else {
                         const script = document.createElement('script');
                         script.type = 'module';
-                        script.src = 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js';
+                        script.src = '../../assets/vendor/emoji-picker.js';
                         script.onload = resolve;
                         script.onerror = reject;
                         document.head.appendChild(script);
@@ -643,6 +643,7 @@
                 });
 
                 const picker = document.createElement('emoji-picker');
+                picker.dataSource = '../../assets/vendor/emoji-data.json';
                 picker.addEventListener('emoji-click', event => {
                     window.noteInsertEmoji(event.detail.unicode, new Event('click'));
                 });

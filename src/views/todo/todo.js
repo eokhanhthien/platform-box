@@ -603,6 +603,10 @@ async function todoOpenModal(id, defaultDate = null) {
     const deleteBtn = document.getElementById('todoDeleteBtn');
     if (deleteBtn) deleteBtn.style.display = 'none';
 
+    // Reset Custom Dropdowns
+    _todoSyncCustomDropdown('todoPriority', 'medium', '🟠 Trung bình');
+    _todoSyncCustomDropdown('todoStatus', 'todo', '📋 Cần làm');
+
     // Pre-fill Date — always default to today
     if (!id) {
         let sd = defaultDate || _fmtDateObj(new Date());
@@ -632,6 +636,12 @@ async function todoOpenModal(id, defaultDate = null) {
                 reminderCheck.checked = hasReminder;
                 todoToggleReminderInputs(reminderCheck);
             }
+
+            // Sync Custom Dropdowns
+            const priorityText = { high: '🔴 Cao', medium: '🟠 Trung bình', low: '🟢 Thấp' }[t.priority] || '🟠 Trung bình';
+            const statusText = { todo: '📋 Cần làm', doing: '⚡ Đang làm', done: '✅ Hoàn thành' }[t.status] || '📋 Cần làm';
+            _todoSyncCustomDropdown('todoPriority', t.priority, priorityText);
+            _todoSyncCustomDropdown('todoStatus', t.status, statusText);
 
             // Show delete button when editing
             if (deleteBtn) deleteBtn.style.display = '';
@@ -777,13 +787,14 @@ window.todoToggleEmojiPicker = async function (e) {
             await new Promise((resolve, reject) => {
                 const script = document.createElement('script');
                 script.type = 'module';
-                script.src = 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js';
+                script.src = '../../assets/vendor/emoji-picker.js';
                 script.onload = resolve;
                 script.onerror = reject;
                 document.head.appendChild(script);
             });
 
             const picker = document.createElement('emoji-picker');
+            picker.dataSource = '../../assets/vendor/emoji-data.json';
             picker.addEventListener('emoji-click', event => {
                 window.todoInsertEmoji(event.detail.unicode, new Event('click'));
             });
@@ -814,9 +825,68 @@ window.todoInsertEmoji = function (emoji, e) {
 
 // Close emoji popover when clicking outside
 document.addEventListener('click', function (e) {
+    // Emoji picker
     const container = document.getElementById('todoEmojiContainer');
     const wrapper = e.target.closest('.todo-emoji-wrapper');
     if (container && container.classList.contains('active') && !wrapper) {
         container.classList.remove('active');
     }
+
+    // Custom dropdowns
+    if (!e.target.closest('.custom-dropdown')) {
+        document.querySelectorAll('.custom-dropdown.active').forEach(el => el.classList.remove('active'));
+    }
 });
+
+// ===== CUSTOM DROPDOWN LOGIC =====
+
+window.todoToggleDropdown = function (e, id) {
+    if (e) e.stopPropagation();
+    const el = document.getElementById(`dropdown-${id}`);
+    if (!el) return;
+
+    const isActive = el.classList.contains('active');
+    // Close others
+    document.querySelectorAll('.custom-dropdown.active').forEach(d => d.classList.remove('active'));
+
+    if (!isActive) el.classList.add('active');
+};
+
+window.todoSelectOption = function (id, value, text) {
+    const el = document.getElementById(`dropdown-${id}`);
+    const select = document.getElementById(id);
+    if (!el || !select) return;
+
+    // Update real select
+    select.value = value;
+    // Trigger change event if any
+    select.dispatchEvent(new Event('change'));
+
+    // Update UI
+    const triggerText = el.querySelector('.selected-text');
+    if (triggerText) triggerText.textContent = text;
+
+    // Update selected class in menu
+    el.querySelectorAll('.dropdown-item').forEach(item => {
+        if (item.textContent === text) item.classList.add('selected');
+        else item.classList.remove('selected');
+    });
+
+    // Close
+    el.classList.remove('active');
+};
+
+function _todoSyncCustomDropdown(id, value, text) {
+    const el = document.getElementById(`dropdown-${id}`);
+    const select = document.getElementById(id);
+    if (!el || !select) return;
+
+    select.value = value;
+    const triggerText = el.querySelector('.selected-text');
+    if (triggerText) triggerText.textContent = text;
+
+    el.querySelectorAll('.dropdown-item').forEach(item => {
+        if (item.textContent === text) item.classList.add('selected');
+        else item.classList.remove('selected');
+    });
+}

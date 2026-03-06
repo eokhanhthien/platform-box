@@ -6,11 +6,11 @@ const { initTodoController } = require('../controllers/todoController');
 const { initNoteController } = require('../controllers/noteController');
 
 // App identity
-app.setName('SkyAdmin');
-app.setAppUserModelId('com.skyadmin.app');
+app.setName('Noteflow');
+app.setAppUserModelId('com.noteflow.app');
 
 let mainWindow;
-const iconPath = path.join(__dirname, '../images/icon.png');
+const iconPath = path.join(__dirname, 'build/icon.png');
 
 // Set Dock icon for macOS (especially needed during dev mode)
 if (process.platform === 'darwin') {

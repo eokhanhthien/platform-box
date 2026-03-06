@@ -304,10 +304,10 @@
     "dist:mac": "electron-builder --mac"
   },
   "build": {
-    "appId": "com.skyadmin.app",
-    "productName": "SkyAdmin",
-    "copyright": "Copyright © 2025 SkyAdmin",
-    "icon": "src/images/icon",
+    "appId": "com.noteflow.app",
+    "productName": "Noteflow",
+    "copyright": "Copyright © 2025 noteflow",
+    "icon": "build/icon.ico",
     "files": [
       "src/**/*",
       "!src/**/*.test.js"
@@ -321,11 +321,11 @@
           ]
         }
       ],
-      "icon": "src/images/icon.ico"
+      "icon": "build/icon.ico"
     },
     "mac": {
       "target": "dmg",
-      "icon": "src/images/icon.png"
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
