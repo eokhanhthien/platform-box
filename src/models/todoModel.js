@@ -87,21 +87,41 @@ function addTodo(data) {
 function updateTodo(id, data) {
     return new Promise((resolve, reject) => {
         try {
-            const db = getDB();
             const { title, description, status, priority, due_date, note, reminder_date, reminder_time, reminder_repeat } = data;
-            db.run(
-                `UPDATE todos SET title=?, description=?, status=?, priority=?, due_date=?,
-                 note=?, reminder_date=?, reminder_time=?, reminder_fired=0, reminder_repeat=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
-                [title, description || null, status, priority, due_date || null,
-                    note || null, reminder_date || null, reminder_time || '08:00', reminder_repeat || null, id],
-                function (err) {
-                    if (err) {
-                        reject({ success: false, error: err.message });
-                    } else {
-                        resolve({ success: true, message: 'Cập nhật task thành công' });
-                    }
+
+            getTodoById(id).then(res => {
+                const old = res.success ? res.data : {};
+
+                // Compare new reminder settings with old ones (treating empty/null/undefined as equivalent)
+                const newRDate = (reminder_date || '').trim();
+                const newRTime = (reminder_time || '').trim();
+                const newRRepeat = (reminder_repeat || '').trim();
+                const oldRDate = (old.reminder_date || '').trim();
+                const oldRTime = (old.reminder_time || '').trim();
+                const oldRRepeat = (old.reminder_repeat || '').trim();
+
+                let resetFired = false;
+                if (newRDate !== oldRDate || newRTime !== oldRTime || newRRepeat !== oldRRepeat) {
+                    resetFired = true;
                 }
-            );
+
+                const firedExpr = resetFired ? '0' : 'reminder_fired';
+
+                const db = getDB();
+                db.run(
+                    `UPDATE todos SET title=?, description=?, status=?, priority=?, due_date=?,
+                     note=?, reminder_date=?, reminder_time=?, reminder_fired=${firedExpr}, reminder_repeat=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
+                    [title, description || null, status, priority, due_date || null,
+                        note || null, reminder_date || null, reminder_time || '08:00', reminder_repeat || null, id],
+                    function (err) {
+                        if (err) {
+                            reject({ success: false, error: err.message });
+                        } else {
+                            resolve({ success: true, message: 'Cập nhật task thành công' });
+                        }
+                    }
+                );
+            }).catch(e => reject({ success: false, error: e.message }));
         } catch (error) {
             reject({ success: false, error: error.message });
         }

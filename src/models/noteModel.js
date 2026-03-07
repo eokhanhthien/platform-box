@@ -124,9 +124,27 @@ async function updateNote(id, data) {
     try {
         const { title, content, color, is_pinned, is_locked, reminder_date, reminder_time, reminder_repeat, tags } = data;
         const now = new Date().toISOString();
-        // Reset reminder_fired when reminder date/time changes
+
+        const oldRes = await getNoteById(id);
+        const old = oldRes.success ? oldRes.data : {};
+
+        // Compare new reminder settings with old ones
+        const newRDate = (reminder_date || '').trim();
+        const newRTime = (reminder_time || '').trim();
+        const newRRepeat = (reminder_repeat || '').trim();
+        const oldRDate = (old.reminder_date || '').trim();
+        const oldRTime = (old.reminder_time || '').trim();
+        const oldRRepeat = (old.reminder_repeat || '').trim();
+
+        // Only reset reminder_fired if a reminder schedule component actually changed
+        let resetFired = false;
+        if (newRDate !== oldRDate || newRTime !== oldRTime || newRRepeat !== oldRRepeat) {
+            resetFired = true;
+        }
+        const firedExpr = resetFired ? '0' : 'reminder_fired';
+
         await runQ(
-            `UPDATE notes SET title=?, content=?, color=?, is_pinned=?, is_locked=?, reminder_date=?, reminder_time=?, reminder_repeat=?, reminder_fired=0, updated_at=? WHERE id=?`,
+            `UPDATE notes SET title=?, content=?, color=?, is_pinned=?, is_locked=?, reminder_date=?, reminder_time=?, reminder_repeat=?, reminder_fired=${firedExpr}, updated_at=? WHERE id=?`,
             [title ?? '', content ?? '', color ?? 'default', is_pinned ? 1 : 0, is_locked ? 1 : 0,
             reminder_date ?? null, reminder_time ?? '08:00', reminder_repeat ?? null, now, id]
         );
