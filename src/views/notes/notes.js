@@ -374,6 +374,35 @@
                 _renderGrid();
             });
         });
+
+        // Initialize scroll indicator logic
+        _initTagScrollLogic(listEl);
+    }
+
+    // Check and update scroll arrow visibility
+    function _initTagScrollLogic(listEl) {
+        const arrow = document.getElementById('notesTagScrollArrow');
+        if (!arrow || !listEl) return;
+
+        function updateArrow() {
+            // Check if scrollable
+            const isScrollable = listEl.scrollHeight > listEl.clientHeight;
+            // Check if scrolled to bottom (allow 5px margin of error)
+            const isAtBottom = Math.abs(listEl.scrollHeight - listEl.scrollTop - listEl.clientHeight) <= 5;
+
+            if (isScrollable && !isAtBottom) {
+                arrow.classList.add('visible');
+            } else {
+                arrow.classList.remove('visible');
+            }
+        }
+
+        // Remove old listener if exists to prevent duplicates
+        listEl.removeEventListener('scroll', updateArrow);
+        listEl.addEventListener('scroll', updateArrow);
+
+        // Run once on init, but use setTimeout to wait for DOM reflow
+        setTimeout(updateArrow, 100);
     }
 
     function _renderTagChips() {

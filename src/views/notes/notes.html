@@ -202,6 +202,16 @@
 
         .notes-sidebar-card {
             background: transparent;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notes-sidebar-card:last-child {
+            flex: 1;
+            /* Take up remaining vertical space */
+            min-height: 0;
+            position: relative;
+            /* For absolutely positioned arrow indicator */
         }
 
         .notes-sidebar-head {
@@ -214,12 +224,27 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .notes-tag-list {
             display: flex;
             flex-direction: column;
             gap: 2px;
+            overflow-y: auto;
+            flex: 1;
+            padding-bottom: 24px;
+            /* Space for arrow indicator */
+        }
+
+        /* Hide scrollbar for clean UI */
+        .notes-tag-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .notes-tag-list {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
 
         .notes-tag-item {
@@ -549,6 +574,39 @@
         .note-action-btn.danger:hover {
             background: rgba(239, 68, 68, 0.2);
             color: #ef4444;
+        }
+
+        /* Scroll Down Indicator */
+        .notes-tag-scroll-indicator {
+            position: absolute;
+            bottom: 0px;
+            left: 0;
+            right: 0;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(to bottom, rgba(15, 25, 35, 0) 0%, rgba(15, 25, 35, 1) 100%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border-bottom-left-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+
+        .notes-tag-scroll-indicator i {
+            color: var(--td-primary);
+            font-size: 12px;
+            animation: notesBounce 2s infinite;
+            pointer-events: auto;
+            cursor: pointer;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 118, 254, 0.15);
+            border-radius: 50%;
         }
 
         /* ===== MODAL ===== */
@@ -1183,6 +1241,12 @@
                         <span><i class="fas fa-bell"></i>Có nhắc nhở</span>
                     </div>
                     <!-- Dynamic tags rendered by JS -->
+                </div>
+                <!-- Scroll down arrow (shown via JS when overflow occurs) -->
+                <div class="notes-tag-scroll-indicator" id="notesTagScrollArrow">
+                    <i class="fas fa-chevron-down"
+                        onclick="document.getElementById('notesTagList').scrollBy({top: 100, behavior: 'smooth'})"
+                        title="Cuộn xuống"></i>
                 </div>
             </div>
         </div>
