@@ -307,7 +307,7 @@
     "appId": "com.noteflow.app",
     "productName": "Noteflow",
     "copyright": "Copyright © 2025 noteflow",
-    "icon": "build/icon.png",
+    "icon": "src/assets/icons/icon.png",
     "files": [
       "src/**/*",
       "!src/**/*.test.js"
@@ -321,11 +321,11 @@
           ]
         }
       ],
-      "icon": "build/icon.ico"
+      "icon": "src/assets/icons/icon.ico"
     },
     "mac": {
       "target": "dmg",
-      "icon": "build/icon.png"
+      "icon": "src/assets/icons/icon.png"
     },
     "nsis": {
       "oneClick": false,
