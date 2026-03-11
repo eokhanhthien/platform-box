@@ -7,6 +7,7 @@
     <!-- Localized Fonts and Styles -->
     <link rel="stylesheet" href="../../assets/vendor/inter.css">
     <link rel="stylesheet" href="../../assets/vendor/fontawesome.min.css">
+
     <script src="../../assets/vendor/sortable.min.js"></script>
     <style>
         *,
@@ -770,6 +771,22 @@
                             style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_10.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
                             onmouseover="this.style.borderColor='#007fff'"
                             onmouseout="this.style.borderColor='transparent'"></div>
+                        <div title="Cảnh quan 11" onclick="setBg('img11')"
+                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_11.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
+                            onmouseover="this.style.borderColor='#007fff'"
+                            onmouseout="this.style.borderColor='transparent'"></div>
+                        <div title="Cảnh quan 12" onclick="setBg('img12')"
+                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_12.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
+                            onmouseover="this.style.borderColor='#007fff'"
+                            onmouseout="this.style.borderColor='transparent'"></div>
+                        <div title="Cảnh quan 13" onclick="setBg('img13')"
+                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_13.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
+                            onmouseover="this.style.borderColor='#007fff'"
+                            onmouseout="this.style.borderColor='transparent'"></div>
+                        <div title="Cảnh quan 14" onclick="setBg('img14')"
+                            style="width:40px;height:40px;border-radius:8px;cursor:pointer;background-image:url('../../assets/img_14.jpg');background-size:cover;border:2px solid transparent; transition: border 0.15s;"
+                            onmouseover="this.style.borderColor='#007fff'"
+                            onmouseout="this.style.borderColor='transparent'"></div>
                         <div title="Blue wave" onclick="setBg('blue')"
                             style="width:40px;height:40px;border-radius:8px;cursor:pointer;background:linear-gradient(135deg,#0d1b4b,#0a2a6e 60%,#0f3580);border:2px solid transparent; transition: border 0.15s;"
                             onmouseover="this.style.borderColor='#007fff'"
@@ -917,6 +934,31 @@
                 imgOpacity: 1,
                 cover: true
             },
+            img11: {
+                body: '#0f1923',
+                imgUrl: "url('../../assets/img_11.jpg')",
+                imgOpacity: 1,
+                cover: true
+            },
+            img12: {
+                body: '#0f1923',
+                imgUrl: "url('../../assets/img_12.jpg')",
+                imgOpacity: 1,
+                cover: true
+            },
+            img13: {
+                body: '#0f1923',
+                imgUrl: "url('../../assets/img_13.jpg')",
+                imgOpacity: 1,
+                cover: true
+            },
+            img14: {
+                body: '#0f1923',
+                imgUrl: "url('../../assets/img_14.jpg')",
+                imgOpacity: 1,
+                cover: true
+            },
+
 
         };
 
@@ -995,6 +1037,119 @@
         } catch (_) { }
 
     </script>
+
+    <!-- Custom Global Time Picker -->
+    <div id="globalTimePicker" class="custom-time-picker">
+        <div class="ctp-col">
+            <button class="ctp-btn" onclick="ctpAdj('h', 1)"><i class="fas fa-chevron-up"></i></button>
+            <div class="ctp-val" id="ctpHour">08</div>
+            <button class="ctp-btn" onclick="ctpAdj('h', -1)"><i class="fas fa-chevron-down"></i></button>
+        </div>
+        <div class="ctp-sep">:</div>
+        <div class="ctp-col">
+            <button class="ctp-btn" onclick="ctpAdj('m', 1)"><i class="fas fa-chevron-up"></i></button>
+            <div class="ctp-val" id="ctpMinute">00</div>
+            <button class="ctp-btn" onclick="ctpAdj('m', -1)"><i class="fas fa-chevron-down"></i></button>
+        </div>
+        <button class="ctp-ok" onclick="ctpClose(true)"><i class="fas fa-check"></i></button>
+    </div>
+
+    <style>
+        .custom-time-picker {
+            position: absolute;
+            z-index: 9999;
+            display: none;
+            background: #1e293b;
+            border: 1px solid var(--td-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            padding: 12px 16px;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            user-select: none;
+        }
+
+        .custom-time-picker.active {
+            display: flex;
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.9) translateY(-5px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .ctp-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ctp-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--td-border);
+            color: var(--td-text-muted);
+            border-radius: 6px;
+            width: 32px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ctp-btn:hover {
+            border-color: var(--td-primary);
+            color: #fff;
+            background: rgba(0, 127, 255, 0.1);
+        }
+
+        .ctp-val {
+            font-size: 22px;
+            font-weight: 700;
+            width: 40px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ctp-sep {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--td-text-muted);
+            margin: 0 -4px;
+        }
+
+        .ctp-ok {
+            background: var(--td-primary);
+            border: none;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            box-shadow: 0 4px 12px rgba(0, 127, 255, 0.3);
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .ctp-ok:hover {
+            transform: scale(1.1);
+            background: var(--td-primary-hover);
+        }
+    </style>
 </body>
 
 </html>

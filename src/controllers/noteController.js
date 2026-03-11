@@ -6,9 +6,9 @@ const path = require('path');
 let _reminderInterval = null;
 
 function startReminderScheduler() {
-    console.log('[Reminder] Scheduler started. Checking every 60 seconds...');
+    console.log('[Reminder] Scheduler started. Checking every 10 seconds...');
     _checkReminders();
-    _reminderInterval = setInterval(_checkReminders, 60 * 1000);
+    _reminderInterval = setInterval(_checkReminders, 10 * 1000);
 }
 
 function stopReminderScheduler() {
@@ -70,6 +70,10 @@ async function _checkReminders() {
                 } else {
                     await markReminderFired(note.id);
                 }
+
+                // Notify renderer to refresh UI
+                const windows = require('electron').BrowserWindow.getAllWindows();
+                windows.forEach(win => win.webContents.send('refresh-data', { type: 'note', id: note.id }));
             }
         }
     } catch (e) {
@@ -106,16 +110,17 @@ async function _sendNotification(note) {
         }
 
         const iconPath = path.join(__dirname, '../../images/icon.png');
+        const { BrowserWindow } = require('electron');
+
         const notif = new Notification({
-            title: '🔔 Noteflow - Ghi chú',
-            body: `${note.title || 'Ghi chú'}\nĐến giờ nhắc nhở lúc ${note.reminder_time || '08:00'} ngày ${note.reminder_date}`,
+            title: `🔔 ${note.title || 'Ghi chú'}`,
+            body: `Đến giờ nhắc nhở lúc ${note.reminder_time || '08:00'} ngày ${note.reminder_date}`,
             icon: iconPath,
+            timeoutType: 'never',
             urgency: 'normal'
         });
-        notif.show();
 
-        // Auto-close after 4 seconds
-        setTimeout(() => notif.close(), 4000);
+        notif.show();
         console.log(`[Reminder] Sent notification for note id=${note.id} "${note.title}"`);
     } catch (e) {
         console.error('[Reminder] Failed to send notification:', e.message);
@@ -171,16 +176,17 @@ function initNoteController() {
                 return { success: false, error: 'Notifications not supported' };
             }
             const iconPath = path.join(__dirname, '../../images/icon.png');
+            const { BrowserWindow } = require('electron');
+
             const notif = new Notification({
-                title: '🔔 Noteflow - Kiểm tra',
-                body: 'Hệ thống thông báo của Noteflow hoạt động bình thường!',
+                title: '🔔 Kiểm tra thông báo',
+                body: 'Hệ thống thông báo của Noteflow hoạt động bình thường! Tin nhắn này có thể click vào.',
                 icon: iconPath,
+                timeoutType: 'never',
                 urgency: 'normal'
             });
-            notif.show();
 
-            // Auto-close after 4 seconds
-            setTimeout(() => notif.close(), 4000);
+            notif.show();
             return { success: true };
         } catch (e) {
             return { success: false, error: e.message };
@@ -212,6 +218,11 @@ function initNoteController() {
                     await markReminderFired(note.id);
                     debug.fired.push({ id: note.id, title: note.title });
                 }
+            }
+            // Send global refresh if anything fired
+            if (debug.fired.length > 0) {
+                const windows = require('electron').BrowserWindow.getAllWindows();
+                windows.forEach(win => win.webContents.send('refresh-data', { type: 'note_bulk' }));
             }
             return { success: true, debug };
         } catch (e) {

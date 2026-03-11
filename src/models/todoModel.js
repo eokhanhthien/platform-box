@@ -105,14 +105,16 @@ function updateTodo(id, data) {
                     resetFired = true;
                 }
 
-                const firedExpr = resetFired ? '0' : 'reminder_fired';
+                let query = `UPDATE todos SET title=?, description=?, status=?, priority=?, due_date=?, note=?, reminder_date=?, reminder_time=?, reminder_repeat=?, updated_at=CURRENT_TIMESTAMP`;
+                if (resetFired) {
+                    query += `, reminder_fired=0, reminder_fired_at=NULL`;
+                }
+                query += ` WHERE id=?`;
 
                 const db = getDB();
                 db.run(
-                    `UPDATE todos SET title=?, description=?, status=?, priority=?, due_date=?,
-                     note=?, reminder_date=?, reminder_time=?, reminder_fired=${firedExpr}, reminder_repeat=?, updated_at=CURRENT_TIMESTAMP WHERE id=?`,
-                    [title, description || null, status, priority, due_date || null,
-                        note || null, reminder_date || null, reminder_time || '08:00', reminder_repeat || null, id],
+                    query,
+                    [title, description || null, status, priority, due_date || null, note || null, reminder_date || null, reminder_time || '08:00', reminder_repeat || null, id],
                     function (err) {
                         if (err) {
                             reject({ success: false, error: err.message });
@@ -214,7 +216,7 @@ function markTodoReminderFired(id) {
         try {
             const db = getDB();
             db.run(
-                `UPDATE todos SET reminder_fired = 1 WHERE id = ?`,
+                `UPDATE todos SET reminder_fired = 1, reminder_fired_at = CURRENT_TIMESTAMP WHERE id = ?`,
                 [id],
                 function (err) {
                     if (err) reject({ success: false, error: err.message });

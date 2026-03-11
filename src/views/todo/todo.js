@@ -23,6 +23,14 @@ async function initTodoModule() {
         // Initial View Render
         switchTodoView('today');
 
+        // Listen for background data refreshes (reminders firing)
+        if (window.api.onRefreshData && !window._todoRefreshBound) {
+            window.api.onRefreshData(() => {
+                todoLoadTasks();
+            });
+            window._todoRefreshBound = true;
+        }
+
     } catch (e) {
         console.error('[Todo] initTodoModule error:', e);
     }
@@ -172,7 +180,27 @@ function _buildListItemHTML(t) {
             <div class="task-list-content">
                 <div class="task-list-title">
                     ${_esc(t.title)}
-                    ${t.reminder_date ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#ef4444; background:#fef2f2; padding:2px 6px; border-radius:12px; margin-left:8px; border:1px solid #fca5a5;" title="Nhắc nhở lúc ${t.reminder_time || '08:00'} ngày ${t.reminder_date}"><i class="fas fa-bell" style="font-size:10px;"></i> ${t.reminder_time || '08:00'}</span>` : ''}
+                    ${(() => {
+            if (!t.reminder_date) return '';
+            let isBlinking = false;
+            let shouldShow = true;
+
+            if (t.reminder_fired) {
+                const firedAtStr = t.reminder_fired_at ? t.reminder_fired_at.replace(' ', 'T') + 'Z' : null;
+                const firedAt = firedAtStr ? new Date(firedAtStr) : null;
+                if (firedAt && !isNaN(firedAt.getTime())) {
+                    const diffMs = Date.now() - firedAt.getTime();
+                    const diffMins = diffMs / (1000 * 60);
+                    if (diffMins < 2) isBlinking = true;
+                    else shouldShow = false;
+                } else {
+                    shouldShow = false;
+                }
+            }
+
+            if (!shouldShow) return '';
+            return `<span class="${isBlinking ? 'reminder-blink' : ''}" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#ef4444; background:#fef2f2; padding:2px 6px; border-radius:12px; margin-left:8px; border:1px solid #fca5a5;" title="Nhắc nhở lúc ${t.reminder_time || '08:00'} ngày ${t.reminder_date}${isBlinking ? ' (Vừa nhắc)' : ''}"><i class="fas fa-bell" style="font-size:10px;"></i> ${t.reminder_time || '08:00'}</span>`;
+        })()}
                 </div>
                 <div class="task-list-meta">
                     <span>${pCfg[t.priority] || pCfg.medium}</span>
@@ -395,7 +423,27 @@ function _buildKanbanCardHTML(t) {
                 <div style="margin-top:2px;">${checkBtn}</div>
                 <div class="task-card-title ${isDone ? 'done-title' : ''}" style="margin-bottom:0; font-size:15px; font-weight:700; line-height:1.4;">
                     ${_esc(t.title)}
-                    ${t.reminder_date ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#ef4444; background:#fef2f2; padding:2px 6px; border-radius:12px; margin-left:8px; border:1px solid #fca5a5;" title="Nhắc nhở lúc ${t.reminder_time || '08:00'} ngày ${t.reminder_date}"><i class="fas fa-bell" style="font-size:10px;"></i> ${t.reminder_time || '08:00'}</span>` : ''}
+                    ${(() => {
+            if (!t.reminder_date) return '';
+            let isBlinking = false;
+            let shouldShow = true;
+
+            if (t.reminder_fired) {
+                const firedAtStr = t.reminder_fired_at ? t.reminder_fired_at.replace(' ', 'T') + 'Z' : null;
+                const firedAt = firedAtStr ? new Date(firedAtStr) : null;
+                if (firedAt && !isNaN(firedAt.getTime())) {
+                    const diffMs = Date.now() - firedAt.getTime();
+                    const diffMins = diffMs / (1000 * 60);
+                    if (diffMins < 2) isBlinking = true;
+                    else shouldShow = false;
+                } else {
+                    shouldShow = false;
+                }
+            }
+
+            if (!shouldShow) return '';
+            return `<span class="${isBlinking ? 'reminder-blink' : ''}" style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:#ef4444; background:#fef2f2; padding:2px 6px; border-radius:12px; margin-left:8px; border:1px solid #fca5a5;" title="Nhắc nhở lúc ${t.reminder_time || '08:00'} ngày ${t.reminder_date}${isBlinking ? ' (Vừa nhắc)' : ''}"><i class="fas fa-bell" style="font-size:10px;"></i> ${t.reminder_time || '08:00'}</span>`;
+        })()}
                 </div>
             </div>
             ${t.description ? `<div class="task-card-desc" style="margin-bottom:16px; ${isDone ? 'opacity:0.6;' : ''}">${_esc(_stripTags(t.description))}</div>` : ''}

@@ -6,9 +6,9 @@ const todoModel = require('../models/todoModel');
 let _todoReminderInterval = null;
 
 function startTodoReminderScheduler() {
-    console.log('[Todo Reminder] Scheduler started. Checking every 60 seconds...');
+    console.log('[Todo Reminder] Scheduler started. Checking every 10 seconds...');
     _checkTodoReminders();
-    _todoReminderInterval = setInterval(_checkTodoReminders, 60 * 1000);
+    _todoReminderInterval = setInterval(_checkTodoReminders, 10 * 1000);
 }
 
 function stopTodoReminderScheduler() {
@@ -59,6 +59,10 @@ async function _checkTodoReminders() {
                 } else {
                     await todoModel.markTodoReminderFired(todo.id);
                 }
+
+                // Notify renderer to refresh UI
+                const windows = require('electron').BrowserWindow.getAllWindows();
+                windows.forEach(win => win.webContents.send('refresh-data', { type: 'todo', id: todo.id }));
             }
         }
     } catch (e) {
@@ -92,16 +96,17 @@ async function _sendTodoNotification(todo) {
         if (!Notification.isSupported()) return;
 
         const iconPath = path.join(__dirname, '../../images/icon.png');
+        const { BrowserWindow } = require('electron');
+
         const notif = new Notification({
-            title: '🔔 Noteflow - Việc cần làm',
-            body: `${todo.title || 'Task'}\nĐến hạn lúc ${todo.reminder_time || '08:00'} ngày ${todo.reminder_date}`,
+            title: `🔔 ${todo.title || 'Việc cần làm'}`,
+            body: `Đến hạn lúc ${todo.reminder_time || '08:00'} ngày ${todo.reminder_date}`,
             icon: iconPath,
+            timeoutType: 'never',
             urgency: 'critical'
         });
-        notif.show();
 
-        // Auto-close after 4 seconds
-        setTimeout(() => notif.close(), 4000);
+        notif.show();
         console.log(`[Todo Reminder] Sent notification for task id=${todo.id} "${todo.title}"`);
     } catch (e) {
         console.error('[Todo Reminder] Failed to send notification:', e.message);

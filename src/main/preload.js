@@ -23,5 +23,9 @@ contextBridge.exposeInMainWorld('api', {
     getAllTags: () => ipcRenderer.invoke('getAllTags'),
     markReminderFired: (id) => ipcRenderer.invoke('markReminderFired', id),
     testReminderNotification: () => ipcRenderer.invoke('testReminderNotification'),
-    checkRemindersNow: () => ipcRenderer.invoke('checkRemindersNow')
+    checkRemindersNow: () => ipcRenderer.invoke('checkRemindersNow'),
+
+    // App Navigation
+    onNavigate: (callback) => ipcRenderer.on('navigate', (event, ...args) => callback(...args)),
+    onRefreshData: (callback) => ipcRenderer.on('refresh-data', (event, ...args) => callback(...args))
 });

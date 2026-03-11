@@ -299,6 +299,28 @@
             font-weight: 500;
         }
 
+        /* Reminder Blinking */
+        @keyframes reminderBlink {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.92);
+                color: #ef4444;
+            }
+        }
+
+        .reminder-blink {
+            animation: reminderBlink 1s ease-in-out infinite !important;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+            border-radius: 4px;
+        }
+
         .todo-header-actions {
             display: flex;
             align-items: center;
@@ -1009,10 +1031,26 @@
             background: rgba(255, 255, 255, 0.08);
         }
 
-        .todo-form-group input[type="date"]::-webkit-calendar-picker-indicator,
-        .todo-form-group input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(0.7);
+        .todo-form-group input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8);
             cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Make time picker arrows always visible and larger */
+        .todo-form-group input[type="time"]::-webkit-inner-spin-button,
+        .todo-reminder-inputs input[type="time"]::-webkit-inner-spin-button {
+            -webkit-appearance: inner-spin-button !important;
+            display: block !important;
+            opacity: 1 !important;
+            height: 100%;
+            cursor: pointer;
+            filter: invert(0.8);
+        }
+
+        .todo-form-group input[type="time"]::-webkit-calendar-picker-indicator {
+            display: none;
         }
 
         .todo-form-group input[disabled] {
@@ -1248,8 +1286,7 @@
 
         .todo-reminder-inputs input[type="date"]::-webkit-calendar-picker-indicator,
         .todo-reminder-inputs input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(0.6);
-            cursor: pointer;
+            display: none;
         }
 
         .task-card-title {
@@ -1670,7 +1707,8 @@
                             </label>
                             <div class="todo-reminder-inputs" style="flex:1;">
                                 <input type="date" id="todoReminderDate" style="flex:2;" disabled>
-                                <input type="time" id="todoReminderTime" style="flex:1;" value="08:00" disabled>
+                                <input type="text" id="todoReminderTime" style="flex:1; cursor:pointer;" value="08:00"
+                                    readonly onclick="openCustomTimePicker(event, 'todoReminderTime')" disabled>
                             </div>
                         </div>
                         <div class="todo-repeat-wrap" id="todoModalRepeat" style="opacity:.45; pointer-events:none;">

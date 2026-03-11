@@ -110,3 +110,94 @@ async function _ensureNotesLoaded() {
         await initNotesModule();
     }
 }
+
+// --- Custom Global Time Picker ---
+let _ctpTargetInput = null;
+let _ctpH = 8;
+let _ctpM = 0;
+
+window.openCustomTimePicker = function (e, inputId) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    _ctpTargetInput = document.getElementById(inputId);
+    if (!_ctpTargetInput || _ctpTargetInput.disabled) return;
+
+    // parse current time
+    let val = _ctpTargetInput.value || '08:00';
+    let parts = val.split(':');
+    _ctpH = parseInt(parts[0]) || 0;
+    _ctpM = parseInt(parts[1]) || 0;
+    _ctpUpdateUI();
+
+    const picker = document.getElementById('globalTimePicker');
+    picker.classList.add('active');
+
+    // Position it just below the input
+    const rect = _ctpTargetInput.getBoundingClientRect();
+    let topPos = rect.bottom + window.scrollY + 8;
+    picker.style.top = topPos + 'px';
+    picker.style.left = (rect.left + window.scrollX) + 'px';
+};
+
+window.ctpAdj = function (type, amount) {
+    if (type === 'h') {
+        _ctpH = (_ctpH + amount + 24) % 24;
+    } else {
+        _ctpM = (_ctpM + amount + 60) % 60;
+    }
+    _ctpUpdateUI();
+};
+
+window.ctpClose = function (save) {
+    if (save && _ctpTargetInput) {
+        _ctpTargetInput.value = `${String(_ctpH).padStart(2, '0')}:${String(_ctpM).padStart(2, '0')}`;
+    }
+    const picker = document.getElementById('globalTimePicker');
+    if (picker) picker.classList.remove('active');
+};
+
+function _ctpUpdateUI() {
+    const hEl = document.getElementById('ctpHour');
+    const mEl = document.getElementById('ctpMinute');
+    if (hEl) hEl.textContent = String(_ctpH).padStart(2, '0');
+    if (mEl) mEl.textContent = String(_ctpM).padStart(2, '0');
+}
+
+// Close time picker when clicking outside
+document.addEventListener('click', e => {
+    const picker = document.getElementById('globalTimePicker');
+    if (picker && picker.classList.contains('active')) {
+        // If they click inside the picker or on the bound input, ignore
+        if (picker.contains(e.target) || (_ctpTargetInput && _ctpTargetInput.contains(e.target))) {
+            return;
+        }
+        ctpClose(false);
+    }
+});
+
+// ── IPC Navigation Listener ────────────────────────────────────────────────
+if (window.api && window.api.onNavigate) {
+    window.api.onNavigate((section, view) => {
+        let selector = `.nav-item[data-section="${section}"]`;
+        if (view && section === 'todo') {
+            selector += `[data-view="${view}"]`;
+        }
+
+        let el = document.querySelector(selector);
+
+        // Fallback for notes if specific view not found
+        if (!el && section === 'notes') {
+            el = document.querySelector('.nav-item[data-section="notes"]');
+        }
+
+        if (el) {
+            handleNav(el);
+            // Apply specific notes view
+            if (section === 'notes' && view === 'reminder' && typeof window._notesSetFilter === 'function') {
+                setTimeout(() => window._notesSetFilter('__reminder__'), 100);
+            }
+        }
+    });
+}

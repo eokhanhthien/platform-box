@@ -69,6 +69,15 @@
         const sectionEl = document.getElementById('section-notes');
         if (!sectionEl || !sectionEl.querySelector('.notes-root')) return; // Template not loaded yet
 
+        // Global search/reminder-firing listener (only register once per session)
+        if (window.api.onRefreshData && !sectionEl.dataset.refreshBound) {
+            window.api.onRefreshData(() => {
+                _loadNotes();
+                _loadTags();
+            });
+            sectionEl.dataset.refreshBound = '1';
+        }
+
         // Guard: avoid double-init if already initialized
         if (sectionEl.dataset.initialized === '1') {
             await _loadNotes();
@@ -304,7 +313,39 @@
         const lockBadge = n.is_locked ? `<span class="note-badge badge-lock" title="Đã khóa"><i class="fas fa-lock"></i></span>` : '';
         const tags = (n.tags || []).map(t => `<span class="note-tag-chip">#${t}</span>`).join('');
         const plainContent = _stripHtml(n.content || '');
-        const reminder = _reminderBadge(n.reminder_date, n.reminder_time);
+
+        let reminderHtml = '';
+        if (n.reminder_date) {
+            let isBlinking = false;
+            let shouldShow = true;
+
+            if (n.reminder_fired) {
+                // SQLite CURRENT_TIMESTAMP is UTC "YYYY-MM-DD HH:MM:SS"
+                // Browsers often parse "YYYY-MM-DD HH:MM:SS" as local time.
+                // We force UTC parsing by replacing space with T and adding Z.
+                const firedAtStr = n.reminder_fired_at ? n.reminder_fired_at.replace(' ', 'T') + 'Z' : null;
+                const firedAt = firedAtStr ? new Date(firedAtStr) : null;
+
+                if (firedAt && !isNaN(firedAt)) {
+                    const diffMs = Date.now() - firedAt.getTime();
+                    const diffMins = diffMs / (1000 * 60);
+                    if (diffMins < 2) {
+                        isBlinking = true;
+                    } else {
+                        shouldShow = false;
+                    }
+                } else {
+                    // If we have fired=1 but no valid date, hide it to be safe
+                    shouldShow = false;
+                }
+            }
+
+            if (shouldShow) {
+                reminderHtml = `<span class="${isBlinking ? 'reminder-blink' : ''}" style="display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:600; color:#ef4444; background:rgba(239, 68, 68, 0.1); padding:1px 6px; border-radius:8px; margin-left:6px; border:1px solid rgba(239, 68, 68, 0.2);" title="Nhắc nhở lúc ${n.reminder_time || '08:00'} ngày ${n.reminder_date}${isBlinking ? ' (Vừa nhắc)' : ''}"><i class="fas fa-bell"></i> ${n.reminder_time || '08:00'}</span>`;
+            }
+        }
+
+        const reminderBadge = _reminderBadge(n.reminder_date, n.reminder_time);
         const updatedTime = _relativeTime(n.updated_at);
 
         return `
@@ -314,7 +355,7 @@
                 <div class="note-card-top">
                     <div class="note-card-title">
                         ${_escHtml(n.title) || '<span style="color:#cbd5e1;font-style:italic;font-weight:400;">Không có tiêu đề</span>'}
-                        ${n.reminder_date ? `<span style="display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:600; color:#ef4444; background:rgba(239, 68, 68, 0.1); padding:1px 6px; border-radius:8px; margin-left:6px; border:1px solid rgba(239, 68, 68, 0.2);" title="Nhắc nhở lúc ${n.reminder_time || '08:00'} ngày ${n.reminder_date}"><i class="fas fa-bell"></i> ${n.reminder_time || '08:00'}</span>` : ''}
+                        ${reminderHtml}
                     </div>
                     <div class="note-card-badges">
                         ${pinBadge}${lockBadge}
@@ -328,7 +369,6 @@
                 ${plainContent ? `<div class="note-card-body">${_escHtml(plainContent)}</div>` : ''}
                 <div class="note-card-footer">
                     ${tags}
-                    ${reminder}
                     <span style="margin-left:auto;font-size:11px;color:#cbd5e1;">${updatedTime}</span>
                 </div>
             </div>

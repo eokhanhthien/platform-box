@@ -141,12 +141,16 @@ async function updateNote(id, data) {
         if (newRDate !== oldRDate || newRTime !== oldRTime || newRRepeat !== oldRRepeat) {
             resetFired = true;
         }
-        const firedExpr = resetFired ? '0' : 'reminder_fired';
+
+        let query = `UPDATE notes SET title=?, content=?, color=?, is_pinned=?, is_locked=?, reminder_date=?, reminder_time=?, reminder_repeat=?, updated_at=?`;
+        if (resetFired) {
+            query += `, reminder_fired=0, reminder_fired_at=NULL`;
+        }
+        query += ` WHERE id=?`;
 
         await runQ(
-            `UPDATE notes SET title=?, content=?, color=?, is_pinned=?, is_locked=?, reminder_date=?, reminder_time=?, reminder_repeat=?, reminder_fired=${firedExpr}, updated_at=? WHERE id=?`,
-            [title ?? '', content ?? '', color ?? 'default', is_pinned ? 1 : 0, is_locked ? 1 : 0,
-            reminder_date ?? null, reminder_time ?? '08:00', reminder_repeat ?? null, now, id]
+            query,
+            [title ?? '', content ?? '', color ?? 'default', is_pinned ? 1 : 0, is_locked ? 1 : 0, reminder_date ?? null, reminder_time ?? '08:00', reminder_repeat ?? null, now, id]
         );
         if (tags !== undefined) await setNoteTags(id, tags);
         return { success: true };
@@ -189,7 +193,7 @@ async function getPendingReminders() {
 // Mark a reminder as fired so it doesn't notify again
 async function markReminderFired(id) {
     try {
-        await runQ('UPDATE notes SET reminder_fired = 1 WHERE id = ?', [id]);
+        await runQ('UPDATE notes SET reminder_fired = 1, reminder_fired_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
         return { success: true };
     } catch (e) {
         return { success: false, error: e.message };
