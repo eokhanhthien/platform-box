@@ -477,7 +477,10 @@
         const lockBtn = document.getElementById('noteLockBtn');
         const deleteBtn = document.getElementById('noteDeleteBtn');
 
-        if (titleEl) titleEl.value = noteData ? (noteData.title || '') : '';
+        if (titleEl) {
+            titleEl.value = noteData ? (noteData.title || '') : '';
+            titleEl.readOnly = (noteData && noteData.is_locked);
+        }
         if (editorEl) {
             editorEl.innerHTML = noteData ? (noteData.content || '') : '';
             // If locked, disable editing
@@ -596,7 +599,18 @@
             noteCloseModal();
             await _loadNotes();
             await _loadTags();
-            Swal.fire({ icon: 'success', title: 'Đã lưu!', timer: 1200, showConfirmButton: false });
+            // Show non-blocking toast
+            Swal.fire({
+                icon: 'success',
+                title: 'Đã lưu!',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                background: '#1e293b',
+                color: '#fff'
+            });
         } else {
             Swal.fire({ icon: 'error', title: 'Lỗi', text: res.error || 'Không thể lưu ghi chú.' });
         }
@@ -733,9 +747,9 @@
         _renderTagChips();
     };
 
-    window.noteExecCmd = function (cmd) {
+    window.noteExecCmd = function (cmd, val = null) {
         document.getElementById('noteEditorArea').focus();
-        document.execCommand(cmd, false, null);
+        document.execCommand(cmd, false, val);
     };
 
     window._noteEmojiPickerLoaded = false;
@@ -851,14 +865,39 @@
         document.getElementById('noteTemplateDropdown').classList.toggle('open');
     };
 
-    window.noteApplyTemplate = function (type) {
+    window.noteApplyTemplate = async function (type) {
         const editor = document.getElementById('noteEditorArea');
+        const titleEl = document.getElementById('noteModalTitle');
         if (!editor) return;
+
         if (editor.innerHTML && editor.innerHTML !== '<br>') {
-            if (!confirm('Thay thế nội dung hiện tại bằng mẫu này?')) return;
+            const confirm = await Swal.fire({
+                title: 'Thay thế nội dung?',
+                text: 'Mẫu này sẽ thay thế nội dung hiện tại của bạn.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#007fff',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Đồng ý',
+                cancelButtonText: 'Hủy'
+            });
+            if (!confirm.isConfirmed) return;
         }
+
+        // Apply template
         editor.innerHTML = TEMPLATES[type] || '';
         document.getElementById('noteTemplateDropdown').classList.remove('open');
+
+        // FORCE UNLOCK if it was locked
+        _isLocked = false;
+        editor.contentEditable = 'true';
+        editor.style.opacity = '1';
+        if (titleEl) titleEl.readOnly = false;
+
+        // Update UI button
+        const lockBtn = document.getElementById('noteLockBtn');
+        if (lockBtn) lockBtn.classList.remove('on');
+
         editor.focus();
     };
 
@@ -866,6 +905,88 @@
     document.addEventListener('click', () => {
         const dd = document.getElementById('noteTemplateDropdown');
         if (dd) dd.classList.remove('open');
+    });
+
+    // Toolbar Dropdowns
+    window.noteToggleDropdown = function (e, id) {
+        e.stopPropagation();
+        // Close others
+        document.querySelectorAll('.editor-dropdown-panel').forEach(p => {
+            if (p.id !== id) p.classList.remove('active');
+        });
+        const dd = document.getElementById(id);
+        if (dd) dd.classList.toggle('active');
+    };
+
+    // Insert Table
+    window.noteInsertTable = async function () {
+        const { value: formValues } = await Swal.fire({
+            title: 'Chèn Bảng',
+            html:
+                '<div style="text-align:left; font-size:14px; margin-bottom:10px;">Nhập số hàng và số cột:</div>' +
+                '<div style="display:flex; gap:10px;">' +
+                '<input id="swal-input1" class="swal2-input" type="number" placeholder="Số hàng" value="3" style="margin:0; flex:1;">' +
+                '<input id="swal-input2" class="swal2-input" type="number" placeholder="Số cột" value="3" style="margin:0; flex:1;">' +
+                '</div>',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'Chèn',
+            cancelButtonText: 'Hủy',
+            preConfirm: () => {
+                return [
+                    document.getElementById('swal-input1').value,
+                    document.getElementById('swal-input2').value
+                ]
+            }
+        });
+
+        if (formValues) {
+            const rows = parseInt(formValues[0]) || 3;
+            const cols = parseInt(formValues[1]) || 3;
+            let tableHtml = '<table style="border-collapse: collapse; width: 100%; border: 1px solid #444;">';
+            for (let i = 0; i < rows; i++) {
+                tableHtml += '<tr>';
+                for (let j = 0; j < cols; j++) {
+                    tableHtml += '<td style="border: 1px solid #444; padding: 8px; min-width: 50px;">&nbsp;</td>';
+                }
+                tableHtml += '</tr>';
+            }
+            tableHtml += '</table><p>&nbsp;</p>';
+            
+            const area = document.getElementById('noteEditorArea');
+            if (area) {
+                area.focus();
+                document.execCommand('insertHTML', false, tableHtml);
+            }
+        }
+    };
+
+    // Insert Link
+    window.noteInsertLink = async function () {
+        const { value: url } = await Swal.fire({
+            title: 'Chèn Liên kết',
+            input: 'url',
+            inputLabel: 'Địa chỉ URL (ví dụ: https://...)',
+            inputPlaceholder: 'https://',
+            showCancelButton: true,
+            confirmButtonText: 'Lưu',
+            cancelButtonText: 'Hủy'
+        });
+
+        if (url) {
+            const area = document.getElementById('noteEditorArea');
+            if (area) {
+                area.focus();
+                document.execCommand('createLink', false, url);
+                // Make links clickable in editor (optional, but good for UX)
+                // Note: contenteditable links are usually not clickable by default
+            }
+        }
+    };
+
+    // Close all dropdowns when clicking outside
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.editor-dropdown-panel').forEach(p => p.classList.remove('active'));
     });
 
     // ── Helpers ─────────────────────────────────────────────────────────────

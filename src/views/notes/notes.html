@@ -835,6 +835,66 @@
             color: var(--td-primary);
         }
 
+        /* Color & Font Spinners/Dropdowns */
+        .editor-dropdown-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+
+        .editor-dropdown-panel {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 8px;
+            background: #2d3748;
+            border: 1px solid var(--td-border);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            z-index: 2200;
+            display: none;
+            padding: 10px;
+            min-width: 140px;
+        }
+
+        .editor-dropdown-panel.active {
+            display: grid;
+        }
+
+        .color-grid {
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .color-option {
+            width: 20px;
+            height: 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .color-option:hover {
+            transform: scale(1.2);
+            border-color: #fff;
+            z-index: 10;
+        }
+
+        .font-size-option {
+            padding: 8px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            color: var(--td-text-main);
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .font-size-option:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+        }
+
+
         .editor-tool-sep {
             width: 1px;
             height: 18px;
@@ -874,6 +934,28 @@
             line-height: 1.7;
             color: #e2e8f0;
             outline: none;
+            transition: max-height 0.3s ease;
+        }
+
+        .notes-editor-area table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 16px 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .notes-editor-area table td, .notes-editor-area table th {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            min-width: 60px;
+            vertical-align: top;
+        }
+
+        .notes-editor-area table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 700;
         }
 
         .notes-editor-area:empty::before {
@@ -1190,6 +1272,29 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+
+        /* Modal bottom row */
+        .notes-modal-meta {
+            padding: 20px 32px;
+            border-top: 1px solid var(--td-border-light);
+            background: rgba(255, 255, 255, 0.01);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .notes-modal-meta-section-group {
+             display: flex;
+             gap: 20px;
+             flex-wrap: wrap;
+             align-items: flex-start;
+             width: 100%;
+        }
+
+        #noteEmojiContainer {
+            z-index: 10000; /* Extremely high to beat modal */
+        }
     </style>
 
 
@@ -1347,17 +1452,6 @@
                         class="fas fa-underline"></i></button>
                 <button class="editor-tool-btn" title="Gạch ngang" onclick="noteExecCmd('strikeThrough')"><i
                         class="fas fa-strikethrough"></i></button>
-                <div class="editor-tool-sep"></div>
-                <button class="editor-tool-btn" title="Danh sách không đánh số"
-                    onclick="noteExecCmd('insertUnorderedList')"><i class="fas fa-list-ul"></i></button>
-                <button class="editor-tool-btn" title="Danh sách đánh số" onclick="noteExecCmd('insertOrderedList')"><i
-                        class="fas fa-list-ol"></i></button>
-                <div class="editor-tool-sep"></div>
-                <button class="editor-tool-btn" title="Căn trái" onclick="noteExecCmd('justifyLeft')"><i
-                        class="fas fa-align-left"></i></button>
-                <button class="editor-tool-btn" title="Căn giữa" onclick="noteExecCmd('justifyCenter')"><i
-                        class="fas fa-align-center"></i></button>
-                <div class="editor-tool-sep"></div>
 
                 <!-- Emoji Picker -->
                 <div class="notes-emoji-wrapper">
@@ -1369,6 +1463,70 @@
                 </div>
 
                 <div class="editor-tool-sep"></div>
+
+                <!-- Text Color -->
+                <div class="editor-dropdown-wrap">
+                    <button class="editor-tool-btn" title="Màu chữ" onclick="noteToggleDropdown(event, 'textColorDropdown')">
+                        <i class="fas fa-font"></i>
+                    </button>
+                    <div id="textColorDropdown" class="editor-dropdown-panel color-grid">
+                        <div class="color-option" style="background:#ffffff" onclick="noteExecCmd('foreColor', '#ffffff')"></div>
+                        <div class="color-option" style="background:#ef4444" onclick="noteExecCmd('foreColor', '#ef4444')"></div>
+                        <div class="color-option" style="background:#f97316" onclick="noteExecCmd('foreColor', '#f97316')"></div>
+                        <div class="color-option" style="background:#fbbf24" onclick="noteExecCmd('foreColor', '#fbbf24')"></div>
+                        <div class="color-option" style="background:#22c55e" onclick="noteExecCmd('foreColor', '#22c55e')"></div>
+                        <div class="color-option" style="background:#3b82f6" onclick="noteExecCmd('foreColor', '#3b82f6')"></div>
+                        <div class="color-option" style="background:#8b5cf6" onclick="noteExecCmd('foreColor', '#8b5cf6')"></div>
+                        <div class="color-option" style="background:#ec4899" onclick="noteExecCmd('foreColor', '#ec4899')"></div>
+                        <div class="color-option" style="background:#94a3b8" onclick="noteExecCmd('foreColor', '#94a3b8')"></div>
+                        <div class="color-option" style="background:#000000" onclick="noteExecCmd('foreColor', '#000000')"></div>
+                    </div>
+                </div>
+
+                <!-- Highlight Color -->
+                <div class="editor-dropdown-wrap">
+                    <button class="editor-tool-btn" title="Màu nền chữ" onclick="noteToggleDropdown(event, 'bgColorDropdown')">
+                        <i class="fas fa-highlighter"></i>
+                    </button>
+                    <div id="bgColorDropdown" class="editor-dropdown-panel color-grid">
+                        <div class="color-option" style="background:transparent; border:1px dashed rgba(255,255,255,0.3)" onclick="noteExecCmd('hiliteColor', 'transparent')" title="Không màu"></div>
+                        <div class="color-option" style="background:rgba(239,68,68,0.4)" onclick="noteExecCmd('hiliteColor', 'rgba(239,68,68,0.4)')"></div>
+                        <div class="color-option" style="background:rgba(249,115,22,0.4)" onclick="noteExecCmd('hiliteColor', 'rgba(249,115,22,0.4)')"></div>
+                        <div class="color-option" style="background:rgba(251,191,36,0.4)" onclick="noteExecCmd('hiliteColor', 'rgba(251,191,36,0.4)')"></div>
+                        <div class="color-option" style="background:rgba(34,197,94,0.4)" onclick="noteExecCmd('hiliteColor', 'rgba(34,197,94,0.4)')"></div>
+                        <div class="color-option" style="background:rgba(59,130,246,0.4)" onclick="noteExecCmd('hiliteColor', 'rgba(59,130,246,0.4)')"></div>
+                    </div>
+                </div>
+
+                <!-- Font Size -->
+                <div class="editor-dropdown-wrap">
+                    <button class="editor-tool-btn" title="Kích thước chữ" onclick="noteToggleDropdown(event, 'fontSizeDropdown')">
+                        <i class="fas fa-text-height"></i>
+                    </button>
+                    <div id="fontSizeDropdown" class="editor-dropdown-panel">
+                        <div class="font-size-option" onclick="noteExecCmd('fontSize', '2')">Nhỏ</div>
+                        <div class="font-size-option" onclick="noteExecCmd('fontSize', '3')">Mặc định (16px)</div>
+                        <div class="font-size-option" onclick="noteExecCmd('fontSize', '4')" style="font-size:1.1em">Vừa</div>
+                        <div class="font-size-option" onclick="noteExecCmd('fontSize', '5')" style="font-size:1.25em">Lớn</div>
+                        <div class="font-size-option" onclick="noteExecCmd('fontSize', '6')" style="font-size:1.5em">Rất lớn</div>
+                    </div>
+                </div>
+
+                <div class="editor-tool-sep"></div>
+                <button class="editor-tool-btn" title="Chèn Bảng" onclick="noteInsertTable()"><i class="fas fa-table"></i></button>
+                <button class="editor-tool-btn" title="Chèn Liên kết" onclick="noteInsertLink()"><i class="fas fa-link"></i></button>
+                <div class="editor-tool-sep"></div>
+
+                <button class="editor-tool-btn" title="Danh sách không đánh số"
+                    onclick="noteExecCmd('insertUnorderedList')"><i class="fas fa-list-ul"></i></button>
+                <button class="editor-tool-btn" title="Danh sách đánh số" onclick="noteExecCmd('insertOrderedList')"><i
+                        class="fas fa-list-ol"></i></button>
+                <div class="editor-tool-sep"></div>
+                <button class="editor-tool-btn" title="Căn trái" onclick="noteExecCmd('justifyLeft')"><i
+                        class="fas fa-align-left"></i></button>
+                <button class="editor-tool-btn" title="Căn giữa" onclick="noteExecCmd('justifyCenter')"><i
+                        class="fas fa-align-center"></i></button>
+                <div class="editor-tool-sep"></div>
                 <button class="editor-tool-btn" title="Xóa định dạng" onclick="noteExecCmd('removeFormat')"><i
                         class="fas fa-eraser"></i></button>
             </div>
@@ -1377,6 +1535,7 @@
             <div class="notes-editor-area" id="noteEditorArea" contenteditable="true" spellcheck="false"
                 data-placeholder="Nội dung ghi chú..."></div>
 
+            <!-- Meta row: tags + reminder + pin + lock -->
             <!-- Meta row: tags + reminder + pin + lock -->
             <div class="notes-modal-meta">
                 <!-- Tags -->
