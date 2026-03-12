@@ -23,6 +23,8 @@ async function initTodoModule() {
         // Initial View Render
         switchTodoView('today');
 
+        _initSidebarSortables();
+
         // Listen for background data refreshes (reminders firing)
         if (window.api.onRefreshData && !window._todoRefreshBound) {
             window.api.onRefreshData(() => {
@@ -148,17 +150,23 @@ function _renderMyDay() {
 
     if (tasks.length === 0) {
         container.innerHTML = '';
+        container.style.display = 'none';
         empty.style.display = 'flex';
         return;
     }
 
+    container.style.display = 'block';
     empty.style.display = 'none';
 
-    // Sort tasks: undone first, then done. Within undone, sort by priority
+    // Sort: Undone first, then by manual order_index, then by priority fallback
     const priorityWeight = { 'high': 3, 'medium': 2, 'low': 1 };
     tasks.sort((a, b) => {
         if (a.status === 'done' && b.status !== 'done') return 1;
         if (a.status !== 'done' && b.status === 'done') return -1;
+
+        if (a.order_index !== b.order_index) {
+            return (a.order_index || 0) - (b.order_index || 0);
+        }
 
         const wpA = priorityWeight[a.priority] || 0;
         const wpB = priorityWeight[b.priority] || 0;
@@ -166,6 +174,57 @@ function _renderMyDay() {
     });
 
     container.innerHTML = tasks.map(t => _buildListItemHTML(t)).join('');
+
+    // Enable Reordering in My Day
+    if (window.Sortable) {
+        if (container._sortable) container._sortable.destroy();
+        container._sortable = new Sortable(container, {
+            group: 'todo-cross',
+            animation: 180,
+            draggable: '.task-list-item',
+            ghostClass: 'todo-sortable-ghost',
+            dragClass: 'todo-sortable-drag',
+            onMove: function (evt) {
+                const draggedIsDone = evt.dragged.classList.contains('done');
+                const targetIsDone = evt.related.classList.contains('done');
+                
+                if (draggedIsDone && !targetIsDone && !evt.willInsertAfter) return false; // Prevent Done above Todo
+                if (!draggedIsDone && targetIsDone && evt.willInsertAfter) return false;  // Prevent Todo below Done
+            },
+            onEnd: async function (evt) {
+                const container = evt.from;
+                const items = Array.from(container.querySelectorAll('.task-list-item')).map((el, idx) => ({
+                    id: el.getAttribute('data-id'),
+                    order_index: idx
+                }));
+
+                // Optimistic Local Update
+                items.forEach(item => {
+                    const task = _todoTasks.find(t => String(t.id) === String(item.id));
+                    if (task) task.order_index = item.order_index;
+                });
+                
+                _updateSidebarCounts();
+
+                if (items.length) {
+                    await window.api.updateTodoOrder(items);
+                }
+            },
+            onAdd: async function (evt) {
+                const taskId = evt.item.getAttribute('data-id');
+                const todayStr = _fmtDateObj(new Date());
+                // Optimistic update
+                const task = _todoTasks.find(t => String(t.id) === String(taskId));
+                if (task) {
+                    task.due_date = todayStr;
+                    // Move task in array to correct position if needed
+                }
+                await todoChangeDueDate(taskId, todayStr);
+                _updateSidebarCounts();
+                _renderMyDay(); // Refresh to ensure correct HTML (task-card -> task-list-item)
+            }
+        });
+    }
 }
 
 function _buildListItemHTML(t) {
@@ -173,12 +232,20 @@ function _buildListItemHTML(t) {
     const pCfg = { high: '🔴 Cao', medium: '🟠 TB', low: '🟢 Thấp' };
 
     return `
-        <div class="task-list-item ${isDone ? 'done' : ''}" onclick="todoOpenModal(${t.id})">
+        <div class="task-list-item ${isDone ? 'done' : ''}" data-id="${t.id}" onclick="todoOpenModal(${t.id})">
             <div class="task-list-checkbox" onclick="event.stopPropagation(); todoToggleCheck(${t.id}, '${t.status}')" title="${isDone ? 'Bỏ tick hoàn thành' : 'Đánh dấu hoàn thành'}">
                 <i class="fas fa-check"></i>
             </div>
             <div class="task-list-content">
                 <div class="task-list-title">
+                    ${(() => {
+                        if (isDone || !t.due_date) return '';
+                        const today = new Date().toISOString().split('T')[0];
+                        if (t.due_date < today) {
+                            return `<span class="overdue-badge">Quá hạn</span>`;
+                        }
+                        return '';
+                    })()}
                     ${_esc(t.title)}
                     ${(() => {
             if (!t.reminder_date) return '';
@@ -301,27 +368,55 @@ function _renderNext7Days() {
             const el = document.getElementById(`next7-col-${ds}`);
             if (el) {
                 const s = new Sortable(el, {
-                    group: 'next7',
-                    animation: 150,
+                    group: 'todo-cross',
+                    animation: 180,
                     draggable: '.draggable-card',
-                    ghostClass: 'sortable-ghost',
+                    ghostClass: 'todo-sortable-ghost',
+                    dragClass: 'todo-sortable-drag',
+                    onMove: function (evt) {
+                        const draggedIsDone = evt.dragged.classList.contains('done');
+                        const targetIsDone = evt.related.classList.contains('done');
+                        
+                        if (draggedIsDone && !targetIsDone && !evt.willInsertAfter) return false;
+                        if (!draggedIsDone && targetIsDone && evt.willInsertAfter) return false;
+                    },
                     onEnd: async function (evt) {
                         const itemEl = evt.item;
                         const taskId = itemEl.getAttribute('data-id');
                         const toDate = evt.to.getAttribute('data-date');
                         const fromDate = evt.from.getAttribute('data-date');
 
+                        // 1. Optimistic State Update
+                        const task = _todoTasks.find(t => String(t.id) === String(taskId));
+                        if (task && toDate !== fromDate) {
+                            task.due_date = toDate;
+                        }
+
+                        // 2. Handle Reordering in the "To" column
+                        const items = Array.from(evt.to.querySelectorAll('.draggable-card')).map((card, idx) => ({
+                            id: card.getAttribute('data-id'), 
+                            order_index: idx
+                        }));
+
+                        items.forEach(item => {
+                            const t = _todoTasks.find(x => String(x.id) === String(item.id));
+                            if (t) t.order_index = item.order_index;
+                        });
+
+                        _updateSidebarCounts();
+
+                        // 4. Background Server Updates
                         if (taskId && toDate !== fromDate) {
                             await todoChangeDueDate(taskId, toDate, true);
                         }
-
-                        const items = Array.from(evt.to.querySelectorAll('.task-card')).map((card, idx) => ({
-                            id: card.getAttribute('data-id'), order_index: idx
-                        }));
                         if (items.length) {
                             await window.api.updateTodoOrder(items);
                         }
-                        await todoLoadTasks();
+                        
+                        // If moving BETWEEN columns, re-render purely to ensure DOM is clean
+                        if (toDate !== fromDate) {
+                             _renderNext7Days(); 
+                        }
                     }
                 });
                 board.__sortables.push(s);
@@ -360,32 +455,55 @@ function _renderKanban() {
                 </div>
             `;
         } else {
+            // Sort by manual order_index
+            cols[s].sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
             body.innerHTML = cols[s].map(t => _buildKanbanCardHTML(t)).join('');
         }
 
         if (window.Sortable) {
             body._sortable = new Sortable(body, {
-                group: 'allTasks',
-                animation: 150,
+                group: 'todo-cross',
+                animation: 180,
                 draggable: '.draggable-card',
-                ghostClass: 'sortable-ghost',
+                ghostClass: 'todo-sortable-ghost',
+                dragClass: 'todo-sortable-drag',
                 onEnd: async function (evt) {
                     const itemEl = evt.item;
                     const taskId = itemEl.getAttribute('data-id');
                     const toCol = evt.to.id.replace('cards-', '');
                     const fromCol = evt.from.id.replace('cards-', '');
 
+                    // 1. Optimistic State Update
+                    const task = _todoTasks.find(t => String(t.id) === String(taskId));
+                    if (task && toCol !== fromCol) {
+                        task.status = toCol;
+                    }
+
+                    // 2. Handle Reordering in the "To" column
+                    const items = Array.from(evt.to.querySelectorAll('.draggable-card')).map((card, idx) => ({
+                        id: card.getAttribute('data-id'), 
+                        order_index: idx
+                    }));
+
+                    items.forEach(item => {
+                        const t = _todoTasks.find(x => String(x.id) === String(item.id));
+                        if (t) t.order_index = item.order_index;
+                    });
+
+                    _updateSidebarCounts();
+
+                    // 4. Background Server Updates
                     if (taskId && toCol !== fromCol) {
                         await todoChangeStatus(taskId, toCol, true);
                     }
-
-                    const items = Array.from(evt.to.querySelectorAll('.task-card')).map((card, idx) => ({
-                        id: card.getAttribute('data-id'), order_index: idx
-                    }));
                     if (items.length) {
                         await window.api.updateTodoOrder(items);
                     }
-                    await todoLoadTasks();
+                    
+                    // Re-render columns to ensure correct headers/counts
+                    if (toCol !== fromCol) {
+                        _renderKanban();
+                    }
                 }
             });
         }
@@ -402,9 +520,13 @@ function _buildKanbanCardHTML(t) {
     let topLabel = '';
     if (t.due_date) {
         const [y, m, d] = t.due_date.split('-');
+        const isOverdue = !isDone && t.due_date < today;
+        const color = isOverdue ? '#ef4444' : dotColor;
         const dateText = t.due_date === today ? 'HÔM NAY' : `${d}/${m}`;
-        const dotHtml = `<div style="width:6px;height:6px;border-radius:50%;background:${dotColor};"></div>`;
-        topLabel = `<div style="display:flex; align-items:center; gap:6px; font-size:10px; font-weight:800; color:${dotColor}; margin-bottom:10px; letter-spacing:0.5px;">${dotHtml}${dateText}</div>`;
+        const overdueTag = isOverdue ? `<span style="background:#ef4444; color:#fff; padding:1px 6px; border-radius:3px; margin-left:8px; font-size:9px;">QUÁ HẠN</span>` : '';
+        
+        const dotHtml = `<div style="width:6px;height:6px;border-radius:50%;background:${color};"></div>`;
+        topLabel = `<div style="display:flex; align-items:center; gap:6px; font-size:10px; font-weight:800; color:${color}; margin-bottom:10px; letter-spacing:0.5px;">${dotHtml}${dateText}${overdueTag}</div>`;
     }
 
     const checkIcon = isDone
@@ -682,7 +804,14 @@ async function todoOpenModal(id, defaultDate = null) {
             document.getElementById('todoPriority').value = t.priority;
             document.getElementById('todoDueDate').value = t.due_date || '';
 
-            const hasReminder = !!t.reminder_date;
+            let hasReminder = !!t.reminder_date;
+            
+            // If the reminder has already fired, we uncheck it in the modal 
+            // to return to the "new reminder" state as requested.
+            if (t.reminder_fired) {
+                hasReminder = false;
+            }
+
             document.getElementById('todoReminderDate').value = t.reminder_date || '';
             document.getElementById('todoReminderTime').value = t.reminder_time || '08:00';
 
@@ -983,5 +1112,47 @@ function _todoSyncCustomDropdown(id, value, text) {
     el.querySelectorAll('.dropdown-item').forEach(item => {
         if (item.textContent === text) item.classList.add('selected');
         else item.classList.remove('selected');
+    });
+}
+
+function _initSidebarSortables() {
+    if (!window.Sortable) return;
+
+    document.querySelectorAll('.todo-nav-item').forEach(nav => {
+        new Sortable(nav, {
+            group: {
+                name: 'todo-cross',
+                put: true,
+                pull: false
+            },
+            ghostClass: 'todo-sortable-ghost',
+            dragClass: 'todo-sortable-drag',
+            onAdd: async function (evt) {
+                const taskId = evt.item.getAttribute('data-id');
+                const targetView = nav.id.replace('nav-', '');
+
+                // Remove the dropped item element immediately (it's a card in a sidebar list)
+                if (evt.item && evt.item.parentNode) {
+                    evt.item.parentNode.removeChild(evt.item);
+                }
+
+                if (targetView === 'today') {
+                    const todayStr = _fmtDateObj(new Date());
+                    const task = _todoTasks.find(t => String(t.id) === String(taskId));
+                    if (task) task.due_date = todayStr;
+                    
+                    await todoChangeDueDate(taskId, todayStr);
+                    _updateSidebarCounts();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Đã thêm vào My Day',
+                        toast: true,
+                        position: 'top-end',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            }
+        });
     });
 }

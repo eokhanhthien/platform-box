@@ -113,8 +113,8 @@ async function _sendNotification(note) {
         const { BrowserWindow } = require('electron');
 
         const notif = new Notification({
-            title: `🔔 ${note.title || 'Ghi chú'}`,
-            body: `Đến giờ nhắc nhở lúc ${note.reminder_time || '08:00'} ngày ${note.reminder_date}`,
+            title: `📝 GHI CHÚ: ${note.title || 'Nhắc nhở'}`,
+            body: `⏰ Thời gian: ${note.reminder_time || '08:00'}\n📅 Ngày: ${note.reminder_date}\n\nĐừng quên ghi chú quan trọng này nhé!`,
             icon: iconPath,
             timeoutType: 'never',
             urgency: 'normal'

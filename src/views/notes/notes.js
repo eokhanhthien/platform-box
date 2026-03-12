@@ -276,8 +276,14 @@
         if (!el || !window.Sortable) return;
         return new Sortable(el, {
             group: groupName, // Prevent dragging between pinned and unpinned
-            animation: 150,
+            animation: 250,
             ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            forceFallback: true,      // Smoother drag behavior in Electron
+            fallbackOnBody: true,
+            swapThreshold: 0.65,      // More forgiving swap
+            delay: 50,                // Slight delay to distinguish from clicks
+            delayOnTouchOnly: true,
             onEnd: async function () {
                 // Collect new order
                 const items = Array.from(el.querySelectorAll('.note-card'));
@@ -497,7 +503,13 @@
         if (deleteBtn) deleteBtn.style.display = noteData ? 'inline-flex' : 'none';
 
         const reminderCheck = document.getElementById('noteReminderCheck');
-        const hasReminder = !!(noteData && noteData.reminder_date);
+        let hasReminder = !!(noteData && noteData.reminder_date);
+        
+        // If the reminder has already fired, we uncheck it in the modal 
+        // to return to the "new reminder" state as requested by the user.
+        if (noteData && noteData.reminder_fired) {
+            hasReminder = false;
+        }
         if (reminderCheck) {
             reminderCheck.checked = hasReminder;
             window.noteToggleReminderInputs(reminderCheck, true);

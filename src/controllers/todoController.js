@@ -99,8 +99,8 @@ async function _sendTodoNotification(todo) {
         const { BrowserWindow } = require('electron');
 
         const notif = new Notification({
-            title: `🔔 ${todo.title || 'Việc cần làm'}`,
-            body: `Đến hạn lúc ${todo.reminder_time || '08:00'} ngày ${todo.reminder_date}`,
+            title: `📌 NHẮC NHỞ: ${todo.title || 'Công việc'}`,
+            body: `⏰ Thời gian: ${todo.reminder_time || '08:00'}\n📅 Ngày: ${todo.reminder_date}\n\nĐã đến lúc thực hiện công việc này rồi!`,
             icon: iconPath,
             timeoutType: 'never',
             urgency: 'critical'

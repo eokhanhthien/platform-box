@@ -397,11 +397,22 @@
             border: 1px solid var(--td-border-light);
             border-radius: 16px;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            /* DO NOT transition transforms, it breaks SortableJS smoothness */
+            transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
             overflow: hidden;
             position: relative;
             display: flex;
             flex-direction: column;
+        }
+
+        .sortable-ghost {
+            opacity: 0.3 !important;
+            border-style: dashed !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .sortable-chosen {
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4) !important;
         }
 
         .note-card:hover {
